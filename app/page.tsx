@@ -33,80 +33,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useState, useEffect, useRef } from "react";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
-import jaiyaAvatar from "@/assets/jaiya-avatar.png";
-
+import jaiyaAvatar from "@/assets/jaiya.jpg";
 import Image from "next/image";
+import Navbar from "@/components/Navbar";
 
-// Navbar Component
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
-  return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      isScrolled ? "glass-nav shadow-sm" : "bg-transparent"
-    }`}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-secondary/20">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-bold text-xl text-foreground">JAI App</span>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">Features</a>
-            <a href="#categories" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">Categories</a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">Pricing</a>
-            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">About</a>
-          </div>
-
-          <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="font-medium">Sign In</Button>
-            <Button variant="hero" size="sm" className="shadow-lg shadow-secondary/20">
-              Get Started
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden bg-card border-t border-border py-4 animate-fade-in rounded-b-2xl shadow-lg">
-            <div className="flex flex-col gap-1 px-2">
-              <a href="#features" className="text-foreground py-3 px-4 rounded-lg hover:bg-accent transition-colors">Features</a>
-              <a href="#categories" className="text-foreground py-3 px-4 rounded-lg hover:bg-accent transition-colors">Categories</a>
-              <a href="#pricing" className="text-foreground py-3 px-4 rounded-lg hover:bg-accent transition-colors">Pricing</a>
-              <a href="#about" className="text-foreground py-3 px-4 rounded-lg hover:bg-accent transition-colors">About</a>
-              <div className="flex gap-3 pt-4 mt-2 border-t border-border px-2">
-                <Button variant="outline" className="flex-1">Sign In</Button>
-                <Button variant="hero" className="flex-1">Get Started</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
-};
+// export default Navbar;
 
 // Hero Section
 const HeroSection = () => {
@@ -127,10 +60,9 @@ const HeroSection = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                <span className="text-sm text-muted-foreground font-medium">Trusted by 10,000+ users across India</span>
+                <span className="text-sm text-muted-foreground font-medium">Trusted by 200+ users world wide</span>
               </div>
             </AnimatedSection>
-
             <AnimatedSection animation="fade-up" delay={100}>
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-[1.1] mb-6">
                 Your Personal AI Expert Network
@@ -171,13 +103,13 @@ const HeroSection = () => {
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Users className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-sm font-semibold">1000+ Experts</span>
+                  <span className="text-sm font-semibold">10+ Experts</span>
                 </div>
                 <div className="flex items-center gap-2 glass-card rounded-xl px-4 py-2.5">
                   <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
                     <Star className="w-4 h-4 text-amber-600" />
                   </div>
-                  <span className="text-sm font-semibold">50+ Categories</span>
+                  <span className="text-sm font-semibold">20+ Categories</span>
                 </div>
               </div>
             </AnimatedSection>
@@ -187,7 +119,7 @@ const HeroSection = () => {
           <AnimatedSection animation="fade-left" delay={200} className="relative hidden lg:block">
             <div className="relative">
               {/* Main Phone Mockup */}
-              <div className="bg-card rounded-3xl shadow-2xl p-4 mx-auto max-w-sm border border-border/50">
+              <div className="bg-card rounded-3xl shadow-2xl shadow-zinc-500 p-4 mx-auto max-w-sm border border-border/50">
                 <div className="bg-linear-to-br from-primary-lighter to-accent rounded-2xl p-6">
                   {/* Chat Header */}
                   <div className="flex items-center gap-3 mb-6">
@@ -196,17 +128,17 @@ const HeroSection = () => {
                       <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-card" />
                     </div>
                     <div>
-                      <p className="font-heading font-semibold text-foreground">Jaiya - Health AI</p>
+                      <p className="font-heading font-semibold text-foreground">Jaiya</p>
                       <p className="text-xs text-muted-foreground">Active now</p>
                     </div>
                   </div>
                   
                   {/* Chat Messages */}
                   <div className="space-y-3 mb-4">
-                    <div className="bg-card rounded-2xl rounded-tl-md p-4 shadow-sm max-w-[85%]">
+                    <div className="bg-card rounded-2xl rounded-tl-md p-4 shadow-sm max-w-[85%] border border-gray-400">
                       <p className="text-sm text-foreground">I've been feeling tired lately. What could be the reason?</p>
                     </div>
-                    <div className="bg-primary/10 rounded-2xl rounded-tr-md p-4 ml-auto max-w-[85%]">
+                    <div className="bg-primary/10 rounded-2xl rounded-tr-md p-4 ml-auto max-w-[85%] border border-gray-400">
                       <p className="text-sm text-foreground">There could be several reasons for fatigue. Let me ask you a few questions to help identify the cause...</p>
                     </div>
                   </div>
@@ -226,7 +158,7 @@ const HeroSection = () => {
               </div>
 
               {/* Floating Cards */}
-              <div className="absolute -left-12 top-1/4 glass-card rounded-xl p-3 shadow-lg animate-bounce-soft">
+              <div className="absolute -left-12 top-1/4 glass-card rounded-xl p-3 shadow-lg shadow-red-300 animate-bounce [animation-duration:4s]">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
                     <Heart className="w-4 h-4 text-red-500" />
@@ -235,7 +167,7 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              <div className="absolute -right-8 top-1/3 glass-card rounded-xl p-3 shadow-lg animate-bounce-soft" style={{ animationDelay: '0.5s' }}>
+              <div className="absolute -right-8 top-1/3 glass-card rounded-xl p-3 shadow-lg shadow-green-300 animate-bounce [animation-duration:4s]" style={{ animationDelay: '0.5s' }}>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
                     <Wallet className="w-4 h-4 text-green-600" />
@@ -244,10 +176,10 @@ const HeroSection = () => {
                 </div>
               </div>
 
-              <div className="absolute -left-4 bottom-1/4 glass-card rounded-xl p-3 shadow-lg animate-bounce-soft" style={{ animationDelay: '1s' }}>
+              <div className="absolute -left-4 bottom-1/4 glass-card rounded-xl p-3 shadow-lg shadow-blue-300 animate-bounce [animation-duration:4s]" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Scale className="w-4 h-4 text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Scale className="w-4 h-4 text-blue-600" />
                   </div>
                   <span className="text-sm font-semibold">Legal</span>
                 </div>

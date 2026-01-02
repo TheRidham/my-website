@@ -1,0 +1,109 @@
+import { useState, useEffect } from "react";
+import { Sparkles, Menu, X, ArrowRight, ChevronRight } from "lucide-react";
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Trigger effect slightly earlier for smoother feel
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+        isScrolled
+          ? "bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm py-3"
+          : "bg-transparent py-5"
+      }`}
+    >
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          
+          {/* Logo Section */}
+          <div className="flex items-center gap-2 group cursor-pointer">
+            {/* <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 text-white shadow-lg shadow-blue-500/20 group-hover:shadow-teal-500/30 transition-all duration-300">
+              <Sparkles className="w-5 h-5" />
+            </div> */}
+            <span className="font-bold text-2xl tracking-tight text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-blue-400">
+              JAI APP
+            </span>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center bg-slate-100/50 rounded-full px-2 py-1.5 border border-slate-200/50">
+            {["Features", "Categories", "Pricing", "About"].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="px-5 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 rounded-full hover:bg-white transition-all duration-300"
+              >
+                {item}
+              </a>
+            ))}
+          </div>
+
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-4">
+            <button className="text-slate-600 hover:text-blue-600 font-medium text-sm transition-colors">
+              Sign In
+            </button>
+            <button className="group relative px-5 py-2.5 rounded-full bg-slate-900 text-white font-medium text-sm overflow-hidden shadow-lg shadow-blue-900/20 hover:shadow-teal-500/30 transition-all duration-300">
+              {/* Gradient overlay on hover */}
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="relative z-10 flex items-center gap-2">
+                Get Started
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        <div
+          className={`md:hidden absolute left-0 right-0 top-full bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-xl transition-all duration-300 ease-in-out ${
+            isOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-2 invisible"
+          }`}
+        >
+          <div className="flex flex-col p-4 space-y-2">
+            {["Features", "Categories", "Pricing", "About"].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="flex items-center justify-between p-3 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="font-medium">{item}</span>
+                <ChevronRight className="w-4 h-4 opacity-50" />
+              </a>
+            ))}
+            <div className="h-px bg-slate-100 my-2" />
+            <div className="grid grid-cols-2 gap-3">
+              <button className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+                Sign In
+              </button>
+              <button className="py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 text-white font-medium shadow-lg shadow-blue-500/25">
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
