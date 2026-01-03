@@ -1,5 +1,5 @@
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import Image from "next/image";
 import jaiyaAvatar from "@/assets/jaiya.jpg";
 

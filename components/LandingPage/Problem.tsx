@@ -1,7 +1,7 @@
 import { Users, Wallet, Clock } from "lucide-react";
 
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
-import { Card } from "./ui/card";
+import { Card } from "../ui/card";
 
 const ProblemSection = () => {
   const problems = [

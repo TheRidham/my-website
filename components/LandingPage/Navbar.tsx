@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,17 +51,21 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="text-blue-600 px-5 py-2.5 rounded-full border border-teal-500 bg-white shadow-lg font-medium text-sm hover:shadow-teal-500/30 hover:text-white hover:bg-linear-to-r from-blue-600 to-teal-500 transition-all duration-300 ease-in-out">
-              Sign In
-            </button>
-            <button className="group relative px-5 py-2.5 rounded-full bg-slate-900 text-white font-medium text-sm overflow-hidden shadow-lg hover:shadow-teal-500/30 transition-all duration-300 ease-in-out">
-              {/* Gradient overlay on hover */}
-              <div className="absolute inset-0 w-full h-full bg-linear-to-r from-blue-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span className="relative z-10 flex items-center gap-2">
-                Get Started
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
+            <Link href={'/auth/login'}>
+              <button className="text-blue-600 px-5 py-2.5 rounded-full border border-teal-500 bg-white shadow-lg font-medium text-sm hover:shadow-teal-500/30 hover:text-white hover:bg-linear-to-r from-blue-600 to-teal-500 transition-all duration-300 ease-in-out">
+                Sign In
+              </button>
+            </Link>
+            <Link href={'/home'}>
+              <button className="group relative px-5 py-2.5 rounded-full bg-slate-900 text-white font-medium text-sm overflow-hidden shadow-lg hover:shadow-teal-500/30 transition-all duration-300 ease-in-out">
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 w-full h-full bg-linear-to-r from-blue-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <span className="relative z-10 flex items-center gap-2">
+                  Get Started
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}

@@ -1,16 +1,16 @@
-import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
-import ProblemSection from "@/components/Problem";
-import SolutionSection from "@/components/SolutionSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import CategoriesSection from "@/components/CategoriesSection";
-import AIToolsSection from "@/components/AIToolsSection";
-import PricingSection from "@/components/PricingSection";
-import TrustSection from "@/components/TrustSection";
-import ComparisonSection from "@/components/ComparisonSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
-import CTASection from "@/components/CTASection";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/LandingPage/Navbar";
+import HeroSection from "@/components/LandingPage/HeroSection";
+import ProblemSection from "@/components/LandingPage/Problem";
+import SolutionSection from "@/components/LandingPage/SolutionSection";
+import FeaturesSection from "@/components/LandingPage/FeaturesSection";
+import CategoriesSection from "@/components/LandingPage/CategoriesSection";
+import AIToolsSection from "@/components/LandingPage/AIToolsSection";
+import PricingSection from "@/components/LandingPage/PricingSection";
+import TrustSection from "@/components/LandingPage/TrustSection";
+import ComparisonSection from "@/components/LandingPage/ComparisonSection";
+import TestimonialsSection from "@/components/LandingPage/TestimonialsSection";
+import CTASection from "@/components/LandingPage/CTASection";
+import Footer from "@/components/LandingPage/Footer";
 
 export default function Home() {
   return (
