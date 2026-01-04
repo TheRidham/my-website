@@ -2,30 +2,42 @@
 
 import Jaiya from '@/components/Jaiya/Index'
 import BottomNav from '@/components/BottomNav'
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { useChat } from '@/providers/ChatProvider'
+import { SubcategoryList } from '@/components/SubcategoryList'
+import { useParams, usePathname } from 'next/navigation'
 
 function Layout({ children }: {children: React.ReactNode}) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [activeChat, setActiveChat] = useState({
-    advisorName: "Jaiya",
-    advisorAvatar: null, // Will default to jaiyaAvatar in component
-    customSystemPrompt: "You are Jaiya, a helpful AI assistant that connects users with specialized AI advisors.",
-    welcomeMessage: "Hello! I'm Jaiya, your AI companion. I can help you find the perfect AI advisor for any situation."
-  })
+  const params = useParams()
+  const pathname = usePathname()
+  const { 
+    activeChat, 
+    resetChat, 
+    isSidebarOpen, 
+    setIsSidebarOpen,
+    switchChat
+  } = useChat()
 
-  const handleSwitchChat = (advisor: any) => {
-    setActiveChat({
-      advisorName: advisor.name,
-      advisorAvatar: advisor.image,
-      customSystemPrompt: `You are ${advisor.name}, a specialized AI advisor in ${advisor.specialty}. Provide expert advice in this field.`,
-      welcomeMessage: `Hello! I'm ${advisor.name}, your ${advisor.specialty} expert. How can I help you today?`
-    })
-    // On mobile, we might want to close the sidebar when a chat is selected
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false)
+  const categoryKey = params.category as string
+  const subcategoryTitle = params.subcategory ? decodeURIComponent(params.subcategory as string) : undefined
+
+  // Sync URL params with ChatProvider state
+  useEffect(() => {
+    if (categoryKey && subcategoryTitle) {
+      switchChat({
+        name: subcategoryTitle,
+        categoryKey,
+        subcategoryTitle,
+      })
+    } else if (!pathname.includes('/home/')) {
+      // If we're not in a category/subcategory route, reset to Jaiya
+      // but only if we're not on the home page or allAdvisors
+      if (pathname === '/jaiya' || pathname === '/home') {
+        resetChat()
+      }
     }
-  }
+  }, [categoryKey, subcategoryTitle, pathname, switchChat, resetChat])
 
   return (
     <section
@@ -40,15 +52,9 @@ function Layout({ children }: {children: React.ReactNode}) {
         `}
       >
         <div className={`flex-1 overflow-y-auto no-scrollbar ${!isSidebarOpen && 'md:hidden'}`}>
-          {/* Pass handleSwitchChat to children if needed, but better to use a context or event bus for deep nesting */}
-          { React.Children.map(children, child => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child as React.ReactElement<any>, { onSelectAdvisor: handleSwitchChat })
-            }
-            return child
-          }) }
+          {children}
         </div>
-        <div className={`shrink-0 ${!isSidebarOpen && 'md:hidden'}`}>
+        <div className={`shrink-0 md:hidden`}>
           <BottomNav />
         </div>
 
@@ -82,8 +88,9 @@ function Layout({ children }: {children: React.ReactNode}) {
             isSidebarOpen={isSidebarOpen} 
             advisorName={activeChat.advisorName}
             advisorAvatar={activeChat.advisorAvatar}
-            customSystemPrompt={activeChat.customSystemPrompt}
-            welcomeMessage={activeChat.welcomeMessage}
+            categoryKey={activeChat.categoryKey}
+            subcategoryTitle={activeChat.subcategoryTitle}
+            onBack={resetChat}
           />
         </div>
       </div>

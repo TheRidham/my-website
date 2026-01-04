@@ -1,48 +1,89 @@
-import React from 'react'
-import AIChat from '../Chat/AIChat'
-import { ChevronLeft, Wallet, History } from 'lucide-react'
+'use client'
+
+import React, { useRef } from 'react'
+import { AIChat, AIChatHandle } from '../Chat/AIChat'
+import { ChevronLeft, Wallet, History, Plus } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import jaiyaAvatar from "@/assets/jaiya.jpg";
+import { ADVISOR_CATEGORIES } from '@/constant/advisors'
+import { LucideIcon } from '../ui/LucideIcon'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
-  customSystemPrompt?: string;
-  welcomeMessage?: string;
+  categoryKey?: string;
+  subcategoryTitle?: string;
   advisorName?: string;
   advisorAvatar?: any;
+  onBack?: () => void;
 }
 
 function Jaiya({ 
   isSidebarOpen, 
-  customSystemPrompt, 
-  welcomeMessage,
+  categoryKey,
+  subcategoryTitle,
   advisorName = "Jaiya",
-  advisorAvatar = jaiyaAvatar
+  advisorAvatar = jaiyaAvatar,
+  onBack
 }: JaiyaProps) {
+  const chatRef = useRef<AIChatHandle>(null);
+  const isAdvisorChat = !!categoryKey;
+  
+  const category = categoryKey ? ADVISOR_CATEGORIES[categoryKey] : null;
+  const subcategory = category && subcategoryTitle 
+    ? category.categories.find(c => c.title === subcategoryTitle)
+    : null;
+
+  const handleNewChat = () => {
+    chatRef.current?.clearMessages();
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className={`border-b border-gray-200 bg-white backdrop-blur-sm transition-all duration-300 ${!isSidebarOpen && "md:pl-12"}`}>
         <div className="w-full flex items-center justify-between px-6 py-4">
           <div className="flex items-center">
-            <Link href="/home" className="md:hidden mr-4 text-gray-600 hover:text-blue-600 transition-colors">
-              <ChevronLeft size={24} />
-            </Link>
+            {(onBack || isAdvisorChat) && (
+              <button 
+                onClick={onBack}
+                className="mr-4 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            )}
             <div className="flex items-center gap-4">
-              <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-md">
-                <Image
-                  src={advisorAvatar || jaiyaAvatar}
-                  alt={advisorName}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-blue-50 flex items-center justify-center">
+                {isAdvisorChat ? (
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: category?.bgColor, color: category?.color }}
+                  >
+                    <LucideIcon name={subcategory?.icon || category?.icon || "Sparkles"} size={24} />
+                  </div>
+                ) : (
+                  <Image
+                    src={advisorAvatar || jaiyaAvatar}
+                    alt={advisorName}
+                    fill
+                    className="object-cover"
+                  />
+                )}
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-gray-900 text-[16px] tracking-tight">{advisorName}</span>
+                <span className="font-black text-gray-900 text-[16px] tracking-tight">
+                  {isAdvisorChat ? subcategoryTitle : advisorName}
+                </span>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-[11px] font-bold text-green-600 uppercase tracking-wider">Online</span>
+                  {isAdvisorChat ? (
+                    <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                      {category?.name} Expert
+                    </span>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-[11px] font-bold text-green-600 uppercase tracking-wider">Online</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -50,6 +91,13 @@ function Jaiya({
 
           {/* Header Actions */}
           <div className="flex items-center gap-3">
+            <button 
+              onClick={handleNewChat}
+              className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" 
+              title="New Chat"
+            >
+              <Plus size={22} />
+            </button>
             <button className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chat History">
               <History size={22} />
             </button>
@@ -63,8 +111,10 @@ function Jaiya({
       {/* Chat Component */}
       <div className="flex-1 overflow-hidden">
         <AIChat 
-          customSystemPrompt={customSystemPrompt} 
-          welcomeMessage={welcomeMessage} 
+          ref={chatRef}
+          categoryKey={categoryKey}
+          subcategoryTitle={subcategoryTitle}
+          isJaiya={!isAdvisorChat}
         />
       </div>
     </div>

@@ -2,38 +2,17 @@
 
 import React, { useState } from 'react'
 import { 
-  Search, ChevronRight, 
-  Salad, Dumbbell, Brain, Stethoscope, 
-  Heart, Sparkles, Ban, Coins, 
-  Scale, Briefcase, Users, Moon,
-  Utensils, Pill, Star, FlaskConical,
+  Search, Star, Utensils, Pill, FlaskConical,
   Tag, Shirt, ShieldCheck, Gavel,
   UserCircle, Lightbulb, FileText, TrendingUp,
-  ShoppingBag, Activity, Calculator, Landmark,
   ChevronDown, ChevronUp
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import jaiyaAvatar from "@/assets/jaiya.jpg";
-
-const categories = [
-  { name: 'Nutrition & Diet', icon: Salad, color: 'bg-emerald-50 text-emerald-600' },
-  { name: 'Fitness', icon: Dumbbell, color: 'bg-pink-50 text-pink-600' },
-  { name: 'Mental Health', icon: Brain, color: 'bg-blue-50 text-blue-600' },
-  { name: 'General Medicine', icon: Stethoscope, color: 'bg-cyan-50 text-cyan-600' },
-  { name: 'Sexual Health', icon: Heart, color: 'bg-red-50 text-red-600' },
-  { name: 'Skin & Beauty', icon: Sparkles, color: 'bg-purple-50 text-purple-600' },
-  { name: 'Addiction', icon: Ban, color: 'bg-orange-50 text-orange-600' },
-  { name: 'Finance', icon: Coins, color: 'bg-teal-50 text-teal-600' },
-  { name: 'Lawyer', icon: Scale, color: 'bg-indigo-50 text-indigo-600' },
-  { name: 'Career Coach', icon: Briefcase, color: 'bg-yellow-50 text-yellow-600' },
-  { name: 'Relationship', icon: Users, color: 'bg-rose-50 text-rose-600' },
-  { name: 'Astro', icon: Moon, color: 'bg-violet-50 text-violet-600' },
-  { name: 'Shopping', icon: ShoppingBag, color: 'bg-pink-50 text-pink-500' },
-  { name: 'Chronic Diseases', icon: Activity, color: 'bg-red-50 text-red-500' },
-  { name: 'CA Taxes', icon: Calculator, color: 'bg-blue-50 text-blue-500' },
-  { name: 'Government', icon: Landmark, color: 'bg-gray-50 text-gray-600' },
-]
+import { ADVISOR_CATEGORIES } from '@/constant/advisors';
+import { LucideIcon } from '@/components/ui/LucideIcon';
+import { useChat } from '@/providers/ChatProvider';
 
 const aiApps = [
   { name: 'Food Reader', icon: Utensils, color: 'bg-emerald-400' },
@@ -55,6 +34,8 @@ const featuredAdvisors = [
     id: 1,
     name: "Dr. Sarah Chen",
     specialty: "Nutrition & Wellness",
+    categoryKey: "nutrition",
+    subcategoryTitle: "Healthy Eating",
     rating: 4.9,
     image: jaiyaAvatar,
     status: "Online"
@@ -63,6 +44,8 @@ const featuredAdvisors = [
     id: 2,
     name: "Marcus Thorne",
     specialty: "Fitness & Strength",
+    categoryKey: "fitness",
+    subcategoryTitle: "Exercise & Training",
     rating: 4.8,
     image: jaiyaAvatar,
     status: "Online"
@@ -71,16 +54,28 @@ const featuredAdvisors = [
     id: 3,
     name: "Elena Rodriguez",
     specialty: "Mental Health",
+    categoryKey: "mental",
+    subcategoryTitle: "Stress",
     rating: 5.0,
     image: jaiyaAvatar,
     status: "Busy"
   }
 ]
 
-function HomePage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any) => void }) {
+function HomePage() {
   const [showAllCategories, setShowAllCategories] = useState(false)
+  const { switchChat } = useChat()
 
-  const displayedCategories = showAllCategories ? categories : categories.slice(0, 8)
+  const categoriesList = Object.entries(ADVISOR_CATEGORIES).map(([key, value]) => ({
+    key,
+    name: value.name,
+    icon: value.icon,
+    bgColor: value.bgColor,
+    color: value.color,
+    className: `flex flex-col items-center gap-2 group cursor-pointer`
+  }));
+
+  const displayedCategories = showAllCategories ? categoriesList : categoriesList.slice(0, 8)
 
   return (
     <div className="flex flex-col h-full bg-slate-50 pb-24">
@@ -103,14 +98,21 @@ function HomePage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any) => voi
         </div>
         <div className="grid grid-cols-4 gap-x-3 gap-y-6">
           {displayedCategories.map((cat) => (
-            <div key={cat.name} className="flex flex-col items-center gap-2 group cursor-pointer">
-              <div className={`w-15 h-15 rounded-2xl ${cat.color} flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300`}>
-                <cat.icon size={26} />
+            <Link 
+              key={cat.key} 
+              href={`/home/${cat.key}`}
+              className={cat.className}
+            >
+              <div 
+                className="w-15 h-15 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300"
+                style={{ backgroundColor: cat.bgColor, color: cat.color }}
+              >
+                <LucideIcon name={cat.icon} size={26} />
               </div>
               <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-blue-600 transition-colors">
                 {cat.name}
               </span>
-            </div>
+            </Link>
           ))}
         </div>
         <button 
@@ -156,9 +158,16 @@ function HomePage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any) => voi
         </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
           {featuredAdvisors.map((advisor) => (
-            <div 
+            <Link 
               key={advisor.id}
-              onClick={() => onSelectAdvisor?.(advisor)}
+              href={`/home/${advisor.categoryKey}/${encodeURIComponent(advisor.subcategoryTitle)}`}
+              onClick={() => switchChat({
+                name: advisor.name,
+                categoryKey: advisor.categoryKey,
+                subcategoryTitle: advisor.subcategoryTitle,
+                specialty: advisor.specialty,
+                image: advisor.image
+              })}
               className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
             >
               <div className="relative w-16 h-16 mx-auto mb-3">
@@ -178,7 +187,7 @@ function HomePage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any) => voi
                 <Star size={10} className="fill-amber-400 text-amber-400" />
                 <span className="text-[10px] font-bold text-gray-600">{advisor.rating}</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

@@ -2,8 +2,11 @@ import { Brain, Users, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import { usePrice } from "@/providers/PriceProvider";
 
 const PricingSection = () => {
+  const { formattedPrice } = usePrice();
+
   return (
     <section id="pricing" className="section-padding gradient-bg">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,7 +35,7 @@ const PricingSection = () => {
               <ul className="space-y-4 mb-8">
                 {["Unlimited AI conversations", "50+ specialized domains", "File sharing included", "Hinglish support", "Voice messages"].map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                       <Check className="w-3 h-3 text-emerald-600" />
                     </div>
                     <span className="text-foreground">{feature}</span>
@@ -58,13 +61,13 @@ const PricingSection = () => {
                   <Users className="w-4 h-4 text-secondary" />
                   Human Experts
                 </div>
-                <div className="font-heading text-5xl font-bold mb-2">₹49<span className="text-lg font-normal text-muted-foreground">/session</span></div>
+                <div className="font-heading text-5xl font-bold mb-2">{formattedPrice}<span className="text-lg font-normal text-muted-foreground">/session</span></div>
                 <p className="text-muted-foreground">per expert consultation</p>
               </div>
               <ul className="space-y-4 mb-8">
                 {["Verified professionals", "Voice & text chat", "Document review", "Follow-up sessions", "₹100 free credit for new users"].map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center shrink-0">
                       <Check className="w-3 h-3 text-secondary" />
                     </div>
                     <span className="text-foreground">{feature}</span>

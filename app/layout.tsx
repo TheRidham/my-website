@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { DM_Sans, Outfit } from "next/font/google";
+import { Providers } from "@/components/Providers";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -41,7 +42,9 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${outfit.variable} antialiased`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

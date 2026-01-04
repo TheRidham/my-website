@@ -31,7 +31,7 @@ const CategoriesSection = () => {
             <AnimatedSection key={index} animation="fade-up" delay={index * 80}>
               <Card 
                 variant="elevated" 
-                className={`min-w-[300px] sm:min-w-[340px] p-6 snap-start cursor-pointer group card-hover`}
+                className={`min-w-75 sm:min-w-85 p-6 snap-start cursor-pointer group card-hover`}
               >
                 <div className={`w-14 h-14 rounded-2xl ${category.color} ring-4 ${category.ring} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500`}>
                   <category.icon className="w-7 h-7" />
@@ -40,7 +40,7 @@ const CategoriesSection = () => {
                 <div className="space-y-2.5 mb-5">
                   {category.items.map((item, iIndex) => (
                     <div key={iIndex} className="flex items-center gap-2.5 text-muted-foreground text-sm">
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      <Check className="w-4 h-4 text-primary shrink-0" />
                       {item}
                     </div>
                   ))}

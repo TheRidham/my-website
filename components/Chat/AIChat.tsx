@@ -1,28 +1,145 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
-import { Paperclip, Mic, Send, Loader2 } from 'lucide-react'
-import { useAIChat } from '@/hooks/useAIChat'
+import React, { useState, useRef, useEffect, useMemo, useImperativeHandle, forwardRef } from 'react'
+import { Send, Loader2, Trash2, Paperclip, Mic } from 'lucide-react'
+import { ADVISOR_CATEGORIES } from '@/constant/advisors'
+import { Button } from '@/components/ui/button'
+import { usePrompts } from '@/providers/PromptsProvider'
+import { useChatAI } from '@/hooks/useAI'
+import { useChat } from '@/providers/ChatProvider'
+import { marked } from 'marked'
 
 interface AIChatProps {
-  customSystemPrompt?: string;
-  welcomeMessage?: string;
+  categoryKey?: string;
+  subcategoryTitle?: string;
+  isJaiya?: boolean;
 }
 
-function AIChat({ customSystemPrompt, welcomeMessage }: AIChatProps) {
+export interface AIChatHandle {
+  clearMessages: () => void;
+}
+
+const getMatcherPrompt = (categories: typeof ADVISOR_CATEGORIES) => {
+  const tags = Object.entries(categories).reduce((acc, [key, cat]) => {
+    acc[key] = {
+      categoryName: cat.name,
+      categoryTag: key,
+      subCategories: cat.categories.map(sub => sub.title)
+    };
+    return acc;
+  }, {} as any);
+
+  return `
+You are an intelligent advisor category matcher. Your task is to analyze user questions and match them to the most relevant category and subcategory from the dataset below.
+
+ADVISOR_DATA:
+${JSON.stringify(tags, null, 2)}
+
+**Instructions:**
+1. **Be flexible and understanding**: User questions may use different words, slang, or colloquial terms. Understand the intent and context, not just exact keyword matches.
+2. **Use semantic understanding**: Match based on meaning and context.
+3. **Match partial information**: If the query is related to a category but not specific about subcategory, choose the most logical subcategory.
+4. **Respond in strict JSON format only**:
+   - If you find a match: { "isfind": true, "categoryTag": "<tag>", "categoryName": "<name>", "subCategoryName": "<subcategory>" }
+   - If no match: { "isfind": false, "response": "<helpful message explaining what services are available and suggesting user to rephrase or browse categories>" }
+
+**Important:**
+- The "categoryTag" MUST be one of the keys from ADVISOR_DATA (e.g., "nutrition", "fitness").
+- The "subCategoryName" MUST be one of the subCategories listed under that tag.
+- Always return valid JSON.
+- No extra text, markdown, or explanation outside the JSON.
+- Be helpful and user-friendly in responses`;
+};
+
+export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subcategoryTitle, isJaiya = false }, ref) => {
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
-  
-  const { messages, isLoading, sendMessage } = useAIChat({
-    customSystemPrompt
+  const { jaiyaPrompt, advisorsPrompt } = usePrompts()
+  const { switchChat } = useChat()
+
+  console.log('AIChat Render:', { isJaiya, categoryKey, subcategoryTitle });
+
+  // Configure marked options
+  marked.setOptions({
+    breaks: true,
+    gfm: true
   })
 
-  const suggestions = [
-    "Find me a career advisor",
-    "I need help with my relationship",
-    "How to improve my mental health?",
-    "Best AI for coding help"
-  ]
+  // Resolve prompt and welcome message
+  const { systemPrompt, welcomeMessage } = useMemo(() => {
+    console.log('AIChat: Resolving prompt. isJaiya:', isJaiya, 'categoryKey:', categoryKey, 'subcategoryTitle:', subcategoryTitle);
+    console.log('AIChat: advisorsPrompt loaded:', !!advisorsPrompt, 'jaiyaPrompt loaded:', !!jaiyaPrompt);
+    
+    if (isJaiya) {
+      const matcherPrompt = getMatcherPrompt(ADVISOR_CATEGORIES);
+      console.log('AIChat: Using Jaiya Matcher Prompt');
+      return {
+        systemPrompt: matcherPrompt,
+        welcomeMessage: jaiyaPrompt?.welcomeMessage
+      }
+    }
+    
+    if (categoryKey && subcategoryTitle) {
+      const categoryData = advisorsPrompt?.[categoryKey]
+      const advisorData = categoryData?.[subcategoryTitle]
+      
+      console.log('AIChat: Advisor Data lookup:', { 
+        categoryKey, 
+        subcategoryTitle, 
+        found: !!advisorData,
+        hasGeneralPrompt: !!categoryData?.generalPrompt,
+        promptLength: advisorData?.prompt?.length 
+      });
+      
+      if (!advisorData && advisorsPrompt) {
+        console.log('AIChat: Available categories in advisorsPrompt:', Object.keys(advisorsPrompt));
+        if (advisorsPrompt[categoryKey]) {
+          console.log('AIChat: Available subcategories in', categoryKey, ':', Object.keys(advisorsPrompt[categoryKey]));
+        }
+      }
+
+      // Combine subcategory prompt with category general prompt
+      const combinedSystemPrompt = advisorData?.prompt 
+        ? `${advisorData.prompt} ${categoryData?.generalPrompt || ''}`.trim()
+        : undefined;
+
+      return {
+        systemPrompt: combinedSystemPrompt,
+        welcomeMessage: advisorData?.welcomeMessage
+      }
+    }
+
+    console.log('AIChat: No prompt resolved, returning undefined');
+    return {
+      systemPrompt: undefined,
+      welcomeMessage: undefined
+    }
+  }, [isJaiya, categoryKey, subcategoryTitle, jaiyaPrompt, advisorsPrompt])
+
+  const { messages, isLoading, sendMessage, clearMessages } = useChatAI({
+    systemPrompt,
+    appendGeneralPrompt: !isJaiya
+  })
+
+  useImperativeHandle(ref, () => ({
+    clearMessages
+  }));
+
+  // Clear messages on unmount to stop any pending AI responses
+  useEffect(() => {
+    return () => {
+      clearMessages();
+    };
+  }, [clearMessages]);
+
+  const suggestions = useMemo(() => {
+    if (categoryKey && subcategoryTitle) {
+      return ADVISOR_CATEGORIES[categoryKey]?.categories.find(s => s.title === subcategoryTitle)?.recommendedQuestions || []
+    }
+    return Object.values(ADVISOR_CATEGORIES).flatMap(cat => 
+      cat.categories.flatMap(sub => sub.recommendedQuestions)
+    ).slice(0, 4)
+  }, [categoryKey, subcategoryTitle])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -30,11 +147,80 @@ function AIChat({ customSystemPrompt, welcomeMessage }: AIChatProps) {
     }
   }, [messages, isLoading])
 
+  const processMessage = async (content: string) => {
+    if (!content.trim() || isLoading) {
+      console.log('processMessage blocked:', { content: !!content.trim(), isLoading });
+      return;
+    }
+    
+    console.log('processMessage starting:', { content, isJaiya });
+    const response = await sendMessage(content);
+    console.log('processMessage response received:', response);
+
+    if (isJaiya && response) {
+      try {
+        // Try to extract JSON if AI wrapped it in markdown or text
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : response;
+        console.log('processMessage extracted JSON:', jsonStr);
+        
+        const data = JSON.parse(jsonStr);
+        console.log('processMessage parsed data:', data);
+
+        if (data.isfind) {
+          const categoryTag = data.categoryTag?.toLowerCase();
+          const categoryName = data.categoryName?.toLowerCase();
+          
+          console.log('processMessage searching for category:', { categoryTag, categoryName });
+          
+          // Try to find by tag first, then by name
+          let category = ADVISOR_CATEGORIES[categoryTag];
+          if (!category) {
+            const foundCategory = Object.values(ADVISOR_CATEGORIES).find(
+              cat => cat.name.toLowerCase() === categoryName
+            );
+            if (foundCategory) {
+              category = foundCategory;
+            }
+          }
+          
+          if (category) {
+            const targetTag = Object.keys(ADVISOR_CATEGORIES).find(
+              key => ADVISOR_CATEGORIES[key] === category
+            );
+
+            console.log('processMessage category found:', category.name, 'Target Tag:', targetTag);
+            const subcategory = category.categories.find(
+              c => c.title.toLowerCase() === data.subCategoryName?.toLowerCase()
+            );
+            
+            if (subcategory) {
+              console.log('processMessage subcategory found, redirecting to:', subcategory.title);
+              switchChat({
+                name: subcategory.title,
+                categoryKey: targetTag,
+                subcategoryTitle: subcategory.title,
+              });
+            } else {
+              console.warn('processMessage subcategory not found:', data.subCategoryName);
+            }
+          } else {
+            console.warn('processMessage category not found for tag:', categoryTag, 'or name:', categoryName);
+          }
+        } else {
+          console.log('processMessage AI did not find a match. Response:', data.response);
+        }
+      } catch (e) {
+        console.error('processMessage JSON parse error:', e);
+      }
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return
-    const msg = input
-    setInput('')
-    await sendMessage(msg)
+    console.log('handleSend clicked. Input:', input);
+    const msg = input;
+    setInput('');
+    await processMessage(msg);
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -48,40 +234,54 @@ function AIChat({ customSystemPrompt, welcomeMessage }: AIChatProps) {
     <div className="flex flex-col h-full bg-slate-50">
       {/* Chat Messages Area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
-        <div className="max-w-4xl mx-auto w-full p-6 space-y-6">
+        <div className="max-w-4xl mx-auto w-full p-6 space-y-3">
           {/* Welcome Message */}
-          <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 max-w-[85%] shadow-sm">
-              <p className="text-gray-700 text-[14px] leading-relaxed font-medium">
-                {welcomeMessage || "Hello! I'm Jaiya, your AI companion. I can help you find the perfect AI advisor for any situation."}
-              </p>
-            </div>
-          </div>
-
-          {messages.length === 0 && (
+          {(welcomeMessage || isJaiya) && messages.length === 0 && (
             <div className="flex justify-start">
               <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 max-w-[85%] shadow-sm">
-                <p className="text-gray-700 text-[14px] leading-relaxed font-medium">
-                  Ask me anything and I will connect you to that AI advisor.
-                </p>
+                <div 
+                  className="text-gray-700 text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed"
+                  dangerouslySetInnerHTML={{ 
+                    __html: marked.parse(welcomeMessage || "Hello! I'm Jaiya, your AI companion. I can help you find the perfect AI advisor for any situation.") as string
+                  }}
+                />
               </div>
             </div>
           )}
 
           {/* Chat History */}
-          {messages.map((msg, index) => (
-            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`px-4 py-2 max-w-[85%] shadow-sm rounded-2xl ${
-                msg.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-tr-none' 
-                  : 'bg-white border border-gray-200 text-gray-700 rounded-tl-none'
-              }`}>
-                <p className="text-[14px] leading-relaxed font-medium">
-                  {msg.content}
-                </p>
+          {messages.map((msg, index) => {
+            // If it's Jaiya and the message looks like JSON, we might want to hide it or show the 'response' field
+            let displayContent = msg.content;
+            if (isJaiya && msg.role === 'assistant') {
+              try {
+                const jsonMatch = msg.content.match(/\{[\s\S]*\}/);
+                const jsonStr = jsonMatch ? jsonMatch[0] : msg.content;
+                const data = JSON.parse(jsonStr);
+                if (data.isfind) {
+                  return null; // Hide redirecting messages
+                }
+                displayContent = data.response || msg.content;
+              } catch (e) {
+                // Not JSON, show as is
+              }
+            }
+
+            return (
+              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`px-4 py-2 max-w-[85%] shadow-sm rounded-2xl ${
+                  msg.role === 'user' 
+                    ? 'bg-blue-600 text-white rounded-tr-none' 
+                    : 'bg-white border border-gray-200 text-gray-700 rounded-tl-none'
+                }`}>
+                  <div 
+                    className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
+                    dangerouslySetInnerHTML={{ __html: marked.parse(displayContent) as string }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Loading State */}
           {isLoading && (
@@ -89,23 +289,23 @@ function AIChat({ customSystemPrompt, welcomeMessage }: AIChatProps) {
               <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
-                  <span className="text-[12px] text-gray-400 font-medium">Jaiya is thinking...</span>
+                  <span className="text-[12px] text-gray-400 font-medium">Thinking...</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Suggestions */}
-          {messages.length === 0 && (
+          {messages.length === 0 && suggestions.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
               {suggestions.map((suggestion, index) => (
                 <button 
                   key={index}
-                  onClick={() => sendMessage(suggestion)}
+                  onClick={() => processMessage(suggestion)}
                   className="text-left p-4 rounded-2xl border border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 transition-all group shadow-sm"
                 >
                   <p className="text-[13px] font-bold text-gray-800 group-hover:text-blue-700">{suggestion}</p>
-                  <p className="text-[11px] text-gray-500 mt-1">Click to ask Jaiya</p>
+                  <p className="text-[11px] text-gray-500 mt-1">Click to ask</p>
                 </button>
               ))}
             </div>
@@ -114,37 +314,25 @@ function AIChat({ customSystemPrompt, welcomeMessage }: AIChatProps) {
       </div>
 
       {/* Input Area */}
-      <div className="p-6 bg-slate-50">
-        <div className="max-w-4xl mx-auto w-full">
-          <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-50 transition-all shadow-md">
-            <button className="text-gray-400 hover:text-blue-600 transition-colors p-1 hover:bg-blue-50 rounded-lg">
-              <Paperclip size={20} />
-            </button>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 bg-transparent border-none focus:outline-none text-[14px] py-1.5 text-gray-800 placeholder:text-gray-400 font-medium"
-            />
-            <div className="flex items-center gap-1">
-              <button className="text-gray-400 hover:text-blue-600 transition-colors p-1 hover:bg-blue-50 rounded-lg">
-                <Mic size={20} />
-              </button>
-              <button 
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                className="bg-blue-600 text-white p-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95 disabled:opacity-50 disabled:scale-100"
-              >
-                <Send size={18} />
-              </button>
-            </div>
-          </div>
+      <div className="p-4 bg-white border-t border-gray-200">
+        <div className="max-w-4xl mx-auto flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Type your message..."
+            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+          />
+          <Button 
+            onClick={handleSend} 
+            disabled={isLoading || !input.trim()}
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>
   )
-}
-
-export default AIChat
+})

@@ -3,12 +3,16 @@
 import React from 'react'
 import { Search, Star, MessageCircle, Phone, Video } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { useChat } from '@/providers/ChatProvider'
 
 const advisors = [
   {
     id: 1,
     name: 'Dr. Sarah Johnson',
     specialty: 'Nutrition & Diet',
+    categoryKey: 'nutrition',
+    subcategoryTitle: 'Healthy Eating',
     rating: 4.9,
     reviews: 124,
     price: '₹500/session',
@@ -19,6 +23,8 @@ const advisors = [
     id: 2,
     name: 'Coach Mike Ross',
     specialty: 'Fitness & Bodybuilding',
+    categoryKey: 'fitness',
+    subcategoryTitle: 'Exercise & Training',
     rating: 4.8,
     reviews: 89,
     price: '₹800/session',
@@ -29,6 +35,8 @@ const advisors = [
     id: 3,
     name: 'Dr. Emily Chen',
     specialty: 'Mental Health',
+    categoryKey: 'mental',
+    subcategoryTitle: 'Stress',
     rating: 5.0,
     reviews: 210,
     price: '₹1200/session',
@@ -39,6 +47,8 @@ const advisors = [
     id: 4,
     name: 'Adv. Rajesh Kumar',
     specialty: 'Legal Expert',
+    categoryKey: 'lawyer',
+    subcategoryTitle: 'Income Tax',
     rating: 4.7,
     reviews: 56,
     price: '₹1500/session',
@@ -49,6 +59,8 @@ const advisors = [
     id: 5,
     name: 'Priya Sharma',
     specialty: 'Career Coach',
+    categoryKey: 'career',
+    subcategoryTitle: 'Budgeting & Saving',
     rating: 4.9,
     reviews: 145,
     price: '₹600/session',
@@ -57,7 +69,9 @@ const advisors = [
   },
 ]
 
-function AllAdvisorsPage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any) => void }) {
+function AllAdvisorsPage() {
+  const { switchChat } = useChat()
+
   return (
     <div className="flex flex-col h-full bg-slate-50 pb-24">
       {/* Search Section */}
@@ -91,10 +105,17 @@ function AllAdvisorsPage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any)
       {/* Advisors List */}
       <div className="p-5 space-y-5">
         {advisors.map((advisor) => (
-          <div 
+          <Link 
             key={advisor.id} 
-            onClick={() => onSelectAdvisor?.(advisor)}
-            className="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all duration-300 group cursor-pointer"
+            href={`/home/${advisor.categoryKey}/${encodeURIComponent(advisor.subcategoryTitle)}`}
+            onClick={() => switchChat({
+              name: advisor.name,
+              categoryKey: advisor.categoryKey,
+              subcategoryTitle: advisor.subcategoryTitle,
+              specialty: advisor.specialty,
+              image: advisor.image
+            })}
+            className="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all duration-300 group cursor-pointer block"
           >
             <div className="flex gap-5">
               <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 shadow-inner">
@@ -126,26 +147,20 @@ function AllAdvisorsPage({ onSelectAdvisor }: { onSelectAdvisor?: (advisor: any)
                     <p className="text-[15px] font-black text-gray-900">{advisor.price}</p>
                   </div>
                   <div className="flex gap-2.5">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectAdvisor?.(advisor);
-                      }}
-                      className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-xs"
-                    >
+                    <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-xs">
                       <MessageCircle size={20} />
-                    </button>
-                    <button className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-xs">
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-xs">
                       <Phone size={20} />
-                    </button>
-                    <button className="p-2.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white transition-all shadow-xs">
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white transition-all shadow-xs">
                       <Video size={20} />
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

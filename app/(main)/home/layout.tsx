@@ -1,13 +1,27 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Wallet, History } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-function Layout({ children, onSelectAdvisor }: {children: React.ReactNode, onSelectAdvisor?: (advisor: any) => void}) {
+function Layout({ children }: {children: React.ReactNode}) {
   const pathname = usePathname()
+  const [greetings, setGreetings] = useState('Good Morning!!!');
+  useEffect(() => {
+    const updateGreetings = () => {
+      const currentHour = new Date().getHours();
+      if (currentHour < 12) {
+        setGreetings("Good Morning!");
+      } else if (currentHour < 17) {
+        setGreetings("Good Afternoon!");
+      } else
+        setGreetings("Good Evening!");
+    };
+
+    updateGreetings()
+  }, [])
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -18,7 +32,7 @@ function Layout({ children, onSelectAdvisor }: {children: React.ReactNode, onSel
             <Image src="/user-avatar.png" alt="User" width={44} height={44} className="object-cover" />
           </div>
           <div className="flex flex-col">
-            <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider">Good Night</p>
+            <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider">{greetings}</p>
             <p className="text-lg font-extrabold text-gray-900 leading-tight">Monu</p>
           </div>
         </div>
@@ -51,12 +65,7 @@ function Layout({ children, onSelectAdvisor }: {children: React.ReactNode, onSel
       </div>
 
       <div className="flex-1">
-        { React.Children.map(children, child => {
-          if (React.isValidElement(child)) {
-            return React.cloneElement(child as React.ReactElement<any>, { onSelectAdvisor })
-          }
-          return child
-        }) }
+        {children}
       </div>
     </div>
   )
