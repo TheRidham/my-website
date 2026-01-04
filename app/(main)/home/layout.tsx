@@ -1,14 +1,28 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Wallet, History } from 'lucide-react'
-import Image from 'next/image'
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { getAuth } from 'firebase/auth'
+import { db } from '@/lib/firebase'
+import { getDoc, doc } from 'firebase/firestore'
+
+import userAvatar from '@/constant/userAvatar'
 
 function Layout({ children }: {children: React.ReactNode}) {
   const pathname = usePathname()
   const [greetings, setGreetings] = useState('Good Morning!!!');
+  const user = getAuth().currentUser;
+  const [isLoading, setIsLoading] = useState(true);
+    const [userData, setUserData] = useState<{
+      name?: string;
+      gender?: "male" | "female";
+      avatar?: string;
+      email?: string;
+      hasClaimedFreeCash?: boolean;
+    } | null>(null);
+
   useEffect(() => {
     const updateGreetings = () => {
       const currentHour = new Date().getHours();
@@ -23,17 +37,52 @@ function Layout({ children }: {children: React.ReactNode}) {
     updateGreetings()
   }, [])
 
+  useEffect(() => {
+      const init = async () => {
+        try {
+          if (!user?.uid) {
+            throw new Error("User UID is missing");
+          }
+          // Fetch existing guest profile
+          const guestRef = doc(db, "users", user.uid);
+          const guestSnap = await getDoc(guestRef);
+  
+          if (guestSnap.exists()) {
+            const data = guestSnap.data();
+            setUserData({
+              name: data?.name,
+              email: data?.email,
+              gender: data?.gender?.toLowerCase() as "male" | "female",
+              hasClaimedFreeCash: false,
+            });
+          }
+  
+          setIsLoading(false);
+          return;
+        } catch (err) {
+          console.log("Error fetching user data:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+  
+      init();
+    }, [user]);
+  
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-5 py-5 flex items-center justify-between bg-white">
         <div className="flex items-center gap-3.5">
+          <Link href={"/profile"}>
           <div className="w-11 h-11 rounded-full bg-blue-50 border border-blue-200 overflow-hidden shadow-sm">
-            <Image src="/user-avatar.png" alt="User" width={44} height={44} className="object-cover" />
+            {/* <Image src="/user-avatar.png" alt="User" width={44} height={44} className="object-cover" /> */}
+            <img src={userData?.gender == "male" ? userAvatar.maleAvatar : userAvatar.femaleAvatar} alt="User" width={44} height={44} />
           </div>
+          </Link>
           <div className="flex flex-col">
             <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider">{greetings}</p>
-            <p className="text-lg font-extrabold text-gray-900 leading-tight">Monu</p>
+            <p className="text-lg font-extrabold text-gray-900 leading-tight">{userData?.name}</p>
           </div>
         </div>
       </div>

@@ -51,7 +51,7 @@ function Layout({ children }: {children: React.ReactNode}) {
           ${isSidebarOpen ? 'translate-x-0 md:w-105' : '-translate-x-full md:translate-x-0 md:w-0'}
         `}
       >
-        <div className={`flex-1 overflow-y-auto no-scrollbar ${!isSidebarOpen && 'md:hidden'}`}>
+        <div className={`flex-1 p-0 bg-amber-400 overflow-y-auto no-scrollbar ${!isSidebarOpen && 'md:hidden'}`}>
           {children}
         </div>
         <div className={`shrink-0 md:hidden`}>

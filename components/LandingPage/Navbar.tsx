@@ -56,7 +56,7 @@ const Navbar = () => {
                 Sign In
               </button>
             </Link>
-            <Link href={'/home'}>
+            <Link href={'/auth/signup'}>
               <button className="group relative px-5 py-2.5 rounded-full bg-slate-900 text-white font-medium text-sm overflow-hidden shadow-lg hover:shadow-teal-500/30 transition-all duration-300 ease-in-out">
                 {/* Gradient overlay on hover */}
                 <div className="absolute inset-0 w-full h-full bg-linear-to-r from-blue-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

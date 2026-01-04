@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { 
   Search, Star, Utensils, Pill, FlaskConical,
   Tag, Shirt, ShieldCheck, Gavel,
@@ -13,21 +13,23 @@ import jaiyaAvatar from "@/assets/jaiya.jpg";
 import { ADVISOR_CATEGORIES } from '@/constant/advisors';
 import { LucideIcon } from '@/components/ui/LucideIcon';
 import { useChat } from '@/providers/ChatProvider';
+import { useRouter } from 'next/navigation';
+import { getAuth } from 'firebase/auth';
 
 const aiApps = [
-  { name: 'Food Reader', icon: Utensils, color: 'bg-emerald-400' },
-  { name: 'Medicine Reader', icon: Pill, color: 'bg-orange-400' },
-  { name: 'Deima AI', icon: Star, color: 'bg-blue-400' },
-  { name: 'Lab Reports', icon: FlaskConical, color: 'bg-purple-400' },
-  { name: 'Price Compare', icon: Tag, color: 'bg-rose-400' },
-  { name: 'Fashion', icon: Shirt, color: 'bg-pink-400' },
-  { name: 'Truth Detector', icon: ShieldCheck, color: 'bg-cyan-400' },
-  { name: 'AI Judge', icon: Gavel, color: 'bg-indigo-400' },
-  { name: 'AI Personas', icon: UserCircle, color: 'bg-violet-400' },
-  { name: 'AI Suggester', icon: Lightbulb, color: 'bg-emerald-500' },
-  { name: 'Legal Expert', icon: FileText, color: 'bg-blue-500' },
-  { name: 'Investment Finder', icon: TrendingUp, color: 'bg-yellow-500' },
-]
+  { name: "Food Reader", icon: Utensils, color: "bg-emerald-400" },
+  { name: "Medicine Reader", icon: Pill, color: "bg-orange-400" },
+  { name: "Deima AI", icon: Star, color: "bg-blue-400" },
+  { name: "Lab Reports", icon: FlaskConical, color: "bg-purple-400" },
+  { name: "Price Compare", icon: Tag, color: "bg-rose-400" },
+  { name: "Fashion", icon: Shirt, color: "bg-pink-400" },
+  { name: "Truth Detector", icon: ShieldCheck, color: "bg-cyan-400" },
+  { name: "AI Judge", icon: Gavel, color: "bg-indigo-400" },
+  { name: "AI Personas", icon: UserCircle, color: "bg-violet-400" },
+  { name: "AI Suggester", icon: Lightbulb, color: "bg-emerald-500" },
+  { name: "Legal Expert", icon: FileText, color: "bg-blue-500" },
+  { name: "Investment Finder", icon: TrendingUp, color: "bg-yellow-500" },
+];
 
 const featuredAdvisors = [
   {
@@ -38,7 +40,7 @@ const featuredAdvisors = [
     subcategoryTitle: "Healthy Eating",
     rating: 4.9,
     image: jaiyaAvatar,
-    status: "Online"
+    status: "Online",
   },
   {
     id: 2,
@@ -48,7 +50,7 @@ const featuredAdvisors = [
     subcategoryTitle: "Exercise & Training",
     rating: 4.8,
     image: jaiyaAvatar,
-    status: "Online"
+    status: "Online",
   },
   {
     id: 3,
@@ -58,9 +60,9 @@ const featuredAdvisors = [
     subcategoryTitle: "Stress",
     rating: 5.0,
     image: jaiyaAvatar,
-    status: "Busy"
-  }
-]
+    status: "Busy",
+  },
+];
 
 function HomePage() {
   const [showAllCategories, setShowAllCategories] = useState(false)
@@ -75,14 +77,25 @@ function HomePage() {
     className: `flex flex-col items-center gap-2 group cursor-pointer`
   }));
 
-  const displayedCategories = showAllCategories ? categoriesList : categoriesList.slice(0, 8)
+  const displayedCategories = showAllCategories ? categoriesList : categoriesList.slice(0, 8);
+  const user = getAuth().currentUser;
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user?.uid) {
+      router.replace("/auth/login");
+    }
+  }, [user]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 pb-24">
+    <div className="flex flex-col h-full pb-24 bg-slate-50">
       {/* Search Section */}
       <div className="px-5 py-4 sticky top-0 bg-white backdrop-blur-md z-20 border-b border-gray-200/50">
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Search AI Specialists"
@@ -94,7 +107,9 @@ function HomePage() {
       {/* Advisor Categories */}
       <div className="mt-2 px-5">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">Explore Advisor Categories</h2>
+          <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
+            Explore Advisor Categories
+          </h2>
         </div>
         <div className="grid grid-cols-4 gap-x-3 gap-y-6">
           {displayedCategories.map((cat) => (
@@ -115,14 +130,18 @@ function HomePage() {
             </Link>
           ))}
         </div>
-        <button 
+        <button
           onClick={() => setShowAllCategories(!showAllCategories)}
           className="w-full mt-6 py-3 text-blue-600 text-sm font-bold flex items-center justify-center gap-2 bg-blue-50/50 rounded-xl hover:bg-blue-50 transition-colors"
         >
           {showAllCategories ? (
-            <>View Less <ChevronUp size={16} /></>
+            <>
+              View Less <ChevronUp size={16} />
+            </>
           ) : (
-            <>View More <ChevronDown size={16} /></>
+            <>
+              View More <ChevronDown size={16} />
+            </>
           )}
         </button>
       </div>
@@ -131,15 +150,26 @@ function HomePage() {
       <div className="mt-10 px-5">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">AI Apps</h2>
-            <span className="bg-linear-to-r from-blue-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">New</span>
+            <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
+              AI Apps
+            </h2>
+            <span className="bg-linear-to-r from-blue-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+              New
+            </span>
           </div>
-          <button className="text-blue-600 text-xs font-bold hover:underline">See All</button>
+          <button className="text-blue-600 text-xs font-bold hover:underline">
+            See All
+          </button>
         </div>
         <div className="grid grid-cols-4 gap-x-4 gap-y-6">
           {aiApps.map((app) => (
-            <div key={app.name} className="flex flex-col items-center gap-2 group cursor-pointer">
-              <div className={`w-15 h-15 rounded-full ${app.color} flex items-center justify-center text-white shadow-sm group-hover:shadow-lg group-hover:scale-105 transition-all duration-300`}>
+            <div
+              key={app.name}
+              className="flex flex-col items-center gap-2 group cursor-pointer"
+            >
+              <div
+                className={`w-15 h-15 rounded-full ${app.color} flex items-center justify-center text-white shadow-sm group-hover:shadow-lg group-hover:scale-105 transition-all duration-300`}
+              >
                 <app.icon size={26} />
               </div>
               <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-blue-600 transition-colors">
@@ -153,8 +183,15 @@ function HomePage() {
       {/* Featured Advisors */}
       <div className="mt-10 px-5">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">Featured Advisors</h2>
-          <Link href="/home/allAdvisors" className="text-blue-600 text-xs font-bold hover:underline">See All</Link>
+          <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
+            Featured Advisors
+          </h2>
+          <Link
+            href="/home/allAdvisors"
+            className="text-blue-600 text-xs font-bold hover:underline"
+          >
+            See All
+          </Link>
         </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
           {featuredAdvisors.map((advisor) => (
@@ -177,22 +214,32 @@ function HomePage() {
                   fill
                   className="rounded-2xl object-cover group-hover:scale-105 transition-transform"
                 />
-                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                  advisor.status === 'Online' ? 'bg-green-500' : 'bg-amber-500'
-                }`} />
+                <div
+                  className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                    advisor.status === "Online"
+                      ? "bg-green-500"
+                      : "bg-amber-500"
+                  }`}
+                />
               </div>
-              <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">{advisor.name}</h3>
-              <p className="text-[10px] text-blue-600 font-bold text-center uppercase tracking-wider mt-0.5">{advisor.specialty}</p>
+              <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">
+                {advisor.name}
+              </h3>
+              <p className="text-[10px] text-blue-600 font-bold text-center uppercase tracking-wider mt-0.5">
+                {advisor.specialty}
+              </p>
               <div className="flex items-center justify-center gap-1 mt-2">
                 <Star size={10} className="fill-amber-400 text-amber-400" />
-                <span className="text-[10px] font-bold text-gray-600">{advisor.rating}</span>
+                <span className="text-[10px] font-bold text-gray-600">
+                  {advisor.rating}
+                </span>
               </div>
             </Link>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default HomePage
+export default HomePage;
