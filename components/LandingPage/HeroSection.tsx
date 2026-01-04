@@ -20,8 +20,8 @@ const HeroSection = () => {
     <section className="relative min-h-screen flex items-center gradient-hero overflow-hidden pt-40">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-[10%] w-[500px] h-[500px] bg-primary/8 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 right-[10%] w-[400px] h-[400px] bg-secondary/8 rounded-full blur-[80px]" />
+        <div className="absolute top-1/4 left-[10%] w-125 h-125 bg-primary/8 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 right-[10%] w-100 h-100 bg-secondary/8 rounded-full blur-[80px]" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

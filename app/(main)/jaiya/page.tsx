@@ -3,7 +3,7 @@ import React from 'react'
 
 function page() {
   return (
-    <div>Jaiya Route for mobile layout
+    <div className="h-screen">
       <Jaiya />
     </div>
   )
