@@ -40,8 +40,6 @@ type UserData = {
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [requiresAuth, setRequiresAuth] = useState(false);
-  const [isGuest, setIsGuest] = useState(false);
 
   const user = auth.currentUser;
   const router = useRouter();
@@ -79,68 +77,6 @@ export default function ProfilePage() {
       alert("Failed to logout. Please try again.");
     }
   };
-
-  // Login Prompt Screen
-  if (requiresAuth && !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        {/* Background Gradient */}
-        <div className="absolute top-0 left-0 right-0 h-48 bg-linear-to-br from-indigo-600 via-purple-600 to-purple-700 opacity-5 rounded-b-[3rem]"></div>
-
-        <div className="relative max-w-md w-full">
-          {/* Lock Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-2 border-indigo-100">
-              <Lock className="w-12 h-12 text-indigo-600" />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">
-            Profile Locked
-          </h1>
-          <p className="text-gray-600 text-center mb-8 px-4">
-            Sign in to access your profile and unlock all features
-          </p>
-
-          {/* Features List */}
-          <div className="space-y-3 mb-8">
-            {[
-              "Personalized AI recommendations",
-              "Access to premium advisors",
-              "Save your chat history",
-              "Manage your wallet & payments",
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm"
-              >
-                <CheckCircle className="w-5 h-5 text-indigo-600 shrink-0" />
-                <span className="text-gray-700 text-sm">{feature}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Sign In Button */}
-          <button
-            onClick={() => alert("Redirecting to login...")}
-            className="w-full bg-linear-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mb-4"
-          >
-            <LogIn className="w-5 h-5" />
-            Sign In to Continue
-          </button>
-
-          {/* Guest Button */}
-          <button
-            onClick={() => alert("Continuing as guest...")}
-            className="w-full text-indigo-600 font-medium py-3 hover:text-indigo-700 transition-colors"
-          >
-            Continue as Guest
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

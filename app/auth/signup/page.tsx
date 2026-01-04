@@ -76,9 +76,8 @@ export default function SignupPage() {
   };
 
   useEffect(() => {
-    if(otp.length >= 6) {
-      setOtpBtn(true);
-    }
+    if(otp.length < 6) setOtpBtn(false);
+    if(otp.length >= 6) setOtpBtn(true);
   },[otp])
 
   const handleSendOtp = async () => {
@@ -145,8 +144,14 @@ export default function SignupPage() {
 
     try {
       const result = await confirmationResult.confirm(otp);
-      console.log('User signed in:', result.user);
-      router.push('/auth/profile');
+      const user = result.user.uid;
+      const profile = await getDoc(doc(db, "users", user));
+      if(profile.exists()) {
+        router.replace("/home");
+      }else {
+        console.log('User signed in:', result.user);
+        router.push('/auth/profile');
+      }
     } catch (err: any) {
       setError('Invalid OTP. Please try again.');
     } finally {
@@ -164,8 +169,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4 bg-linear-to-br from-cyan-400/40 via-blue-400/20 to-teal-400/40">
-      <div className="w-full max-w-md bg-white/30 backdrop-blur-md rounded-xl shadow-2xl shadow-blue-200 p-8">
+    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4 bg-linear-to-br  from-cyan-200 via-blue-200 to-teal-400">
+      <div className="w-full max-w-md rounded-xl p-8 border border-white/20 bg-white/10 backdrop-blur-lg shadow-xl">
 
         <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
           {step === 'INPUT_PHONE' ? 'Create Account' : 'Verify Phone'}
@@ -178,11 +183,11 @@ export default function SignupPage() {
         {step === 'INPUT_PHONE' && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label htmlFor="phone" className="text-sm font-medium text-gray-600">
+              <label htmlFor="phone" className="text-sm font-semibold text-gray-700">
                 Phone Number
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-500">+91</span>
+                <span className="absolute left-3 top-2.5 text-gray-600">+91</span>
                 <input
                   type="tel"
                   id="phone"
@@ -190,10 +195,10 @@ export default function SignupPage() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                   maxLength={10}
-                  className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-0 focus:outline-none transition-all"
                 />
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-medium text-gray-700">
                 Enter your 10-digit mobile number
               </p>
             </div>
@@ -202,7 +207,7 @@ export default function SignupPage() {
               onClick={handleSendOtp}
               disabled={loading}
               className={`w-full py-2.5 rounded-lg text-white font-semibold transition-colors ${
-                loading ? 'bg-indigo-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                loading ? 'bg-indigo-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
               {loading ? 'Sending OTP...' : 'Send OTP'}
@@ -214,7 +219,7 @@ export default function SignupPage() {
         {step === 'VERIFY_OTP' && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label htmlFor="otp" className="text-sm font-medium text-gray-600">
+              <label htmlFor="otp" className="text-sm font-semibold text-gray-700">
                 Enter Verification Code
               </label>
               <input
@@ -223,7 +228,7 @@ export default function SignupPage() {
                 placeholder="X-X-X-X-X-X"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none tracking-widest text-center text-lg"
+                className="w-full px-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-0 focus:outline-none tracking-widest text-center text-lg"
               />
             </div>
 
@@ -231,7 +236,7 @@ export default function SignupPage() {
               onClick={handleVerifyOtp}
               disabled={!otpBtn || loading}
               className={`w-full py-2.5 rounded-lg text-white font-semibold transition-colors ${
-                loading || !otpBtn ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                loading || !otpBtn ? 'bg-blue-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
               {loading ? 'Verifying...' : 'Verify Otp'}
@@ -247,7 +252,7 @@ export default function SignupPage() {
         )}
 
         {error && (
-          <p className="mt-4 text-center text-sm text-red-500 bg-red-50 p-2 rounded border border-red-100">
+          <p className="mt-4 text-center text-sm text-red-600 bg-red-100 p-2 rounded border border-red-400">
             {error}
           </p>
         )}
