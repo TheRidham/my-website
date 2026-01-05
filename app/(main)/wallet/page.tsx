@@ -28,6 +28,10 @@ export default function WalletPage() {
     try {
       const result = await topUpWallet(numAmount * 100) // Convert to paise
       if (result.paymentUrl) {
+        // Store sessionId in sessionStorage as a backup for verification
+        if (result.sessionId) {
+          sessionStorage.setItem('last_wallet_session_id', result.sessionId)
+        }
         window.location.href = result.paymentUrl
       } else {
         alert('Failed to create payment session')
@@ -127,7 +131,7 @@ export default function WalletPage() {
                 <Button 
                   onClick={handleTopUp} 
                   disabled={isTopUpLoading || isLoading}
-                  className="w-full py-6 text-md font-bold shadow-lg shadow-primary/20 rounded-xl bg-blue-500/70 hover:bg-blue-500 hover:text-white"
+                  className="w-full py-6 text-md font-bold shadow-lg shadow-primary/20 rounded-xl"
                 >
                   {isTopUpLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />

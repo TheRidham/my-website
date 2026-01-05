@@ -9,45 +9,51 @@ import { Button } from '@/components/ui/button'
 function PaymentCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { verifyPayment } = usePayment()
+  const { verifyPayment, isLoading } = usePayment()
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
+  const [verificationStarted, setVerificationStarted] = useState(false)
 
   useEffect(() => {
-    const sessionId = searchParams.get('sessionId')
+    // Wait for auth to settle
+    if (isLoading || verificationStarted) return
+
+    const sessionId = searchParams.get('sessionId') || 
+                     searchParams.get('razorpay_payment_link_reference_id') ||
+                     sessionStorage.getItem('last_payment_session_id')
     const razorpayPaymentId = searchParams.get('razorpay_payment_id')
     const razorpayPaymentLinkId = searchParams.get('razorpay_payment_link_id')
-    
-    // The advisorId might need to be stored in localStorage or passed in the URL if possible
-    // But createWebPaymentSession in index.ts stores advisorId in the session document
-    // However, processPaymentSuccess expects advisorId in the request data.
-    // Let's check index.ts again.
-    
-    /*
-    export const processPaymentSuccess = onCall(..., async (request) => {
-      const { sessionId, advisorId, paymentId: rawPaymentId, ... } = data || {};
-      ...
-      const sessionDoc = await db.collection("paymentSessions").doc(sessionId).get();
-      const sessionData = sessionDoc.data();
-      if (sessionData?.userId !== userId || sessionData?.advisorId !== advisorId) { ... }
-    */
-    
-    // So we DO need advisorId. We should have passed it in the returnUrl or stored it.
-    // Let's update PaymentProvider to include advisorId in the returnUrl.
-    
     const advisorId = searchParams.get('advisorId')
 
     if (!sessionId || !advisorId) {
       setStatus('error')
-      setError('Missing payment information')
+      setError('Missing payment information. Please contact support if money was deducted.')
       return
     }
 
     const verify = async () => {
+      setVerificationStarted(true)
       try {
-        const result = await verifyPayment(sessionId, advisorId, razorpayPaymentId || undefined)
+        console.log('Verifying payment with:', { 
+          sessionId, 
+          advisorId,
+          paymentId: razorpayPaymentId,
+          paymentLinkId: razorpayPaymentLinkId
+        })
+
+        const result = await verifyPayment(
+          sessionId, 
+          advisorId, 
+          razorpayPaymentId || undefined,
+          razorpayPaymentLinkId || undefined
+        )
+        
+        console.log('Verification result:', result)
+
         if (result.success) {
+          // Clear the stored session ID on success
+          sessionStorage.removeItem('last_payment_session_id')
           setStatus('success')
           // Redirect to chat after a short delay
           setTimeout(() => {
@@ -59,13 +65,21 @@ function PaymentCallbackContent() {
         }
       } catch (err: any) {
         console.error('Verification error:', err)
+        
+        // Check for specific Firebase errors
+        if (err.code === 'functions/unauthenticated') {
+          setError('You must be logged in to verify payment.')
+        } else if (err.code === 'functions/not-found') {
+          setError('Payment session not found. Please contact support.')
+        } else {
+          setError(err.message || 'An error occurred during verification')
+        }
         setStatus('error')
-        setError(err.message || 'An error occurred during verification')
       }
     }
 
     verify()
-  }, [searchParams, verifyPayment, router])
+  }, [searchParams, verifyPayment, router, isLoading, verificationStarted])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">

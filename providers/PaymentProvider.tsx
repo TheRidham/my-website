@@ -12,8 +12,8 @@ interface PaymentContextType {
   createPaymentSession: (amount: number, advisorId: string) => Promise<any>
   topUpWallet: (amount: number) => Promise<any>
   payWithWallet: (advisorId: string, amount: number) => Promise<any>
-  verifyPayment: (sessionId: string, advisorId: string, paymentId?: string) => Promise<any>
-  verifyWalletPayment: (sessionId: string, paymentId?: string) => Promise<any>
+  verifyPayment: (sessionId: string, advisorId: string, paymentId?: string, paymentLinkId?: string) => Promise<any>
+  verifyWalletPayment: (sessionId: string, paymentId?: string, paymentLinkId?: string) => Promise<any>
 }
 
 const PaymentContext = createContext<PaymentContextType | undefined>(undefined)
@@ -88,21 +88,23 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
     return result.data
   }, [])
 
-  const verifyPayment = useCallback(async (sessionId: string, advisorId: string, paymentId?: string) => {
+  const verifyPayment = useCallback(async (sessionId: string, advisorId: string, paymentId?: string, paymentLinkId?: string) => {
     const processPaymentSuccess = httpsCallable(functions, 'processPaymentSuccess')
     const result = await processPaymentSuccess({
       sessionId,
       advisorId,
-      paymentId
+      paymentId,
+      paymentLinkId
     })
     return result.data
   }, [])
 
-  const verifyWalletPayment = useCallback(async (sessionId: string, paymentId?: string) => {
+  const verifyWalletPayment = useCallback(async (sessionId: string, paymentId?: string, paymentLinkId?: string) => {
     const processWalletPaymentSuccess = httpsCallable(functions, 'processWalletPaymentSuccess')
     const result = await processWalletPaymentSuccess({
       sessionId,
-      paymentId
+      paymentId,
+      paymentLinkId
     })
     return result.data
   }, [])

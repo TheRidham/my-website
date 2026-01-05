@@ -40,7 +40,6 @@ export const useChatAI = ({
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
 
-    console.log('useChatAI: sendMessage called with:', content);
     const userMessage: Message = { role: 'user', content };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
@@ -50,15 +49,9 @@ export const useChatAI = ({
     const combinedPrompt = (systemPrompt && appendGeneralPrompt)
       ? `${systemPrompt}\n\n${generalPrompt?.prompt || ''}` 
       : (systemPrompt || generalPrompt?.prompt || '');
-    
-    console.log('useChatAI: Starting request ID:', requestId, 'with combinedPrompt (first 50 chars):', combinedPrompt);
 
     try {
       const chatWithAI = httpsCallable(functions, functionName);
-      console.log('useChatAI: Calling cloud function', functionName, 'with payload:', {
-        systemPrompt: combinedPrompt?.substring(0, 50) + '...',
-        messageCount: messages.length + 1
-      });
       const result = await chatWithAI({
         systemPrompt: combinedPrompt,
         formattedMessages: [
@@ -69,8 +62,6 @@ export const useChatAI = ({
           { role: 'user', text: content }
         ]
       });
-
-      console.log('useChatAI: Request ID:', requestId, 'finished. Current lastRequestId:', lastRequestIdRef.current);
 
       // Check if this is still the latest request
       if (requestId !== lastRequestIdRef.current) {

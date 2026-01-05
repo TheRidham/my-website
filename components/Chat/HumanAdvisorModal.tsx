@@ -83,6 +83,10 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
         // Pay with Razorpay
         const result = await createPaymentSession(amountInPaise, advisorId)
         if (result.paymentUrl) {
+          // Store sessionId in sessionStorage as a backup for verification
+          if (result.sessionId) {
+            sessionStorage.setItem('last_payment_session_id', result.sessionId)
+          }
           window.location.href = result.paymentUrl
         }
       }

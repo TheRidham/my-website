@@ -41,13 +41,10 @@ function Layout({ children }: { children: React.ReactNode }) {
   //route protection
   const router = useRouter();
   const { user, loading } = useAuth();
-  console.log("user:", user);
   useEffect(() => {
     if (loading) return;
     if (!loading && !user) {
       router.replace("/auth/login");
-    } else {
-      router.replace("/home");
     }
   }, [user, loading]);
 
