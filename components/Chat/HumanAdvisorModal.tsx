@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/lib/firebase'
@@ -15,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useRouter } from 'next/navigation'
 
 interface Advisor {
   id: string
@@ -39,6 +39,8 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
   const [isProcessing, setIsProcessing] = useState(false)
   const { walletBalance, createPaymentSession, payWithWallet } = usePayment()
   const { price } = usePrice()
+
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen && !selectedAdvisor) {
@@ -66,7 +68,7 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
           return specs.some((s: string) => s.toLowerCase().includes(subcategoryTitle.toLowerCase()))
         })
       }
-      
+  
       setAdvisors(fetchedAdvisors)
     } catch (error) {
       console.error("Error fetching advisors:", error)
@@ -83,8 +85,10 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
       if (walletBalance >= amountInPaise) {
         // Pay with wallet
         const result = await payWithWallet(advisorId, amountInPaise)
-        if (result.ok) {
-          window.location.href = `/jaiya?roomId=${result.roomId}`
+        console.log("pay with wallet result")
+        console.log(result);
+        if (result.success) {
+          router.push(`/home/humanChat/${result.roomId}/${result.advisorId}`)
         }
       } else {
         // Pay with Razorpay

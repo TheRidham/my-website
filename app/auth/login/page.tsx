@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,9 +26,21 @@ export default function LoginPage() {
 
       if (userSnap.exists()) {
         // User has a profile, redirect to home
+        console.log("exist one");
         router.push("/home");
       } else {
         // New user, redirect to profile setup
+        console.log("new one")
+        await setDoc(userRef, {
+          name: user.displayName,
+          email: user.email,
+          hasClaimedFreeCash: false,
+          walletBalance: 0,
+          age: null,
+          gender: null,
+          phone: null,
+          createdAt: serverTimestamp(),
+        });
         router.push("/home");
       }
     } catch (err: any) {
