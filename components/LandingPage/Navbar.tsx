@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import Logo from "../Logo";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,7 @@ const Navbar = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
         isScrolled
-          ? "bg-white/80 backdrop-blur-md border border-blue-200 shadow-lg shadow-blue-200/60 py-2 mt-2 w-[80%] rounded-full mx-auto"
+          ? "bg-white/80 backdrop-blur-md border border-blue-200 shadow-lg shadow-blue-200/60 py-1 mt-2 w-[80%] rounded-full mx-auto"
           : "bg-transparent py-5"
       }`}
     >
@@ -28,16 +29,14 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo Section */}
           <div className="flex items-center gap-2 group cursor-pointer">
-            {/* <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 text-white shadow-lg shadow-blue-500/20 group-hover:shadow-teal-500/30 transition-all duration-300">
-              <Sparkles className="w-5 h-5" />
-            </div> */}
-            <span className="font-bold text-2xl tracking-tight text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-blue-400">
+            {/* <span className="font-bold text-2xl tracking-tight text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-blue-400">
               JAI AI
-            </span>
+            </span> */}
+            <Logo />
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center bg-slate-100/50 rounded-full px-2 py-1.5 border border-slate-200/50">
+          <div className={`hidden md:flex items-center ${isScrolled ? "bg-slate-100/50 border border-slate-200/50" : null} rounded-full px-2 py-1.5`}>
             {["Features", "Categories", "Pricing", "About"].map((item) => (
               <a
                 key={item}

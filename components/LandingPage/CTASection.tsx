@@ -1,6 +1,7 @@
 import { Play, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import Link from "next/link";
 
 const CTASection = () => {
   return (
@@ -13,14 +14,14 @@ const CTASection = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <AnimatedSection className="text-center max-w-3xl mx-auto">
           <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6">
-            Join 10,000+ Users Getting Smarter Advice
+            Join 200+ Users Getting Smarter Advice
           </h2>
           <p className="text-lg text-muted-foreground mb-10">
             Start with ₹100 free credit. No credit card required.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-            <Button variant="cta" size="xl" className="shadow-xl shadow-secondary/30 group">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10 text-white">
+            <Button size="xl" className="bg-linear-to-r from-teal-400 to-blue-500 shadow-xl shadow-secondary/30 group">
               <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
               Download JAI App
               <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
@@ -28,11 +29,13 @@ const CTASection = () => {
           </div>
 
           <div className="flex justify-center gap-4 mb-8">
+            <Link href={"https://play.google.com/store/apps/details?id=com.anonymous.jaiai"}>
             <img 
               src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
               alt="Get it on Google Play" 
               className="h-12 cursor-pointer hover:opacity-90 transition-opacity hover:scale-105 duration-300"
-            />
+              />
+            </Link>
             <img 
               src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" 
               alt="Download on App Store" 
@@ -40,9 +43,9 @@ const CTASection = () => {
             />
           </div>
 
-          <a href="#" className="text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 font-medium">
+          <Link href="/auth/signup" className="text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 font-medium">
             Or continue on web <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </AnimatedSection>
       </div>
     </section>

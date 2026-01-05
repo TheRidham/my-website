@@ -2,6 +2,7 @@ import { AnimatedSection } from "@/hooks/useScrollAnimation";
 import { Button } from "../ui/button";
 import Image from "next/image";
 import jaiyaAvatar from "@/assets/jaiya.jpg";
+import Link from "next/link";
 
 import {
   Users,
@@ -41,7 +42,9 @@ const HeroSection = () => {
             <AnimatedSection animation="fade-up" delay={100}>
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-[1.1] mb-6">
                 Your Personal AI Advisor
-                <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-teal-500 block mt-2">Available 24/7</span>
+                <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-teal-500 block mt-2">
+                  Available 24/7
+                </span>
               </h1>
             </AnimatedSection>
 
@@ -55,17 +58,22 @@ const HeroSection = () => {
 
             <AnimatedSection animation="fade-up" delay={300}>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
-                <Button
-                  className="shadow-lg group bg-blue-500 text-white"
-                >
-                  <Play className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <Link href={"/auth/signup"}>
+                <Button className="shadow-lg group relative overflow-hidden bg-blue-500 text-white">
                   Start Free Chat
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full"></div>
+                  <div className="absolute inset-0 ring-1 ring-inset ring-white/20"></div>
                 </Button>
-                <Button className="shadow-lg group border border-blue-500 bg-white text-blue-500">
+                </Link>
+                <Link href={"/auth/signup"}>
+                <Button className="shadow-lg group relative overflow-hidden border border-blue-500 bg-white text-blue-500">
                   <Users className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   Talk to Human Expert
+                  <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-blue-400 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full"></div>
+                  <div className="absolute inset-0 ring-1 ring-inset ring-white/20"></div>
                 </Button>
+                </Link>
               </div>
             </AnimatedSection>
 
@@ -104,16 +112,16 @@ const HeroSection = () => {
           >
             <div className="relative">
               <AnimatedSection animation="fade-up" className="flex">
-              <div className="inline-flex items-center gap-2 glass-card rounded-full px-4 py-2 mb-8 mx-auto">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                <span className="text-sm text-muted-foreground font-medium">
-                  Trusted by 200+ users world wide
-                </span>
-              </div>
-            </AnimatedSection>
+                <div className="inline-flex items-center gap-2 glass-card rounded-full px-4 py-2 mb-8 mx-auto">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    Trusted by 200+ users world wide
+                  </span>
+                </div>
+              </AnimatedSection>
               {/* Main Phone Mockup */}
               <div className="bg-card rounded-3xl shadow-2xl shadow-zinc-500 p-4 mx-auto max-w-sm border border-border/50">
                 <div className="bg-linear-to-br from-primary-lighter to-accent rounded-2xl p-6">
