@@ -7,6 +7,7 @@ import { usePayment } from '@/providers/PaymentProvider'
 import { usePrice } from '@/providers/PriceProvider'
 import { Loader2, User, Star, MessageSquare, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ADVISOR_CATEGORIES } from '@/constant/advisors'
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,7 @@ interface Advisor {
   specialty: string | string[]
   rating: number
   experience: string
-  image?: string
+  profilePhoto?: string
 }
 
 interface HumanAdvisorModalProps {
@@ -53,7 +54,13 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
       let fetchedAdvisors = result.data.advisors || []
       
       // Filter by category or subcategory if provided
-      if (subcategoryTitle) {
+      if (categoryKey && ADVISOR_CATEGORIES[categoryKey]) {
+        const categoryName = ADVISOR_CATEGORIES[categoryKey].name.toLowerCase()
+        fetchedAdvisors = fetchedAdvisors.filter((a: any) => {
+          const specs = Array.isArray(a.specialization) ? a.specialization : [a.specialty]
+          return specs.some((s: string) => s.toLowerCase().includes(categoryName))
+        })
+      } else if (subcategoryTitle) {
         fetchedAdvisors = fetchedAdvisors.filter((a: any) => {
           const specs = Array.isArray(a.specialization) ? a.specialization : [a.specialty]
           return specs.some((s: string) => s.toLowerCase().includes(subcategoryTitle.toLowerCase()))
@@ -136,8 +143,8 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
             <div className="space-y-4">
               <div className="p-4 border rounded-2xl bg-slate-50 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden border-2 border-white">
-                  {selectedAdvisor.image ? (
-                    <img src={selectedAdvisor.image} alt={selectedAdvisor.name} className="w-full h-full object-cover" />
+                  {selectedAdvisor.profilePhoto ? (
+                    <img src={selectedAdvisor.profilePhoto} alt={selectedAdvisor.name} className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-8 h-8 text-gray-300" />
                   )}
@@ -190,8 +197,8 @@ export function HumanAdvisorModal({ isOpen, onClose, categoryKey, subcategoryTit
                     <div key={advisor.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-                          {advisor.image ? (
-                            <img src={advisor.image} alt={advisor.name} className="w-full h-full object-cover" />
+                          {advisor.profilePhoto ? (
+                            <img src={advisor.profilePhoto} alt={advisor.name} className="w-full h-full object-cover" />
                           ) : (
                             <User className="w-7 h-7 text-gray-300" />
                           )}

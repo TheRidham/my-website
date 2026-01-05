@@ -2,70 +2,51 @@
 
 import React, { useEffect, useState } from 'react'
 import { 
-  Search, Star, Utensils, Pill, FlaskConical,
-  Tag, Shirt, ShieldCheck, Gavel,
-  UserCircle, Lightbulb, FileText, TrendingUp,
+  Search, Star,
   ChevronDown, ChevronUp
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { collection, getDocs, query, where, limit } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import jaiyaAvatar from "@/assets/jaiya.jpg";
 import { ADVISOR_CATEGORIES } from '@/constant/advisors';
 import { LucideIcon } from '@/components/ui/LucideIcon';
 import { useChat } from '@/providers/ChatProvider';
 import { useRouter } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
+import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 
-const aiApps = [
-  { name: "Food Reader", icon: Utensils, color: "bg-emerald-400" },
-  { name: "Medicine Reader", icon: Pill, color: "bg-orange-400" },
-  { name: "Deima AI", icon: Star, color: "bg-blue-400" },
-  { name: "Lab Reports", icon: FlaskConical, color: "bg-purple-400" },
-  { name: "Price Compare", icon: Tag, color: "bg-rose-400" },
-  { name: "Fashion", icon: Shirt, color: "bg-pink-400" },
-  { name: "Truth Detector", icon: ShieldCheck, color: "bg-cyan-400" },
-  { name: "AI Judge", icon: Gavel, color: "bg-indigo-400" },
-  { name: "AI Personas", icon: UserCircle, color: "bg-violet-400" },
-  { name: "AI Suggester", icon: Lightbulb, color: "bg-emerald-500" },
-  { name: "Legal Expert", icon: FileText, color: "bg-blue-500" },
-  { name: "Investment Finder", icon: TrendingUp, color: "bg-yellow-500" },
-];
+type Advisor = {
+  uid: string
+  name: string
+  profilePhoto: string
+  specialization: string[]
+  busy: boolean
+  totalUsersAttended: number
+  isActive: boolean
+  rating?: number
+  experience?: string
+}
 
-const featuredAdvisors = [
-  {
-    id: 1,
-    name: "Dr. Sarah Chen",
-    specialty: "Nutrition & Wellness",
-    categoryKey: "nutrition",
-    subcategoryTitle: "Healthy Eating",
-    rating: 4.9,
-    image: jaiyaAvatar,
-    status: "Online",
-  },
-  {
-    id: 2,
-    name: "Marcus Thorne",
-    specialty: "Fitness & Strength",
-    categoryKey: "fitness",
-    subcategoryTitle: "Exercise & Training",
-    rating: 4.8,
-    image: jaiyaAvatar,
-    status: "Online",
-  },
-  {
-    id: 3,
-    name: "Elena Rodriguez",
-    specialty: "Mental Health",
-    categoryKey: "mental",
-    subcategoryTitle: "Stress",
-    rating: 5.0,
-    image: jaiyaAvatar,
-    status: "Busy",
-  },
-];
+function getCategoryKey(spec: string) {
+  const map: Record<string, string> = {
+    'Nutrition & Diet': 'nutrition',
+    Fitness: 'fitness',
+    'General Medicine': 'medical',
+    'Mental Health': 'mental',
+    Legal: 'lawyer',
+    Career: 'career',
+  }
+  return map[spec] || 'general'
+}
 
 function HomePage() {
   const [showAllCategories, setShowAllCategories] = useState(false)
+  const [advisors, setAdvisors] = useState<Advisor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const { switchChat } = useChat()
 
   const categoriesList = Object.entries(ADVISOR_CATEGORIES).map(([key, value]) => ({
@@ -86,6 +67,42 @@ function HomePage() {
       router.replace("/auth/login");
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchAdvisors = async () => {
+      try {
+        const q = query(
+          collection(db, 'advisors'),
+          where('isActive', '==', true),
+          limit(10)
+        )
+        const snapshot = await getDocs(q)
+        const data = snapshot.docs.map((doc) => ({
+          ...(doc.data() as Advisor),
+          uid: doc.id,
+        }))
+        setAdvisors(data)
+      } catch (error) {
+        console.error('Error fetching advisors:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAdvisors()
+  }, [])
+
+  const handleAdvisorClick = (advisor: Advisor) => {
+    setSelectedAdvisor({
+      id: advisor.uid,
+      name: advisor.name,
+      specialty: advisor.specialization?.[0] || 'Expert Advisor',
+      image: advisor.profilePhoto || jaiyaAvatar,
+      rating: advisor.rating || 4.8,
+      experience: advisor.experience || '5+ years'
+    })
+    setIsModalOpen(true)
+  }
 
   return (
     <div className="flex flex-col h-full pb-24 bg-slate-50">
@@ -147,7 +164,7 @@ function HomePage() {
       </div>
 
       {/* AI Apps Section */}
-      <div className="mt-10 px-5">
+      {/* <div className="mt-10 px-5">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
@@ -178,7 +195,7 @@ function HomePage() {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Featured Advisors */}
       <div className="mt-10 px-5">
@@ -194,50 +211,61 @@ function HomePage() {
           </Link>
         </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
-          {featuredAdvisors.map((advisor) => (
-            <Link 
-              key={advisor.id}
-              href={`/home/${advisor.categoryKey}/${encodeURIComponent(advisor.subcategoryTitle)}`}
-              onClick={() => switchChat({
-                name: advisor.name,
-                categoryKey: advisor.categoryKey,
-                subcategoryTitle: advisor.subcategoryTitle,
-                specialty: advisor.specialty,
-                image: advisor.image
-              })}
-              className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
-            >
-              <div className="relative w-16 h-16 mx-auto mb-3">
-                <Image
-                  src={advisor.image}
-                  alt={advisor.name}
-                  fill
-                  className="rounded-2xl object-cover group-hover:scale-105 transition-transform"
-                />
-                <div
-                  className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                    advisor.status === "Online"
-                      ? "bg-green-500"
-                      : "bg-amber-500"
-                  }`}
-                />
+          {loading ? (
+            Array(3).fill(0).map((_, i) => (
+              <div key={i} className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 animate-pulse">
+                <div className="w-16 h-16 bg-slate-100 rounded-2xl mx-auto mb-3" />
+                <div className="h-4 bg-slate-100 rounded w-3/4 mx-auto mb-2" />
+                <div className="h-3 bg-slate-100 rounded w-1/2 mx-auto" />
               </div>
-              <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">
-                {advisor.name}
-              </h3>
-              <p className="text-[10px] text-blue-600 font-bold text-center uppercase tracking-wider mt-0.5">
-                {advisor.specialty}
-              </p>
-              <div className="flex items-center justify-center gap-1 mt-2">
-                <Star size={10} className="fill-amber-400 text-amber-400" />
-                <span className="text-[10px] font-bold text-gray-600">
-                  {advisor.rating}
-                </span>
+            ))
+          ) : (
+            advisors.map((advisor) => (
+              <div 
+                key={advisor.uid}
+                onClick={() => handleAdvisorClick(advisor)}
+                className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="relative w-16 h-16 mx-auto mb-3">
+                  <Image
+                    src={advisor.profilePhoto || jaiyaAvatar}
+                    alt={advisor.name}
+                    fill
+                    className="rounded-2xl object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                      !advisor.busy
+                        ? "bg-green-500"
+                        : "bg-amber-500"
+                    }`}
+                  />
+                </div>
+                <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">
+                  {advisor.name}
+                </h3>
+                <p className="text-[10px] text-blue-600 font-bold text-center uppercase tracking-wider mt-0.5">
+                  {advisor.specialization?.[0] || 'Expert'}
+                </p>
+                <div className="flex items-center justify-center gap-1 mt-2">
+                  <Star size={10} className="fill-amber-400 text-amber-400" />
+                  <span className="text-[10px] font-bold text-gray-600">
+                    {advisor.rating || 4.8}
+                  </span>
+                </div>
               </div>
-            </Link>
-          ))}
+            ))
+          )}
         </div>
       </div>
+
+      {selectedAdvisor && (
+        <HumanAdvisorModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          selectedAdvisor={selectedAdvisor}
+        />
+      )}
     </div>
   );
 }

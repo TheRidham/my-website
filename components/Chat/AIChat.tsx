@@ -59,8 +59,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
   const { jaiyaPrompt, advisorsPrompt } = usePrompts()
   const { switchChat } = useChat()
 
-  console.log('AIChat Render:', { isJaiya, categoryKey, subcategoryTitle });
-
   // Configure marked options
   marked.setOptions({
     breaks: true,
@@ -69,12 +67,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
 
   // Resolve prompt and welcome message
   const { systemPrompt, welcomeMessage } = useMemo(() => {
-    console.log('AIChat: Resolving prompt. isJaiya:', isJaiya, 'categoryKey:', categoryKey, 'subcategoryTitle:', subcategoryTitle);
-    console.log('AIChat: advisorsPrompt loaded:', !!advisorsPrompt, 'jaiyaPrompt loaded:', !!jaiyaPrompt);
     
     if (isJaiya) {
       const matcherPrompt = getMatcherPrompt(ADVISOR_CATEGORIES);
-      console.log('AIChat: Using Jaiya Matcher Prompt');
       return {
         systemPrompt: matcherPrompt,
         welcomeMessage: jaiyaPrompt?.welcomeMessage
@@ -85,20 +80,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
       const categoryData = advisorsPrompt?.[categoryKey]
       const advisorData = categoryData?.[subcategoryTitle]
       
-      console.log('AIChat: Advisor Data lookup:', { 
-        categoryKey, 
-        subcategoryTitle, 
-        found: !!advisorData,
-        hasGeneralPrompt: !!categoryData?.generalPrompt,
-        promptLength: advisorData?.prompt?.length 
-      });
-      
-      if (!advisorData && advisorsPrompt) {
-        console.log('AIChat: Available categories in advisorsPrompt:', Object.keys(advisorsPrompt));
-        if (advisorsPrompt[categoryKey]) {
-          console.log('AIChat: Available subcategories in', categoryKey, ':', Object.keys(advisorsPrompt[categoryKey]));
-        }
-      }
+      // if (!advisorData && advisorsPrompt) {
+      //   if (advisorsPrompt[categoryKey]) {
+      //     console.log('AIChat: Available subcategories in', categoryKey, ':', Object.keys(advisorsPrompt[categoryKey]));
+      //   }
+      // }
 
       // Combine subcategory prompt with category general prompt
       const combinedSystemPrompt = advisorData?.prompt 
@@ -111,7 +97,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
       }
     }
 
-    console.log('AIChat: No prompt resolved, returning undefined');
     return {
       systemPrompt: undefined,
       welcomeMessage: undefined
@@ -151,29 +136,22 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
 
   const processMessage = async (content: string) => {
     if (!content.trim() || isLoading) {
-      console.log('processMessage blocked:', { content: !!content.trim(), isLoading });
       return;
     }
     
-    console.log('processMessage starting:', { content, isJaiya });
     const response = await sendMessage(content);
-    console.log('processMessage response received:', response);
 
     if (isJaiya && response) {
       try {
         // Try to extract JSON if AI wrapped it in markdown or text
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         const jsonStr = jsonMatch ? jsonMatch[0] : response;
-        console.log('processMessage extracted JSON:', jsonStr);
         
         const data = JSON.parse(jsonStr);
-        console.log('processMessage parsed data:', data);
 
         if (data.isfind) {
           const categoryTag = data.categoryTag?.toLowerCase();
           const categoryName = data.categoryName?.toLowerCase();
-          
-          console.log('processMessage searching for category:', { categoryTag, categoryName });
           
           // Try to find by tag first, then by name
           let category = ADVISOR_CATEGORIES[categoryTag];
@@ -191,13 +169,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
               key => ADVISOR_CATEGORIES[key] === category
             );
 
-            console.log('processMessage category found:', category.name, 'Target Tag:', targetTag);
             const subcategory = category.categories.find(
               c => c.title.toLowerCase() === data.subCategoryName?.toLowerCase()
             );
             
             if (subcategory) {
-              console.log('processMessage subcategory found, redirecting to:', subcategory.title);
               switchChat({
                 name: subcategory.title,
                 categoryKey: targetTag,
@@ -219,7 +195,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
   };
 
   const handleSend = async () => {
-    console.log('handleSend clicked. Input:', input);
     const msg = input;
     setInput('');
     await processMessage(msg);
@@ -237,22 +212,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
       {/* Chat Messages Area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
         <div className="max-w-4xl mx-auto w-full p-6 space-y-3">
-          {/* Human Advisor CTA */}
-          {!isJaiya && categoryKey && (
-            <div className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-sm">Need more expert help?</h3>
-                <p className="text-[11px] opacity-90">Connect with a real human expert for personalized guidance.</p>
-              </div>
-              <Button 
-                size="sm" 
-                onClick={() => setIsHumanModalOpen(true)}
-                className="bg-white text-blue-600 hover:bg-blue-50 font-bold rounded-xl"
-              >
-                Talk to Expert
-              </Button>
-            </div>
-          )}
 
           {/* Welcome Message */}
           {(welcomeMessage || isJaiya) && messages.length === 0 && (
