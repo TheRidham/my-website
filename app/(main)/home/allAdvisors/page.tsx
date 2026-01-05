@@ -1,170 +1,179 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Search, Star, MessageCircle, Phone, Video } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import { useChat } from '@/providers/ChatProvider'
+import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 
-const advisors = [
-  {
-    id: 1,
-    name: 'Dr. Sarah Johnson',
-    specialty: 'Nutrition & Diet',
-    categoryKey: 'nutrition',
-    subcategoryTitle: 'Healthy Eating',
-    rating: 4.9,
-    reviews: 124,
-    price: '₹500/session',
-    status: 'Online',
-    image: '/advisors/sarah.png',
-  },
-  {
-    id: 2,
-    name: 'Coach Mike Ross',
-    specialty: 'Fitness & Bodybuilding',
-    categoryKey: 'fitness',
-    subcategoryTitle: 'Exercise & Training',
-    rating: 4.8,
-    reviews: 89,
-    price: '₹800/session',
-    status: 'Busy',
-    image: '/advisors/mike.png',
-  },
-  {
-    id: 3,
-    name: 'Dr. Emily Chen',
-    specialty: 'Mental Health',
-    categoryKey: 'mental',
-    subcategoryTitle: 'Stress',
-    rating: 5.0,
-    reviews: 210,
-    price: '₹1200/session',
-    status: 'Online',
-    image: '/advisors/emily.png',
-  },
-  {
-    id: 4,
-    name: 'Adv. Rajesh Kumar',
-    specialty: 'Legal Expert',
-    categoryKey: 'lawyer',
-    subcategoryTitle: 'Income Tax',
-    rating: 4.7,
-    reviews: 56,
-    price: '₹1500/session',
-    status: 'Offline',
-    image: '/advisors/rajesh.png',
-  },
-  {
-    id: 5,
-    name: 'Priya Sharma',
-    specialty: 'Career Coach',
-    categoryKey: 'career',
-    subcategoryTitle: 'Budgeting & Saving',
-    rating: 4.9,
-    reviews: 145,
-    price: '₹600/session',
-    status: 'Online',
-    image: '/advisors/priya.png',
-  },
-]
+type Advisor = {
+  uid: string
+  name: string
+  profilePhoto: string
+  specialization: string[]
+  busy: boolean
+  totalUsersAttended: number
+  isActive: boolean
+  rating?: number
+  experience?: string
+}
+
+function getCategoryKey(spec: string) {
+  const map: Record<string, string> = {
+    'Nutrition & Diet': 'nutrition',
+    Fitness: 'fitness',
+    'General Medicine': 'medical',
+    'Mental Health': 'mental',
+    Legal: 'lawyer',
+    Career: 'career',
+  }
+  return map[spec] || 'general'
+}
 
 function AllAdvisorsPage() {
   const { switchChat } = useChat()
+  const [advisors, setAdvisors] = useState<Advisor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    const fetchAdvisors = async () => {
+      try {
+        const q = query(
+          collection(db, 'advisors'),
+          where('isActive', '==', true)
+        )
+        const snapshot = await getDocs(q)
+        const data = snapshot.docs.map((doc) => ({
+          ...(doc.data() as Advisor),
+          uid: doc.id,
+        }))
+        setAdvisors(data)
+      } catch (error) {
+        console.error('Error fetching advisors:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAdvisors()
+  }, [])
+
+  const handleAdvisorClick = (advisor: Advisor) => {
+    setSelectedAdvisor({
+      id: advisor.uid,
+      name: advisor.name,
+      specialty: advisor.specialization,
+      image: advisor.profilePhoto,
+      rating: advisor.rating || 4.8,
+      experience: advisor.experience || '5+ years'
+    })
+    setIsModalOpen(true)
+  }
 
   return (
     <div className="flex flex-col h-full bg-slate-50 pb-24">
-      {/* Search Section */}
-      <div className="px-5 py-4 sticky top-0 bg-white backdrop-blur-md z-20 border-b border-gray-200/50">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+      {/* Search */}
+      <div className="px-5 py-4 sticky top-0 bg-white z-20 border-b">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
-            type="text"
             placeholder="Search by name or specialty"
-            className="w-full bg-slate-50/80 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-blue-300 focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
+            className="w-full bg-slate-50 rounded-2xl py-3.5 pl-12 pr-4 text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
         </div>
       </div>
 
-      {/* Filters/Categories Horizontal Scroll */}
-      <div className="px-5 py-2 flex gap-2.5 overflow-x-auto no-scrollbar bg-white border-b border-gray-200">
-        {['All', 'Nutrition', 'Fitness', 'Mental Health', 'Legal', 'Career'].map((filter) => (
-          <button
-            key={filter}
-            className={`px-5 py-2 rounded-xl text-[13px] font-bold whitespace-nowrap transition-all ${
-              filter === 'All' 
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
-                : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-            }`}
-          >
-            {filter}
-          </button>
-        ))}
+      {/* Advisors */}
+      <div className="p-5 space-y-4">
+        {loading && (
+          <div className="flex flex-col items-center py-20">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm font-bold text-gray-400">Loading expert advisors...</p>
+          </div>
+        )}
+
+        {!loading &&
+          advisors.map((advisor) => {
+            return (
+              <div
+                key={advisor.uid}
+                onClick={() => handleAdvisorClick(advisor)}
+                className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
+              >
+                <div className="flex gap-5">
+                  <div className="relative w-20 h-20 rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner shrink-0">
+                    <Image
+                      src={advisor.profilePhoto || '/placeholder-advisor.png'}
+                      alt={advisor.name}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {advisor.busy && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="text-[10px] font-black text-white uppercase tracking-tighter">Busy</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="font-black text-gray-900 text-lg truncate group-hover:text-blue-600 transition-colors">
+                        {advisor.name}
+                      </h3>
+                      <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
+                        <Star className="text-yellow-500 fill-yellow-500" size={12} />
+                        <span className="text-[11px] font-black text-yellow-700">{advisor.rating || '4.8'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {advisor.specialization?.map((spec, idx) => (
+                        <span 
+                          key={idx}
+                          className="text-[10px] font-bold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full uppercase tracking-wider"
+                        >
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Experience</span>
+                          <span className="text-xs font-black text-gray-700">{advisor.experience || '5+ Years'}</span>
+                        </div>
+                        <div className="w-px h-6 bg-gray-100" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Consults</span>
+                          <span className="text-xs font-black text-gray-700">{advisor.totalUsersAttended || '1.2k'}+</span>
+                        </div>
+                      </div>
+                      
+                      <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                        <MessageCircle className="text-blue-600 group-hover:text-white transition-colors" size={20} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
       </div>
 
-      {/* Advisors List */}
-      <div className="p-5 space-y-5">
-        {advisors.map((advisor) => (
-          <Link 
-            key={advisor.id} 
-            href={`/home/${advisor.categoryKey}/${encodeURIComponent(advisor.subcategoryTitle)}`}
-            onClick={() => switchChat({
-              name: advisor.name,
-              categoryKey: advisor.categoryKey,
-              subcategoryTitle: advisor.subcategoryTitle,
-              specialty: advisor.specialty,
-              image: advisor.image
-            })}
-            className="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all duration-300 group cursor-pointer block"
-          >
-            <div className="flex gap-5">
-              <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 shadow-inner">
-                <Image
-                  src={advisor.image}
-                  alt={advisor.name}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className={`absolute bottom-1.5 right-1.5 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ${
-                  advisor.status === 'Online' ? 'bg-green-500' : 
-                  advisor.status === 'Busy' ? 'bg-amber-500' : 'bg-gray-400'
-                }`} />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-extrabold text-gray-900 text-[16px] group-hover:text-blue-600 transition-colors">{advisor.name}</h3>
-                    <p className="text-[12px] text-blue-600 font-bold uppercase tracking-wide mt-0.5">{advisor.specialty}</p>
-                  </div>
-                  <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-100">
-                    <Star size={13} className="fill-amber-400 text-amber-400" />
-                    <span className="text-[11px] font-extrabold text-amber-700">{advisor.rating}</span>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase">Starting from</span>
-                    <p className="text-[15px] font-black text-gray-900">{advisor.price}</p>
-                  </div>
-                  <div className="flex gap-2.5">
-                    <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-xs">
-                      <MessageCircle size={20} />
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-xs">
-                      <Phone size={20} />
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white transition-all shadow-xs">
-                      <Video size={20} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <HumanAdvisorModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedAdvisor={selectedAdvisor}
+      />
     </div>
   )
 }
+ 
 
 export default AllAdvisorsPage

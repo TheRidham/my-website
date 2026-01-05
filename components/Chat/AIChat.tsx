@@ -8,6 +8,7 @@ import { usePrompts } from '@/providers/PromptsProvider'
 import { useChatAI } from '@/hooks/useAI'
 import { useChat } from '@/providers/ChatProvider'
 import { marked } from 'marked'
+import { HumanAdvisorModal } from './HumanAdvisorModal'
 
 interface AIChatProps {
   categoryKey?: string;
@@ -53,6 +54,7 @@ ${JSON.stringify(tags, null, 2)}
 
 export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subcategoryTitle, isJaiya = false }, ref) => {
   const [input, setInput] = useState('')
+  const [isHumanModalOpen, setIsHumanModalOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { jaiyaPrompt, advisorsPrompt } = usePrompts()
   const { switchChat } = useChat()
@@ -235,6 +237,23 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
       {/* Chat Messages Area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
         <div className="max-w-4xl mx-auto w-full p-6 space-y-3">
+          {/* Human Advisor CTA */}
+          {!isJaiya && categoryKey && (
+            <div className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm">Need more expert help?</h3>
+                <p className="text-[11px] opacity-90">Connect with a real human expert for personalized guidance.</p>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => setIsHumanModalOpen(true)}
+                className="bg-white text-blue-600 hover:bg-blue-50 font-bold rounded-xl"
+              >
+                Talk to Expert
+              </Button>
+            </div>
+          )}
+
           {/* Welcome Message */}
           {(welcomeMessage || isJaiya) && messages.length === 0 && (
             <div className="flex justify-start">
@@ -333,6 +352,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
           </Button>
         </div>
       </div>
+
+      <HumanAdvisorModal 
+        isOpen={isHumanModalOpen} 
+        onClose={() => setIsHumanModalOpen(false)}
+        categoryKey={categoryKey}
+        subcategoryTitle={subcategoryTitle}
+      />
     </div>
   )
 })

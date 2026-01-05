@@ -1,12 +1,15 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { AIChat, AIChatHandle } from '../Chat/AIChat'
-import { ChevronLeft, Wallet, History, Plus } from 'lucide-react'
+import { ChevronLeft, Wallet, History, Plus, User } from 'lucide-react'
 import Image from 'next/image'
 import jaiyaAvatar from "@/assets/jaiya.jpg";
 import { ADVISOR_CATEGORIES } from '@/constant/advisors'
 import { LucideIcon } from '../ui/LucideIcon'
+import { HumanAdvisorModal } from '../Chat/HumanAdvisorModal'
+import { Button } from '../ui/button'
+import { usePayment } from '@/providers/PaymentProvider'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -26,6 +29,8 @@ function Jaiya({
   onBack
 }: JaiyaProps) {
   const chatRef = useRef<AIChatHandle>(null);
+  const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
+  const { walletBalance } = usePayment();
   const isAdvisorChat = !!categoryKey;
   
   const category = categoryKey ? ADVISOR_CATEGORIES[categoryKey] : null;
@@ -91,6 +96,15 @@ function Jaiya({
 
           {/* Header Actions */}
           <div className="flex items-center gap-3">
+            {isAdvisorChat && (
+              <Button 
+                onClick={() => setIsHumanModalOpen(true)}
+                className="hidden md:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-4 py-2 text-xs"
+              >
+                <User size={16} />
+                Connect with Human
+              </Button>
+            )}
             <button 
               onClick={handleNewChat}
               className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" 
@@ -101,8 +115,13 @@ function Jaiya({
             <button className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chat History">
               <History size={22} />
             </button>
-            <button className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Wallet">
-              <Wallet size={22} />
+            <button 
+              onClick={() => window.location.href = '/wallet'}
+              className="flex items-center gap-2 p-2 md:px-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100" 
+              title="Wallet"
+            >
+              <Wallet size={20} />
+              <span className="hidden sm:inline text-xs font-bold">₹{(walletBalance / 100).toFixed(0)}</span>
             </button>
           </div>
         </div>
@@ -117,6 +136,13 @@ function Jaiya({
           isJaiya={!isAdvisorChat}
         />
       </div>
+
+      <HumanAdvisorModal 
+        isOpen={isHumanModalOpen}
+        onClose={() => setIsHumanModalOpen(false)}
+        categoryKey={categoryKey}
+        subcategoryTitle={subcategoryTitle}
+      />
     </div>
   )
 }
