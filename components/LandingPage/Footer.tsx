@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import Logo from "../Logo";
 
 const Footer = () => {
   return (
@@ -7,10 +8,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-md">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-heading font-bold text-xl">JAI App</span>
+              <Logo />
             </div>
             <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
               AI + Human expertise in one app. Making expert advice accessible to everyone.

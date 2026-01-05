@@ -76,7 +76,7 @@ const PricingSection = () => {
                   </li>
                 ))}
               </ul>
-              <Button variant="hero" size="lg" className="w-full font-semibold shadow-lg shadow-secondary/25">
+              <Button size="lg" className="bg-linear-to-r from-teal-400 to-blue-500 w-full text-white font-semibold shadow-lg shadow-secondary/25">
                 Claim Free Credit
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>

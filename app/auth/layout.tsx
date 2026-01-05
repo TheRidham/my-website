@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { AnimatedSection } from "@/hooks/useScrollAnimation";
 
 function Layout({ children }: { children: React.ReactNode }) {
   //route protection
@@ -21,7 +22,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
       </div>
     );
-  return <div>{children}</div>;
+  return <div><AnimatedSection animation="fade-up" delay={200}>{children}</AnimatedSection></div>;
 }
 
 export default Layout;
