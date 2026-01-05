@@ -14,34 +14,18 @@ import {
 } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-import userAvatar from "@/constant/userAvatar";
-
-import { db, auth } from "@/lib/firebase";
-import { getDoc, doc } from "firebase/firestore";
+import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 
-// Mock Firebase functions - replace with your actual Firebase imports
-const mockAuth = {
-  currentUser: {
-    uid: "12345",
-    phoneNumber: "+911234567890",
-    isAnonymous: false,
-  },
-};
-
 type UserData = {
-  age: number;
-  phone: string;
-  email: string;
-  gender: string;
-  name: string;
+  email: string | null;
+  name: string | null;
+  photoUrl: string | null;
 };
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [requiresAuth, setRequiresAuth] = useState(false);
-  const [isGuest, setIsGuest] = useState(false);
 
   const user = auth.currentUser;
   const router = useRouter();
@@ -53,11 +37,20 @@ export default function ProfilePage() {
         if (!user?.uid) {
           throw new Error("User UID is missing");
         }
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        const data = userSnap.data();
-        if (data) {
-          setUserData(data as UserData);
+        if (user.isAnonymous) {
+          const randomNumber = Math.floor(Math.random() * 10000);
+          setUserData({
+            name: `guest${randomNumber}`,
+            email: `guest${randomNumber}@gmail.com`,
+            photoUrl:
+              "https://api.dicebear.com/7.x/avataaars/svg?seed=guest123",
+          });
+        } else {
+          setUserData({
+            name: user.displayName,
+            email: user.email,
+            photoUrl: user.photoURL,
+          });
         }
       } catch (err) {
         console.warn("Error fetching user data:", err);
@@ -80,68 +73,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Login Prompt Screen
-  if (requiresAuth && !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        {/* Background Gradient */}
-        <div className="absolute top-0 left-0 right-0 h-48 bg-linear-to-br from-indigo-600 via-purple-600 to-purple-700 opacity-5 rounded-b-[3rem]"></div>
-
-        <div className="relative max-w-md w-full">
-          {/* Lock Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-2 border-indigo-100">
-              <Lock className="w-12 h-12 text-indigo-600" />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-3">
-            Profile Locked
-          </h1>
-          <p className="text-gray-600 text-center mb-8 px-4">
-            Sign in to access your profile and unlock all features
-          </p>
-
-          {/* Features List */}
-          <div className="space-y-3 mb-8">
-            {[
-              "Personalized AI recommendations",
-              "Access to premium advisors",
-              "Save your chat history",
-              "Manage your wallet & payments",
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm"
-              >
-                <CheckCircle className="w-5 h-5 text-indigo-600 shrink-0" />
-                <span className="text-gray-700 text-sm">{feature}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Sign In Button */}
-          <button
-            onClick={() => alert("Redirecting to login...")}
-            className="w-full bg-linear-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mb-4"
-          >
-            <LogIn className="w-5 h-5" />
-            Sign In to Continue
-          </button>
-
-          {/* Guest Button */}
-          <button
-            onClick={() => alert("Continuing as guest...")}
-            className="w-full text-indigo-600 font-medium py-3 hover:text-indigo-700 transition-colors"
-          >
-            Continue as Guest
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -149,7 +80,7 @@ export default function ProfilePage() {
       </div>
     );
   }
-
+  console.log(user);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Avatar */}
@@ -170,11 +101,7 @@ export default function ProfilePage() {
             <div className="w-30 h-30 rounded-full bg-white flex items-center justify-center ring-4 ring-white">
               <div className="w-30 h-30 rounded-full overflow-hidden bg-gray-200">
                 <img
-                  src={
-                    userData?.gender === "Male"
-                      ? userAvatar.maleAvatar
-                      : userAvatar.femaleAvatar
-                  }
+                  src={userData?.photoUrl as string}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -202,11 +129,11 @@ export default function ProfilePage() {
           </h2>
 
           <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100 overflow-hidden">
-            <InfoRow label="Name" value={userData?.name} />
-            <InfoRow label="Age" value={userData?.age?.toString()} />
-            <InfoRow label="Gender" value={userData?.gender} />
-            <InfoRow label="Email" value={userData?.email} />
-            <InfoRow label="Phone" value={userData?.phone} />
+            <InfoRow label="Name" value={userData?.name as string} />
+            {/* <InfoRow label="Age" value={userData?.age?.toString()} /> */}
+            {/* <InfoRow label="Gender" value={userData?.gender} /> */}
+            <InfoRow label="Email" value={userData?.email as string} />
+            {/* <InfoRow label="Phone" value={userData?.phone} /> */}
           </div>
         </div>
 
