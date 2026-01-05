@@ -1,255 +1,171 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase'; // Adjust the import based on your file structure
-
-declare global {
-  interface Window {
-    recaptchaVerifier: any;
-  }
-}
+"use client";
+import { useState, useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { GoogleAuthProvider, signInWithPopup, signInAnonymously } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { getDoc, doc } from "firebase/firestore";
 
 export default function SignupPage() {
   const router = useRouter();
-
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'INPUT_PHONE' | 'VERIFY_OTP'>('INPUT_PHONE');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [otpBtn, setOtpBtn] = useState(false);
+  const [error, setError] = useState("");
 
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-
-  // Create reCAPTCHA verifier once on mount (invisible for production)
-  useEffect(() => {
-    // Cleanup on unmount
-    return () => {
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const checkIfUserExists = async () => {
-      const user = auth.currentUser;
-
-      if (user?.uid) {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
-
-          if (userSnap.exists()) {
-            // User already exists, redirect to home
-            router.push('/home');
-          }else {
-            console.log("no user exist!")
-          }
-        } catch (err) {
-          console.error('Error checking if user exists:', err);
-        }
-      }
-    };
-
-    checkIfUserExists();
-  }, []);
-
-  const initializeRecaptcha = () => {
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-    }
-
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible', // or 'normal' for visible checkbox during testing
-      callback: () => {
-        console.log('reCAPTCHA solved');
-      },
-      'expired-callback': () => {
-        setError('reCAPTCHA expired. Please try again.');
-      },
-    });
-  };
-
-  useEffect(() => {
-    if(otp.length < 6) setOtpBtn(false);
-    if(otp.length >= 6) setOtpBtn(true);
-  },[otp])
-
-  const handleSendOtp = async () => {
-    if (!phoneNumber) {
-      setError('Please enter phone number');
-      return;
-    }
-
-    if (phoneNumber.length < 10) {
-      setError('Please enter a valid 10-digit phone number');
-      return;
-    }
-
+  const handleGoogleSignup = async () => {
     setLoading(true);
-    setError('');
-
+    setError("");
     try {
-      // Initialize reCAPTCHA before sending
-      initializeRecaptcha();
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      console.log("User signed in:", user);
 
-      const formattedPhone = phoneNumber.startsWith('+')
-        ? phoneNumber
-        : phoneNumber.startsWith('0')
-        ? `+91${phoneNumber.slice(1)}`
-        : `+91${phoneNumber}`;
+      // Check if user profile exists
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-      console.log('Sending OTP to:', formattedPhone);
-
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
-
-      setConfirmationResult(confirmation);
-      setStep('VERIFY_OTP');
-      console.log('OTP sent successfully');
-
+      if (userSnap.exists()) {
+        // User already has a profile, redirect to home
+        router.push("/home");
+      } else {
+        // New user, redirect to profile setup
+        router.push("/home");
+      }
     } catch (err: any) {
-      console.error('Error sending OTP:', err);
+      console.error("Error signing up with Google:", err);
 
-      let errorMessage = 'Failed to send OTP. Please try again.';
+      let errorMessage = "Failed to sign up with Google. Please try again.";
 
-      if (err.code === 'auth/invalid-phone-number') {
-        errorMessage = 'Invalid phone number format. Use +91XXXXXXXXXX';
-      } else if (err.code === 'auth/invalid-app-credential') {
-        errorMessage = 'reCAPTCHA verification failed. Please refresh and try again.';
-      } else if (err.code === 'auth/too-many-requests' || err.code === 'auth/quota-exceeded') {
-        errorMessage = 'Too many requests. Please try again later.';
+      if (err.code === "auth/popup-closed-by-user") {
+        errorMessage = "Sign-up cancelled. Please try again.";
+      } else if (err.code === "auth/popup-blocked") {
+        errorMessage = "Popup was blocked. Please allow popups for this site.";
+      } else if (err.code === "auth/account-exists-with-different-credential") {
+        errorMessage = "An account already exists with the same email address.";
       }
 
       setError(errorMessage);
-
-      // Reset reCAPTCHA on error
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (!otp || !confirmationResult) return;
-    setError('');
+  const handleAnonymousSignup = async () => {
     setLoading(true);
-
+    setError("");
     try {
-      const result = await confirmationResult.confirm(otp);
-      const user = result.user.uid;
-      const profile = await getDoc(doc(db, "users", user));
-      if(profile.exists()) {
-        router.replace("/home");
-      }else {
-        console.log('User signed in:', result.user);
-        router.push('/auth/profile');
-      }
+      const result = await signInAnonymously(auth);
+      const user = result.user;
+      console.log(user);
+      console.log("User signed in anonymously:", user);
+
+      // Anonymous users go directly to home
+      router.push("/home");
     } catch (err: any) {
-      setError('Invalid OTP. Please try again.');
+      console.error("Error signing up anonymously:", err);
+
+      let errorMessage = "Failed to sign up anonymously. Please try again.";
+
+      if (err.code === "auth/operation-not-allowed") {
+        errorMessage = "Anonymous authentication is not enabled.";
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleReset = () => {
-    setStep('INPUT_PHONE');
-    setOtp('');
-    setError('');
-    setConfirmationResult(null);
-    // Re-initialize reCAPTCHA for next attempt
-    initializeRecaptcha();
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4 bg-linear-to-br  from-cyan-200 via-blue-200 to-teal-400">
-      <div className="w-full max-w-md rounded-xl p-8 border border-white/20 bg-white/10 backdrop-blur-lg shadow-xl">
-
+    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4 bg-white">
+      <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-2xl shadow-blue-200 border border-blue-100">
         <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
-          {step === 'INPUT_PHONE' ? 'Create Account' : 'Verify Phone'}
+          Create Account
         </h2>
 
-        {/* Recaptcha container - must exist in DOM */}
-        <div id="recaptcha-container" className="flex justify-center"></div>
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={handleGoogleSignup}
+            disabled={loading}
+            className={`w-full py-3 px-4 cursor-pointer rounded-lg text-gray-800 font-semibold transition-all flex items-center justify-center gap-3 border border-gray-300 ${
+              loading
+                ? "bg-white/70 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50 shadow-md hover:shadow-lg"
+            }`}
+          >
+            {loading ? (
+              <span>Signing up...</span>
+            ) : (
+              <>
+                <svg className="w-6 h-6" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
+                </svg>
+                <span>Continue with Google</span>
+              </>
+            )}
+          </button>
 
-        {/* Phone input step */}
-        {step === 'INPUT_PHONE' && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="phone" className="text-sm font-semibold text-gray-700">
-                Phone Number
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-600">+91</span>
-                <input
-                  type="tel"
-                  id="phone"
-                  placeholder="9876543210"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                  maxLength={10}
-                  className="w-full pl-12 pr-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-0 focus:outline-none transition-all"
-                />
-              </div>
-              <p className="text-sm font-medium text-gray-700">
-                Enter your 10-digit mobile number
-              </p>
-            </div>
-
-            <button
-              onClick={handleSendOtp}
-              disabled={loading}
-              className={`w-full py-2.5 rounded-lg text-white font-semibold transition-colors ${
-                loading ? 'bg-indigo-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {loading ? 'Sending OTP...' : 'Send OTP'}
-            </button>
+          <div className="relative flex items-center my-2">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="px-4 text-sm text-gray-500">or</span>
+            <div className="flex-grow border-t border-gray-300"></div>
           </div>
-        )}
 
-        {/* OTP verification step */}
-        {step === 'VERIFY_OTP' && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="otp" className="text-sm font-semibold text-gray-700">
-                Enter Verification Code
-              </label>
-              <input
-                type="text"
-                id="otp"
-                placeholder="X-X-X-X-X-X"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-0 focus:outline-none tracking-widest text-center text-lg"
-              />
-            </div>
+          <button
+            onClick={handleAnonymousSignup}
+            disabled={loading}
+            className={`w-full py-3 px-4 cursor-pointer rounded-lg font-semibold transition-all flex items-center justify-center gap-3 border ${
+              loading
+                ? "bg-gray-100 cursor-not-allowed text-gray-400 border-gray-300"
+                : "bg-gray-800 text-white hover:bg-gray-700 border-gray-800"
+            }`}
+          >
+            {loading ? (
+              <span>Signing up...</span>
+            ) : (
+              <>
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                  />
+                </svg>
+                <span>Continue as Guest</span>
+              </>
+            )}
+          </button>
 
-            <button
-              onClick={handleVerifyOtp}
-              disabled={!otpBtn || loading}
-              className={`w-full py-2.5 rounded-lg text-white font-semibold transition-colors ${
-                loading || !otpBtn ? 'bg-blue-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+          <div className="text-center text-sm text-gray-700 mt-4">
+            Already have an account?{" "}
+            <a
+              href="/auth/login"
+              className="text-blue-600 hover:text-blue-700 font-semibold underline"
             >
-              {loading ? 'Verifying...' : 'Verify Otp'}
-            </button>
-
-            {/* <button
-              onClick={handleReset}
-              className="text-sm text-indigo-600 hover:text-indigo-800 text-center mt-2 underline"
-            >
-              Change Phone Number
-            </button> */}
+              Log in
+            </a>
           </div>
-        )}
+        </div>
 
         {error && (
           <p className="mt-4 text-center text-sm text-red-600 bg-red-100 p-2 rounded border border-red-400">

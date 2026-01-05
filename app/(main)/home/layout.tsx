@@ -1,27 +1,21 @@
-'use client'
+"use client";
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { getAuth } from "firebase/auth";
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import { getAuth } from 'firebase/auth'
-import { db } from '@/lib/firebase'
-import { getDoc, doc } from 'firebase/firestore'
-
-import userAvatar from '@/constant/userAvatar'
-
-function Layout({ children }: {children: React.ReactNode}) {
-  const pathname = usePathname()
-  const [greetings, setGreetings] = useState('Good Morning!!!');
+function Layout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const [greetings, setGreetings] = useState("Good Morning!!!");
   const user = getAuth().currentUser;
   const [isLoading, setIsLoading] = useState(true);
-    const [userData, setUserData] = useState<{
-      name?: string;
-      gender?: "male" | "female";
-      avatar?: string;
-      email?: string;
-      hasClaimedFreeCash?: boolean;
-    } | null>(null);
+  const [userData, setUserData] = useState<{
+    name: string | null;
+    email: string | null;
+    photoUrl: string | null;
+    hasClaimedFreeCash?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const updateGreetings = () => {
@@ -30,94 +24,107 @@ function Layout({ children }: {children: React.ReactNode}) {
         setGreetings("Good Morning!");
       } else if (currentHour < 17) {
         setGreetings("Good Afternoon!");
-      } else
-        setGreetings("Good Evening!");
+      } else setGreetings("Good Evening!");
     };
 
-    updateGreetings()
-  }, [])
+    updateGreetings();
+  }, []);
 
   useEffect(() => {
-      const init = async () => {
-        try {
-          if (!user?.uid) {
-            throw new Error("User UID is missing");
-          }
-          // Fetch existing guest profile
-          const guestRef = doc(db, "users", user.uid);
-          const guestSnap = await getDoc(guestRef);
-  
-          if (guestSnap.exists()) {
-            const data = guestSnap.data();
+    const init = async () => {
+      try {
+        if (!user?.uid) {
+          throw new Error("User UID is missing");
+        } else {
+          if (user.isAnonymous) {
+            const randomNumber = Math.floor(Math.random() * 10000);
             setUserData({
-              name: data?.name,
-              email: data?.email,
-              gender: data?.gender?.toLowerCase() as "male" | "female",
+              name: `guest${randomNumber}`,
+              email: `guest${randomNumber}@gmail.com`,
+              photoUrl:
+                "https://api.dicebear.com/7.x/avataaars/svg?seed=guest123",
+            });
+          } else {
+            setUserData({
+              name: user.displayName,
+              email: user.email,
+              photoUrl: user.photoURL,
               hasClaimedFreeCash: false,
             });
           }
-  
-          setIsLoading(false);
-          return;
-        } catch (err) {
-          console.log("Error fetching user data:", err);
-        } finally {
-          setIsLoading(false);
         }
-      };
-  
-      init();
-    }, [user]);
-  
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        console.log("Error fetching user data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    init();
+  }, [user]);
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-5 py-5 flex items-center justify-between bg-white">
         <div className="flex items-center gap-3.5">
           <Link href={"/profile"}>
-          <div className="w-11 h-11 rounded-full bg-blue-50 border border-blue-200 overflow-hidden shadow-sm">
-            {/* <Image src="/user-avatar.png" alt="User" width={44} height={44} className="object-cover" /> */}
-            <img src={userData?.gender == "male" ? userAvatar.maleAvatar : userAvatar.femaleAvatar} alt="User" width={44} height={44} />
-          </div>
+            <div className="w-11 h-11 rounded-full bg-blue-50 border border-blue-200 overflow-hidden shadow-sm">
+              {/* <Image src="/user-avatar.png" alt="User" width={44} height={44} className="object-cover" /> */}
+              <img
+                src={userData?.photoUrl as string}
+                alt="profile"
+                width={44}
+                height={44}
+              />
+            </div>
           </Link>
           <div className="flex flex-col">
-            <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider">{greetings}</p>
-            <p className="text-lg font-extrabold text-gray-900 leading-tight">{userData?.name}</p>
+            <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider">
+              {greetings}
+            </p>
+            <p className="text-lg font-extrabold text-gray-900 leading-tight">
+              {userData?.name}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="px-5 flex gap-8 border-b border-gray-200 bg-white">
-        <Link 
-          href="/home" 
+        <Link
+          href="/home"
           className={`pb-3 text-[14px] font-bold transition-all relative ${
-            pathname === '/home' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            pathname === "/home"
+              ? "text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
           }`}
         >
           Home
-          {pathname === '/home' && (
+          {pathname === "/home" && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
           )}
         </Link>
-        <Link 
-          href="/home/allAdvisors" 
+        <Link
+          href="/home/allAdvisors"
           className={`pb-3 text-[14px] font-bold transition-all relative ${
-            pathname === '/home/allAdvisors' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+            pathname === "/home/allAdvisors"
+              ? "text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
           }`}
         >
           All Advisors
-          {pathname === '/home/allAdvisors' && (
+          {pathname === "/home/allAdvisors" && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
           )}
         </Link>
       </div>
 
-      <div className="flex-1">
-        {children}
-      </div>
+      <div className="flex-1">{children}</div>
     </div>
-  )
+  );
 }
 
-export default Layout
+export default Layout;

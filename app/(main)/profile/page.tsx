@@ -14,27 +14,13 @@ import {
 } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-import userAvatar from "@/constant/userAvatar";
-
-import { db, auth } from "@/lib/firebase";
-import { getDoc, doc } from "firebase/firestore";
+import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 
-// Mock Firebase functions - replace with your actual Firebase imports
-const mockAuth = {
-  currentUser: {
-    uid: "12345",
-    phoneNumber: "+911234567890",
-    isAnonymous: false,
-  },
-};
-
 type UserData = {
-  age: number;
-  phone: string;
-  email: string;
-  gender: string;
-  name: string;
+  email: string | null;
+  name: string | null;
+  photoUrl: string | null;
 };
 
 export default function ProfilePage() {
@@ -51,11 +37,20 @@ export default function ProfilePage() {
         if (!user?.uid) {
           throw new Error("User UID is missing");
         }
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        const data = userSnap.data();
-        if (data) {
-          setUserData(data as UserData);
+        if (user.isAnonymous) {
+          const randomNumber = Math.floor(Math.random() * 10000);
+          setUserData({
+            name: `guest${randomNumber}`,
+            email: `guest${randomNumber}@gmail.com`,
+            photoUrl:
+              "https://api.dicebear.com/7.x/avataaars/svg?seed=guest123",
+          });
+        } else {
+          setUserData({
+            name: user.displayName,
+            email: user.email,
+            photoUrl: user.photoURL,
+          });
         }
       } catch (err) {
         console.warn("Error fetching user data:", err);
@@ -85,7 +80,7 @@ export default function ProfilePage() {
       </div>
     );
   }
-
+  console.log(user);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Avatar */}
@@ -106,11 +101,7 @@ export default function ProfilePage() {
             <div className="w-30 h-30 rounded-full bg-white flex items-center justify-center ring-4 ring-white">
               <div className="w-30 h-30 rounded-full overflow-hidden bg-gray-200">
                 <img
-                  src={
-                    userData?.gender === "Male"
-                      ? userAvatar.maleAvatar
-                      : userAvatar.femaleAvatar
-                  }
+                  src={userData?.photoUrl as string}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -138,11 +129,11 @@ export default function ProfilePage() {
           </h2>
 
           <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100 overflow-hidden">
-            <InfoRow label="Name" value={userData?.name} />
-            <InfoRow label="Age" value={userData?.age?.toString()} />
-            <InfoRow label="Gender" value={userData?.gender} />
-            <InfoRow label="Email" value={userData?.email} />
-            <InfoRow label="Phone" value={userData?.phone} />
+            <InfoRow label="Name" value={userData?.name as string} />
+            {/* <InfoRow label="Age" value={userData?.age?.toString()} /> */}
+            {/* <InfoRow label="Gender" value={userData?.gender} /> */}
+            <InfoRow label="Email" value={userData?.email as string} />
+            {/* <InfoRow label="Phone" value={userData?.phone} /> */}
           </div>
         </div>
 
