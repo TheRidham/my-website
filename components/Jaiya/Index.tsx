@@ -130,6 +130,7 @@ function Jaiya({
       {/* Chat Component */}
       <div className="flex-1 overflow-hidden">
         <AIChat 
+          key={`${categoryKey}-${subcategoryTitle}`}
           ref={chatRef}
           categoryKey={categoryKey}
           subcategoryTitle={subcategoryTitle}
