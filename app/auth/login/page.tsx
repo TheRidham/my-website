@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,8 +18,6 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      console.log("User signed in:", user);
-
       // Check if user profile exists
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
@@ -28,7 +26,16 @@ export default function LoginPage() {
         // User has a profile, redirect to home
         router.push("/home");
       } else {
-        // New user, redirect to profile setup
+        // New user or missing profile, create one
+        await setDoc(userRef, {
+          uid: user.uid,
+          name: user.displayName || "User",
+          email: user.email,
+          profilePhoto: user.photoURL,
+          walletBalance: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
         router.push("/home");
       }
     } catch (err: any) {

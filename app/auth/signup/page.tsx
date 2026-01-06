@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, signInAnonymously } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,7 +27,17 @@ export default function SignupPage() {
         // User already has a profile, redirect to home
         router.push("/home");
       } else {
-        // New user, redirect to profile setup
+        // New user, create profile
+        console.log("Creating new user profile...");
+        await setDoc(userRef, {
+          uid: user.uid,
+          name: user.displayName || "User",
+          email: user.email,
+          profilePhoto: user.photoURL,
+          walletBalance: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
         router.push("/home");
       }
     } catch (err: any) {
@@ -59,6 +69,18 @@ export default function SignupPage() {
       console.log("User signed in anonymously:", user);
 
       // Anonymous users go directly to home
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          name: "Guest User",
+          isAnonymous: true,
+          walletBalance: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
       router.push("/home");
     } catch (err: any) {
       console.error("Error signing up anonymously:", err);
@@ -120,9 +142,9 @@ export default function SignupPage() {
           </button>
 
           <div className="relative flex items-center my-2">
-            <div className="flex-grow border-t border-gray-300"></div>
+            <div className="grow border-t border-gray-300"></div>
             <span className="px-4 text-sm text-gray-500">or</span>
-            <div className="flex-grow border-t border-gray-300"></div>
+            <div className="grow border-t border-gray-300"></div>
           </div>
 
           <button

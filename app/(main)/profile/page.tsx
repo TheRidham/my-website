@@ -16,6 +16,7 @@ import {
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
+import Link from "next/link";
 
 type UserData = {
   email: string | null;
@@ -157,7 +158,7 @@ export default function ProfilePage() {
             <SettingButton
               icon={<Wallet className="w-5 h-5" />}
               label="My Wallet"
-              onClick={() => alert("Navigate to wallet")}
+              href="/wallet"
             />
             <SettingButton
               icon={<User className="w-5 h-5" />}
@@ -195,13 +196,16 @@ function SettingButton({
   icon,
   label,
   onClick,
+  href
 }: {
   icon: React.ReactNode;
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string
 }) {
   return (
-    <button
+    <Link
+      href={href || "/profile"}
       onClick={onClick}
       className="w-full bg-white px-5 py-4 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group"
     >
@@ -228,6 +232,6 @@ function SettingButton({
           />
         </svg>
       </div>
-    </button>
+    </Link>
   );
 }

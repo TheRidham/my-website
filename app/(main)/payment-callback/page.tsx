@@ -3,6 +3,8 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { usePayment } from '@/providers/PaymentProvider'
+import { auth, db } from '@/lib/firebase'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -13,7 +15,9 @@ function PaymentCallbackContent() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const [verificationStarted, setVerificationStarted] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('Your payment has been verified. Redirecting you to your chat...')
 
   useEffect(() => {
     // Wait for auth to settle
@@ -26,34 +30,50 @@ function PaymentCallbackContent() {
     const razorpayPaymentLinkId = searchParams.get('razorpay_payment_link_id')
     const advisorId = searchParams.get('advisorId')
 
-    if (!sessionId || !advisorId) {
+    if ((!sessionId && !razorpayPaymentLinkId) || !advisorId) {
       setStatus('error')
-      setError('Missing payment information. Please contact support if money was deducted.')
+      setError('Missing payment information')
       return
     }
 
     const verify = async () => {
       setVerificationStarted(true)
       try {
-        console.log('Verifying payment with:', { 
-          sessionId, 
-          advisorId,
-          paymentId: razorpayPaymentId,
-          paymentLinkId: razorpayPaymentLinkId
-        })
+        // Ensure user document exists in Firestore to avoid potential backend errors
+        const currentUser = auth.currentUser
+        if (currentUser) {
+          const userRef = doc(db, 'users', currentUser.uid)
+          const userSnap = await getDoc(userRef)
+          
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              uid: currentUser.uid,
+              name: currentUser.displayName || 'User',
+              email: currentUser.email,
+              profilePhoto: currentUser.photoURL,
+              walletBalance: 0,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            }, { merge: true })
+          }
+        }
 
         const result = await verifyPayment(
-          sessionId, 
+          sessionId || razorpayPaymentLinkId!, 
           advisorId, 
-          razorpayPaymentId || undefined,
+          razorpayPaymentId || 'pending',
           razorpayPaymentLinkId || undefined
         )
         
-        console.log('Verification result:', result)
 
         if (result.success) {
           // Clear the stored session ID on success
           sessionStorage.removeItem('last_payment_session_id')
+          
+          if (result.alreadyProcessed) {
+            setSuccessMessage('Payment already processed! Redirecting to chat...')
+          }
+
           setStatus('success')
           // Redirect to chat after a short delay
           setTimeout(() => {
@@ -66,11 +86,22 @@ function PaymentCallbackContent() {
       } catch (err: any) {
         console.error('Verification error:', err)
         
+        // Handle retry for already-exists (processing in progress)
+        if (err.code === 'functions/already-exists' && retryCount < 5) {
+          console.log(`Payment is being processed, retrying... (${retryCount + 1}/5)`)
+          setRetryCount(prev => prev + 1)
+          setVerificationStarted(false) // Allow retry
+          setTimeout(verify, 2000)
+          return
+        }
+
         // Check for specific Firebase errors
         if (err.code === 'functions/unauthenticated') {
           setError('You must be logged in to verify payment.')
         } else if (err.code === 'functions/not-found') {
           setError('Payment session not found. Please contact support.')
+        } else if (err.code === 'functions/failed-precondition') {
+          setError('Payment verification failed. Please contact support if money was deducted.')
         } else {
           setError(err.message || 'An error occurred during verification')
         }
@@ -79,7 +110,7 @@ function PaymentCallbackContent() {
     }
 
     verify()
-  }, [searchParams, verifyPayment, router, isLoading, verificationStarted])
+  }, [searchParams, verifyPayment, router, isLoading, verificationStarted, retryCount])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
@@ -87,7 +118,11 @@ function PaymentCallbackContent() {
         <>
           <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
           <h1 className="text-2xl font-bold mb-2">Verifying Payment</h1>
-          <p className="text-muted-foreground">Please wait while we confirm your payment...</p>
+          <p className="text-muted-foreground">
+            {retryCount > 0 
+              ? `Processing is taking longer than expected (Retry ${retryCount}/5)...` 
+              : 'Please wait while we confirm your payment...'}
+          </p>
         </>
       )}
 
@@ -95,7 +130,7 @@ function PaymentCallbackContent() {
         <>
           <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Payment Successful!</h1>
-          <p className="text-muted-foreground mb-6">Your payment has been verified. Redirecting you to your chat...</p>
+          <p className="text-muted-foreground mb-6">{successMessage}</p>
           <Button onClick={() => router.push('/home')}>Go to Home</Button>
         </>
       )}

@@ -6,12 +6,14 @@ import { Wallet, Plus, ArrowUpRight, History, Loader2, CreditCard, ArrowDownLeft
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 export default function WalletPage() {
   const { walletBalance, isLoading, topUpWallet } = usePayment()
   const [isTopUpLoading, setIsTopUpLoading] = useState(false)
   const [amount, setAmount] = useState('500')
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
@@ -55,7 +57,7 @@ export default function WalletPage() {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => window.history.back()}
+              onClick={() => router.replace('/home')}
               className="h-9 w-9 rounded-xl hover:bg-slate-100"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -131,7 +133,7 @@ export default function WalletPage() {
                 <Button 
                   onClick={handleTopUp} 
                   disabled={isTopUpLoading || isLoading}
-                  className="w-full py-6 text-md font-bold shadow-lg shadow-primary/20 rounded-xl"
+                  className="w-full py-6 text-md font-bold shadow-lg shadow-primary/20 rounded-xl bg-blue-500/70 hover:bg-blue-500 hover:text-white"
                 >
                   {isTopUpLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />

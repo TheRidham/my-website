@@ -3,6 +3,8 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { usePayment } from '@/providers/PaymentProvider'
+import { auth, db } from '@/lib/firebase'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { Loader2, CheckCircle2, XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -14,7 +16,9 @@ function WalletCallbackContent() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const [verificationStarted, setVerificationStarted] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('Your wallet has been credited successfully. You will be redirected to your wallet in a few seconds.')
 
   useEffect(() => {
     // Wait for auth to settle
@@ -26,32 +30,39 @@ function WalletCallbackContent() {
     const razorpayPaymentId = searchParams.get('razorpay_payment_id')
     const razorpayPaymentLinkId = searchParams.get('razorpay_payment_link_id')
 
-    if (!sessionId) {
+    if (!sessionId && !razorpayPaymentLinkId) {
       setStatus('error')
-      setError('Missing session information. Please contact support if money was deducted.')
+      setError('Missing payment information')
       return
     }
 
     const verify = async () => {
       setVerificationStarted(true)
       try {
-        console.log('Verifying wallet top-up with:', { 
-          sessionId, 
-          paymentId: razorpayPaymentId,
-          paymentLinkId: razorpayPaymentLinkId
-        })
+        // Ensure user document exists in Firestore to avoid backend NOT_FOUND error
+        const currentUser = auth.currentUser
+        if (currentUser) {
+          const userRef = doc(db, 'users', currentUser.uid)
+          const userSnap = await getDoc(userRef)
+        }
         
+        // Use sessionId if available, otherwise fallback to razorpayPaymentLinkId
         const result = await verifyWalletPayment(
-          sessionId, 
-          razorpayPaymentId || undefined, 
+          sessionId || razorpayPaymentLinkId!, 
+          razorpayPaymentId || 'pending',
           razorpayPaymentLinkId || undefined
         )
-        
-        console.log('Verification result:', result)
         
         if (result.success) {
           // Clear the stored session ID on success
           sessionStorage.removeItem('last_wallet_session_id')
+          
+          if (result.alreadyProcessed) {
+            setSuccessMessage('Payment already processed! Redirecting to wallet...')
+          } else if (result.amount) {
+            setSuccessMessage(`Payment successful! ₹${(result.amount / 100).toFixed(2)} added to your wallet.`)
+          }
+
           setStatus('success')
           setTimeout(() => {
             router.push('/wallet')
@@ -63,11 +74,22 @@ function WalletCallbackContent() {
       } catch (err: any) {
         console.error('Verification error:', err)
         
+        // Handle retry for already-exists (processing in progress)
+        if (err.code === 'functions/already-exists' && retryCount < 5) {
+          console.log(`Payment is being processed, retrying... (${retryCount + 1}/5)`)
+          setRetryCount(prev => prev + 1)
+          setVerificationStarted(false) // Allow retry
+          setTimeout(verify, 2000)
+          return
+        }
+
         // Check for specific Firebase errors
         if (err.code === 'functions/unauthenticated') {
           setError('You must be logged in to verify payment.')
         } else if (err.code === 'functions/not-found') {
           setError('Payment session not found. Please contact support.')
+        } else if (err.code === 'functions/failed-precondition') {
+          setError('Payment verification failed. Please contact support if money was deducted.')
         } else {
           setError(err.message || 'An error occurred during verification')
         }
@@ -76,7 +98,7 @@ function WalletCallbackContent() {
     }
 
     verify()
-  }, [searchParams, verifyWalletPayment, router, isLoading, verificationStarted])
+  }, [searchParams, verifyWalletPayment, router, isLoading, verificationStarted, retryCount])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
@@ -90,7 +112,11 @@ function WalletCallbackContent() {
               </div>
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold tracking-tight">Verifying Payment</h1>
-                <p className="text-muted-foreground">Please do not refresh or close this window. We are confirming your transaction with the bank.</p>
+                <p className="text-muted-foreground">
+                  {retryCount > 0 
+                    ? `Processing is taking longer than expected (Retry ${retryCount}/5)...` 
+                    : 'Please do not refresh or close this window. We are confirming your transaction with the bank.'}
+                </p>
               </div>
             </div>
           )}
@@ -102,7 +128,7 @@ function WalletCallbackContent() {
               </div>
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold tracking-tight text-green-600">Top-up Successful!</h1>
-                <p className="text-muted-foreground">Your wallet has been credited successfully. You will be redirected to your wallet in a few seconds.</p>
+                <p className="text-muted-foreground">{successMessage}</p>
               </div>
               <Button 
                 onClick={() => router.push('/wallet')}
