@@ -70,7 +70,7 @@ function AllAdvisorsPage() {
       specialty: advisor.specialization,
       image: advisor.profilePhoto,
       rating: advisor.rating || 4.8,
-      experience: advisor.experience || '5+ years'
+      experience: advisor.experience || '6+ years'
     })
     setIsModalOpen(true)
   }
