@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,13 +39,17 @@ function Layout({ children }: { children: React.ReactNode }) {
           throw new Error("User UID is missing");
         } else {
           if (user.isAnonymous) {
-            const randomNumber = Math.floor(Math.random() * 10000);
-            setUserData({
-              name: `guest${randomNumber}`,
-              email: `guest${randomNumber}@gmail.com`,
-              photoUrl:
-                "https://api.dicebear.com/7.x/avataaars/svg?seed=guest123",
-            });
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              setUserData({
+                name: userData.name,
+                email: userData.email,
+                photoUrl:
+                  "https://api.dicebear.com/7.x/avataaars/svg?seed=guest123",
+              });
+            }
           } else {
             setUserData({
               name: user.displayName,
