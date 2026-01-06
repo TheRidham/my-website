@@ -1,7 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signInAnonymously } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInAnonymously,
+} from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
@@ -17,26 +21,25 @@ export default function SignupPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log("User signed in:", user);
 
       // Check if user profile exists
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
-
+      console.log("userSnap:",userSnap);
       if (userSnap.exists()) {
         // User already has a profile, redirect to home
+        console.log("exist one");
         router.push("/home");
       } else {
-        // New user, create profile
-        console.log("Creating new user profile...");
         await setDoc(userRef, {
-          uid: user.uid,
-          name: user.displayName || "User",
+          name: user.displayName,
           email: user.email,
-          profilePhoto: user.photoURL,
+          hasClaimedFreeCash: false,
           walletBalance: 0,
+          age: null,
+          gender: null,
+          phone: null,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
         });
         router.push("/home");
       }
@@ -160,17 +163,17 @@ export default function SignupPage() {
               <span>Signing up...</span>
             ) : (
               <>
-                <svg 
-                  className="w-5 h-5" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
                 <span>Continue as Guest</span>

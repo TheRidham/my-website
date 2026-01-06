@@ -24,17 +24,18 @@ export default function LoginPage() {
 
       if (userSnap.exists()) {
         // User has a profile, redirect to home
+        console.log("exist one");
         router.push("/home");
       } else {
-        // New user or missing profile, create one
         await setDoc(userRef, {
-          uid: user.uid,
-          name: user.displayName || "User",
+          name: user.displayName,
           email: user.email,
-          profilePhoto: user.photoURL,
+          hasClaimedFreeCash: false,
           walletBalance: 0,
+          age: null,
+          gender: null,
+          phone: null,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
         });
         router.push("/home");
       }
