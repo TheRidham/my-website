@@ -130,7 +130,7 @@ export function HumanAdvisorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>
             {selectedAdvisor ? "Payment Options" : "Connect with Human Advisor"}

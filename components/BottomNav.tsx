@@ -14,7 +14,7 @@ const BottomNav = () => {
   const navItems = [
     { name: 'Home', icon: Home, path: '/home' },
     { name: 'Advisors', icon: Users, path: '/home/allAdvisors' },
-    { name: 'Ask Jaiya', icon: null, path: '/jaiya', isJaiya: true },
+    { name: 'Ask Super AI', icon: null, path: '/jaiya', isJaiya: true },
   ]
 
   return (
@@ -31,7 +31,7 @@ const BottomNav = () => {
           >
             {item.isJaiya ? (
               <div className={`w-9 h-9 md:w-8 md:h-8 rounded-full overflow-hidden border-2 transition-all ${isActive ? 'border-blue-600 shadow-md shadow-blue-100' : 'border-transparent'}`}>
-                <Image src={jaiyaAvatar} alt="Jaiya" width={36} height={36} className="object-cover" />
+                <Image src={jaiyaAvatar} alt="Super AI" width={36} height={36} className="object-cover" />
               </div>
             ) : (
               <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-blue-50 md:bg-transparent' : ''}`}>

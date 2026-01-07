@@ -220,7 +220,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(({ categoryKey, subc
                 <div 
                   className="text-gray-700 text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed"
                   dangerouslySetInnerHTML={{ 
-                    __html: marked.parse(welcomeMessage || "Hello! I'm Jaiya, your AI companion. I can help you find the perfect AI advisor for any situation.") as string
+                    __html: marked.parse(welcomeMessage || "Hello! I'm Super AI, your AI companion. I can help you find the perfect AI advisor for any situation.") as string
                   }}
                 />
               </div>

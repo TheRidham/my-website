@@ -24,7 +24,7 @@ function Jaiya({
   isSidebarOpen, 
   categoryKey,
   subcategoryTitle,
-  advisorName = "Jaiya",
+  advisorName = "Super AI",
   advisorAvatar = jaiyaAvatar,
   onBack
 }: JaiyaProps) {

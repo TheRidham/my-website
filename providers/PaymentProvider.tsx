@@ -2,13 +2,23 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { httpsCallable } from 'firebase/functions'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore'
 import { functions, db, auth } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
+
+export interface Transaction {
+  id: string
+  amount: number
+  type: 'credit' | 'debit'
+  status: 'pending' | 'success' | 'failed'
+  description: string
+  createdAt: any
+}
 
 interface PaymentContextType {
   walletBalance: number
   isLoading: boolean
+  transactions: Transaction[]
   createPaymentSession: (amount: number, advisorId: string) => Promise<any>
   topUpWallet: (amount: number) => Promise<any>
   payWithWallet: (advisorId: string, amount: number) => Promise<any>
@@ -20,6 +30,7 @@ const PaymentContext = createContext<PaymentContextType | undefined>(undefined)
 
 export function PaymentProvider({ children }: { children: React.ReactNode }) {
   const [walletBalance, setWalletBalance] = useState(0)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
 
@@ -47,6 +58,31 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
     }, (error) => {
       console.error("Error fetching wallet balance:", error)
       setIsLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setTransactions([])
+      return
+    }
+
+    const transactionsQuery = query(
+      collection(db, 'walletTransactions'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    )
+
+    const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+      const txs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Transaction[]
+      setTransactions(txs)
+    }, (error) => {
+      console.error("Error fetching transactions:", error)
     })
 
     return () => unsubscribe()
@@ -113,6 +149,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
     <PaymentContext.Provider value={{
       walletBalance,
       isLoading,
+      transactions,
       createPaymentSession,
       topUpWallet,
       payWithWallet,

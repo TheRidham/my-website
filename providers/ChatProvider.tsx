@@ -28,7 +28,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [activeChat, setActiveChat] = useState({
-    advisorName: "Jaiya",
+    advisorName: "Super AI",
     advisorAvatar: null,
     categoryKey: undefined as string | undefined,
     subcategoryTitle: undefined as string | undefined,
@@ -50,7 +50,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const resetChat = useCallback(() => {
     setActiveChat({
-      advisorName: "Jaiya",
+      advisorName: "Super AI",
       advisorAvatar: null,
       categoryKey: undefined,
       subcategoryTitle: undefined,

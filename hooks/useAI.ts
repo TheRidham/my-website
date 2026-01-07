@@ -19,7 +19,7 @@ const DEFAULT_MESSAGES: Message[] = [];
 
 export const useChatAI = ({
   functionName = 'callOpenAI',
-  systemPrompt = "You are Jaiya, a helpful AI companion.",
+  systemPrompt = "You are Super AI, a helpful AI companion.",
   initialMessages = DEFAULT_MESSAGES,
   appendGeneralPrompt = true
 }: useChatAIOptions = {}) => {

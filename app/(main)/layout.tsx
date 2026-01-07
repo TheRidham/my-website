@@ -21,7 +21,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     ? decodeURIComponent(params.subcategory as string)
     : undefined;
 
-  // Sync URL params with ChatProvider state
   useEffect(() => {
     if (categoryKey && subcategoryTitle) {
       switchChat({
@@ -30,8 +29,6 @@ function Layout({ children }: { children: React.ReactNode }) {
         subcategoryTitle,
       });
     } else if (!pathname.includes("/home/")) {
-      // If we're not in a category/subcategory route, reset to Jaiya
-      // but only if we're not on the home page or allAdvisors
       if (pathname === "/jaiya" || pathname === "/home") {
         resetChat();
       }

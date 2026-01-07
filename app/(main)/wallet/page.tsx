@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
 export default function WalletPage() {
-  const { walletBalance, isLoading, topUpWallet } = usePayment()
+  const { walletBalance, isLoading, topUpWallet, transactions } = usePayment()
   const [isTopUpLoading, setIsTopUpLoading] = useState(false)
   const [amount, setAmount] = useState('500')
   const [mounted, setMounted] = useState(false)
@@ -151,16 +151,64 @@ export default function WalletPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-gray-900">Recent Activity</h3>
-            <button className="text-[11px] font-bold text-primary hover:underline">View All</button>
+            {transactions.length > 5 && (
+              <button className="text-[11px] font-bold text-primary hover:underline">View All</button>
+            )}
           </div>
           
           <Card className="border-none shadow-sm bg-white overflow-hidden">
-            <div className="p-8 text-center space-y-3">
-              <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
-                <History className="w-6 h-6 text-slate-300" />
-              </div>
-              <p className="text-xs font-medium text-slate-500">No transactions yet</p>
-            </div>
+            <CardContent className="p-0">
+              {transactions.length > 0 ? (
+                <div className="divide-y divide-slate-50">
+                  {transactions.slice(0, 10).map((tx) => (
+                    <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center",
+                          tx.type === 'credit' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                        )}>
+                          {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 line-clamp-1">{tx.description || (tx.type === 'credit' ? 'Money Added' : 'Consultation')}</p>
+                          <p className="text-[10px] font-medium text-slate-500">
+                            {tx.createdAt?.toDate ? tx.createdAt.toDate().toLocaleDateString('en-IN', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Recent'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={cn(
+                          "text-sm font-black",
+                          tx.type === 'credit' ? "text-green-600" : "text-slate-900"
+                        )}>
+                          {tx.type === 'credit' ? '+' : '-'}₹{(tx.amount / 100).toLocaleString('en-IN')}
+                        </p>
+                        <p className={cn(
+                          "text-[9px] font-bold uppercase tracking-wider",
+                          tx.status === 'success' ? "text-green-500" : 
+                          tx.status === 'pending' ? "text-amber-500" : "text-red-500"
+                        )}>
+                          {tx.status}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center space-y-3">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
+                    <History className="w-6 h-6 text-slate-300" />
+                  </div>
+                  <p className="text-xs font-medium text-slate-500">No transactions yet</p>
+                </div>
+              )}
+            </CardContent>
           </Card>
         </div>
 
