@@ -40,6 +40,7 @@ export default function SignupPage() {
           gender: null,
           phone: null,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
         router.push("/home");
       }
@@ -75,9 +76,11 @@ export default function SignupPage() {
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
+        const randomNumber = Math.floor(Math.random() * 10000);
         await setDoc(userRef, {
           uid: user.uid,
-          name: "Guest User",
+          name: `guest${randomNumber}`,
+          email: `guest${randomNumber}@gmail.com`,
           isAnonymous: true,
           walletBalance: 0,
           createdAt: serverTimestamp(),
@@ -101,8 +104,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4 bg-white">
-      <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-2xl shadow-blue-200 border border-blue-100">
+    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4">
+      <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-xl ">
         <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
           Create Account
         </h2>

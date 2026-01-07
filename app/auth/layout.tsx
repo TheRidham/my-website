@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AnimatedSection } from "@/hooks/useScrollAnimation";
+import homeBackground from "@/assets/homepage.png";
+import Image from "next/image";
 
 function Layout({ children }: { children: React.ReactNode }) {
   //route protection
@@ -12,7 +14,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (!loading && user) {
-      router.push("/home")
+      router.push("/home");
     }
   }, [user, loading]);
 
@@ -22,7 +24,24 @@ function Layout({ children }: { children: React.ReactNode }) {
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
       </div>
     );
-  return <div><AnimatedSection animation="fade-up" delay={200}>{children}</AnimatedSection></div>;
+  return (
+    <div className="relative min-h-screen">
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
+        <img
+          src={homeBackground.src}
+          alt="Background"
+          className="object-cover"
+        />
+         <div className="absolute inset-0 bg-black/70" />
+      </div>
+
+      {/* Content */}
+      <AnimatedSection animation="fade-up" delay={200}>
+        {children}
+      </AnimatedSection>
+    </div>
+  );
 }
 
 export default Layout;
