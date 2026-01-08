@@ -11,12 +11,18 @@ import { useParams } from 'next/navigation'
 export function SubcategoryList({ categoryKey: propCategoryKey }: { categoryKey?: string }) {
   const params = useParams()
   const { switchChat } = useChat()
+
+  //debugging
+  console.log("params: ", params)
+  console.log("propCategoryKey: ", propCategoryKey)
   
   const categoryKey = propCategoryKey || (params.category as string)
 
   if (!categoryKey || !ADVISOR_CATEGORIES[categoryKey]) return null
 
   const category = ADVISOR_CATEGORIES[categoryKey]
+
+  console.log(category);
 
   return (
     <div className="flex flex-col h-full bg-slate-50 pb-24">

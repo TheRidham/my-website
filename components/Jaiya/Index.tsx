@@ -10,6 +10,7 @@ import { LucideIcon } from '../ui/LucideIcon'
 import { HumanAdvisorModal } from '../Chat/HumanAdvisorModal'
 import { Button } from '../ui/button'
 import { usePayment } from '@/providers/PaymentProvider'
+import AIChatHistorySheet from '../Chat/AIChatHistorySheet'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -31,7 +32,13 @@ function Jaiya({
   const chatRef = useRef<AIChatHandle>(null);
   const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
   const { walletBalance } = usePayment();
+  //for chat history
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false)
+
   const isAdvisorChat = !!categoryKey;
+  
+  console.log(categoryKey, subcategoryTitle, isSidebarOpen)
   
   const category = categoryKey ? ADVISOR_CATEGORIES[categoryKey] : null;
   const subcategory = category && subcategoryTitle 
@@ -40,7 +47,10 @@ function Jaiya({
 
   const handleNewChat = () => {
     chatRef.current?.clearMessages();
+    setCurrentChatId(null);
   };
+
+  
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -112,7 +122,7 @@ function Jaiya({
             >
               <Plus size={22} />
             </button>
-            <button className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chat History">
+            <button onClick={() => setIsOpen(true)} className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Chat History">
               <History size={22} />
             </button>
             <button 
@@ -135,6 +145,8 @@ function Jaiya({
           categoryKey={categoryKey}
           subcategoryTitle={subcategoryTitle}
           isJaiya={!isAdvisorChat}
+          chatId={currentChatId}
+          setChatId={setCurrentChatId}
         />
       </div>
 
@@ -144,6 +156,7 @@ function Jaiya({
         categoryKey={categoryKey}
         subcategoryTitle={subcategoryTitle}
       />
+      <AIChatHistorySheet open={isOpen} setOpen={setIsOpen} />
     </div>
   )
 }
