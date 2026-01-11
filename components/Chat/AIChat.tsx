@@ -31,38 +31,6 @@ export interface AIChatHandle {
   clearMessages: () => void;
 }
 
-const getMatcherPrompt = (categories: typeof ADVISOR_CATEGORIES) => {
-  const tags = Object.entries(categories).reduce((acc, [key, cat]) => {
-    acc[key] = {
-      categoryName: cat.name,
-      categoryTag: key,
-      subCategories: cat.categories.map((sub) => sub.title),
-    };
-    return acc;
-  }, {} as any);
-
-  return `
-You are an intelligent advisor category matcher. Your task is to analyze user questions and match them to the most relevant category and subcategory from the dataset below.
-
-ADVISOR_DATA:
-${JSON.stringify(tags, null, 2)}
-
-**Instructions:**
-1. **Be flexible and understanding**: User questions may use different words, slang, or colloquial terms. Understand the intent and context, not just exact keyword matches.
-2. **Use semantic understanding**: Match based on meaning and context.
-3. **Match partial information**: If the query is related to a category but not specific about subcategory, choose the most logical subcategory.
-4. **Respond in strict JSON format only**:
-   - If you find a match: { "isfind": true, "categoryTag": "<tag>", "categoryName": "<name>", "subCategoryName": "<subcategory>" }
-   - If no match: { "isfind": false, "response": "<helpful message explaining what services are available and suggesting user to rephrase or browse categories>" }
-
-**Important:**
-- The "categoryTag" MUST be one of the keys from ADVISOR_DATA (e.g., "nutrition", "fitness").
-- The "subCategoryName" MUST be one of the subCategories listed under that tag.
-- Always return valid JSON.
-- No extra text, markdown, or explanation outside the JSON.
-- Be helpful and user-friendly in responses`;
-};
-
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -77,11 +45,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { jaiyaPrompt, advisorsPrompt } = usePrompts();
-    const { switchChat } = useChat();
+    const { switchChat, activeChat } = useChat();
     const { createChat, updateChat } = useChatHistory(auth.currentUser?.uid);
     
     // Add a ref to track messages for immediate saving
     const messagesRef = useRef<any[]>([]);
+    // Track if we've processed the initial message to avoid duplicates
+    const initialMessageProcessedRef = useRef(false);
 
     // Configure marked options
     marked.setOptions({
@@ -92,9 +62,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     // Resolve prompt and welcome message
     const { systemPrompt, welcomeMessage } = useMemo(() => {
       if (isJaiya) {
-        const matcherPrompt = getMatcherPrompt(ADVISOR_CATEGORIES);
+        // Use Firestore prompt directly (same as Android app)
         return {
-          systemPrompt: matcherPrompt,
+          systemPrompt: jaiyaPrompt?.prompt,
           welcomeMessage: jaiyaPrompt?.welcomeMessage,
         };
       }
@@ -103,11 +73,15 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         const categoryData = advisorsPrompt?.[categoryKey];
         const advisorData = categoryData?.[subcategoryTitle];
 
-        // if (!advisorData && advisorsPrompt) {
-        //   if (advisorsPrompt[categoryKey]) {
-        //     console.log('AIChat: Available subcategories in', categoryKey, ':', Object.keys(advisorsPrompt[categoryKey]));
-        //   }
-        // }
+        if (!advisorData) {
+          console.error('AIChat: Advisor data not found for:', { categoryKey, subcategoryTitle });
+          if (advisorsPrompt) {
+            console.log('AIChat: Available categories:', Object.keys(advisorsPrompt));
+            if (categoryData) {
+              console.log('AIChat: Available subcategories in', categoryKey, ':', Object.keys(categoryData));
+            }
+          }
+        }
 
         // Combine subcategory prompt with category general prompt
         const combinedSystemPrompt = advisorData?.prompt
@@ -126,14 +100,19 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       };
     }, [isJaiya, categoryKey, subcategoryTitle, jaiyaPrompt, advisorsPrompt]);
 
-    const { messages, isLoading, sendMessage, clearMessages } = useChatAI({
+    const { messages, isLoading, isStreaming, sendMessage, sendMessageStream, clearMessages } = useChatAI({
       systemPrompt,
       appendGeneralPrompt: !isJaiya,
+      isJaiya,
     });
 
-    // Update messagesRef whenever messages change
+    // Update messagesRef whenever messages change (for streaming)
     useEffect(() => {
-      messagesRef.current = messages;
+      messagesRef.current = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp || new Date().toISOString()
+      }));
     }, [messages]);
 
     useImperativeHandle(ref, () => ({
@@ -146,6 +125,33 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         clearMessages();
       };
     }, [clearMessages]);
+
+    // Auto-send initial message if provided (for Jaiya redirects)
+    useEffect(() => {
+      const initialMessage = activeChat?.initialMessage;
+
+      // Only process if:
+      // 1. There's an initial message
+      // 2. We haven't processed it yet
+      // 3. We're not in Jaiya mode
+      // 4. Messages are empty (fresh chat)
+      if (initialMessage && !initialMessageProcessedRef.current && !isJaiya && messages.length === 0) {
+        console.log('AIChat: Auto-sending initial message:', initialMessage);
+
+        // Mark as processed to prevent duplicates
+        initialMessageProcessedRef.current = true;
+
+        // Small delay to ensure component is fully mounted
+        setTimeout(() => {
+          processMessage(initialMessage);
+        }, 100);
+      }
+
+      // Reset the flag when switching to a different chat without initial message
+      if (!initialMessage && initialMessageProcessedRef.current) {
+        initialMessageProcessedRef.current = false;
+      }
+    }, [activeChat?.initialMessage, isJaiya, messages.length]);
 
     const suggestions = useMemo(() => {
       if (categoryKey && subcategoryTitle) {
@@ -166,35 +172,26 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, [messages, isLoading]);
+    }, [messages, isLoading, isStreaming]);
 
     const processMessage = async (content: string) => {
-      if (!content.trim() || isLoading) {
+      if (!content.trim() || isLoading || isStreaming) {
         return;
       }
 
-      // Create user message object
-      const userMessage = {
-        role: 'user',
-        content: content,
-        timestamp: new Date().toISOString()
-      };
+      // Send message using streaming
+      // The hook will automatically add the user message and stream the response
+      await sendMessageStream(content);
 
-      // Update the ref immediately with user message
-      messagesRef.current = [...messagesRef.current, userMessage];
-
-      // Send message and get response
-      const response = await sendMessage(content);
-
-      // Add AI response to the ref
-      if (response) {
-        const aiMessage = {
-          role: 'assistant',
-          content: response,
-          timestamp: new Date().toISOString()
-        };
-        messagesRef.current = [...messagesRef.current, aiMessage];
-      }
+      // Wait for streaming to complete
+      await new Promise<void>((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!isStreaming) {
+            clearInterval(checkInterval);
+            setTimeout(resolve, 100);
+          }
+        }, 100);
+      });
 
       // Save messages to Firebase (only for non-Jaiya chats)
       if (!isJaiya) {
@@ -209,14 +206,14 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
           console.log("Creating new chat...");
           const chatTitle =
             content.length > 30 ? content.slice(0, 30) + "..." : content;
-          
+
           const newChatId = await createChat(
             chatTitle,
             messagesToSave,
             categoryKey as string,
             subcategoryTitle as string
           );
-          
+
           if (newChatId) {
             setChatId(newChatId);
             console.log("New chat created with ID:", newChatId);
@@ -229,65 +226,73 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       }
 
       // Handle Jaiya's category matching logic
-      if (isJaiya && response) {
-        try {
-          const jsonMatch = response.match(/\{[\s\S]*\}/);
-          const jsonStr = jsonMatch ? jsonMatch[0] : response;
+      if (isJaiya) {
+        // Get the LATEST messages after streaming completes
+        const latestMessages = messagesRef.current.filter(m => m.role === 'assistant');
+        const lastAssistantMessage = latestMessages.pop();
+        const response = lastAssistantMessage?.content;
 
-          const data = JSON.parse(jsonStr);
+        if (response) {
+          try {
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            const jsonStr = jsonMatch ? jsonMatch[0] : response;
 
-          if (data.isfind) {
-            const categoryTag = data.categoryTag?.toLowerCase();
-            const categoryName = data.categoryName?.toLowerCase();
+            const data = JSON.parse(jsonStr);
 
-            let category = ADVISOR_CATEGORIES[categoryTag];
-            if (!category) {
-              const foundCategory = Object.values(ADVISOR_CATEGORIES).find(
-                (cat) => cat.name.toLowerCase() === categoryName
-              );
-              if (foundCategory) {
-                category = foundCategory;
+            if (data.isfind) {
+              const categoryTag = data.categoryTag?.toLowerCase();
+              const categoryName = data.categoryName?.toLowerCase();
+
+              let category = ADVISOR_CATEGORIES[categoryTag];
+              if (!category) {
+                const foundCategory = Object.values(ADVISOR_CATEGORIES).find(
+                  (cat) => cat.name.toLowerCase() === categoryName
+                );
+                if (foundCategory) {
+                  category = foundCategory;
+                }
               }
-            }
 
-            if (category) {
-              const targetTag = Object.keys(ADVISOR_CATEGORIES).find(
-                (key) => ADVISOR_CATEGORIES[key] === category
-              );
+              if (category) {
+                const targetTag = Object.keys(ADVISOR_CATEGORIES).find(
+                  (key) => ADVISOR_CATEGORIES[key] === category
+                );
 
-              const subcategory = category.categories.find(
-                (c) =>
-                  c.title.toLowerCase() === data.subCategoryName?.toLowerCase()
-              );
+                const subcategory = category.categories.find(
+                  (c) =>
+                    c.title.toLowerCase() === data.subCategoryName?.toLowerCase()
+                );
 
-              if (subcategory) {
-                switchChat({
-                  name: subcategory.title,
-                  categoryKey: targetTag,
-                  subcategoryTitle: subcategory.title,
-                });
+                if (subcategory) {
+                  switchChat({
+                    name: subcategory.title,
+                    categoryKey: targetTag,
+                    subcategoryTitle: subcategory.title,
+                    initialMessage: content, // Pass the original user message
+                  });
+                } else {
+                  console.warn(
+                    "processMessage subcategory not found:",
+                    data.subCategoryName
+                  );
+                }
               } else {
                 console.warn(
-                  "processMessage subcategory not found:",
-                  data.subCategoryName
+                  "processMessage category not found for tag:",
+                  categoryTag,
+                  "or name:",
+                  categoryName
                 );
               }
             } else {
-              console.warn(
-                "processMessage category not found for tag:",
-                categoryTag,
-                "or name:",
-                categoryName
+              console.log(
+                "processMessage AI did not find a match. Response:",
+                data.response
               );
             }
-          } else {
-            console.log(
-              "processMessage AI did not find a match. Response:",
-              data.response
-            );
+          } catch (e) {
+            console.error("processMessage JSON parse error:", e);
           }
-        } catch (e) {
-          console.error("processMessage JSON parse error:", e);
         }
       }
     };
@@ -332,6 +337,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
             {/* Chat History */}
             {messages.map((msg, index) => {
+              // Hide streaming messages for Jaiya (show "Thinking..." instead)
+              if (isJaiya && (msg as any)._isStreaming) {
+                return null;
+              }
+
               // If it's Jaiya and the message looks like JSON, we might want to hide it or show the 'response' field
               let displayContent = msg.content;
               if (isJaiya && msg.role === "assistant") {
@@ -374,7 +384,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             })}
 
             {/* Loading State */}
-            {isLoading && (
+            {/* For Jaiya: Show during entire loading/streaming */}
+            {/* For others: Show only when loading and no streaming message yet */}
+            {isLoading && (isJaiya || !messages.some(m => (m as any)._isStreaming)) && (
               <div className="flex justify-start">
                 <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
                   <div className="flex items-center gap-2">
