@@ -19,12 +19,19 @@ import { HumanAdvisorModal } from "./HumanAdvisorModal";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { auth } from "@/lib/firebase";
 
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
 interface AIChatProps {
   categoryKey?: string;
   subcategoryTitle?: string;
   isJaiya?: boolean;
   chatId?: string | null;
   setChatId: any;
+  history: Message[] | null;
 }
 
 export interface AIChatHandle {
@@ -38,7 +45,14 @@ interface Message {
 
 export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
   (
-    { categoryKey, subcategoryTitle, isJaiya = false, chatId, setChatId },
+    {
+      categoryKey,
+      subcategoryTitle,
+      isJaiya = false,
+      chatId,
+      setChatId,
+      history,
+    },
     ref
   ) => {
     const [input, setInput] = useState("");
@@ -47,11 +61,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     const { jaiyaPrompt, advisorsPrompt } = usePrompts();
     const { switchChat, activeChat } = useChat();
     const { createChat, updateChat } = useChatHistory(auth.currentUser?.uid);
-    
-    // Add a ref to track messages for immediate saving
+
     const messagesRef = useRef<any[]>([]);
     // Track if we've processed the initial message to avoid duplicates
     const initialMessageProcessedRef = useRef(false);
+    const isHistoryLoadedRef = useRef(false);
 
     // Configure marked options
     marked.setOptions({
@@ -100,11 +114,32 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       };
     }, [isJaiya, categoryKey, subcategoryTitle, jaiyaPrompt, advisorsPrompt]);
 
-    const { messages, isLoading, isStreaming, sendMessage, sendMessageStream, clearMessages } = useChatAI({
-      systemPrompt,
-      appendGeneralPrompt: !isJaiya,
-      isJaiya,
-    });
+    const { messages, isLoading, sendMessage, clearMessages, setMessages, isStreaming, sendMessageStream } =
+      useChatAI({
+        systemPrompt,
+        appendGeneralPrompt: !isJaiya,
+      });
+
+    // Load chat history when component mounts or history prop changes
+    useEffect(() => {
+      if (history && history.length > 0 && !isHistoryLoadedRef.current) {
+        // Convert history format to match the messages format
+        const formattedHistory = history.map((msg) => ({
+          role: msg.role,
+          //@ts-ignore
+          content: msg.text,
+        }));
+
+        setMessages(formattedHistory);
+        messagesRef.current = formattedHistory;
+        isHistoryLoadedRef.current = true;
+      }
+    }, [history, setMessages]);
+
+    // Reset history loaded flag when chatId changes (new chat or different chat selected)
+    useEffect(() => {
+      isHistoryLoadedRef.current = false;
+    }, [chatId]);
 
     // Update messagesRef whenever messages change (for streaming)
     useEffect(() => {
@@ -116,7 +151,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     }, [messages]);
 
     useImperativeHandle(ref, () => ({
-      clearMessages,
+      clearMessages: () => {
+        clearMessages();
+        messagesRef.current = [];
+        isHistoryLoadedRef.current = false;
+      },
     }));
 
     // Clear messages on unmount to stop any pending AI responses
@@ -195,15 +234,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
       // Save messages to Firebase (only for non-Jaiya chats)
       if (!isJaiya) {
-        // Prepare messages for saving (convert to the format expected by Firebase)
-        const messagesToSave = messagesRef.current.map(msg => ({
+        const messagesToSave = messagesRef.current.map((msg) => ({
           role: msg.role,
           text: msg.content,
-          timestamp: msg.timestamp || new Date().toISOString()
+          timestamp: msg.timestamp || new Date().toISOString(),
         }));
 
         if (!chatId) {
-          console.log("Creating new chat...");
           const chatTitle =
             content.length > 30 ? content.slice(0, 30) + "..." : content;
 
@@ -216,12 +253,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
           if (newChatId) {
             setChatId(newChatId);
-            console.log("New chat created with ID:", newChatId);
           }
         } else {
-          console.log("Updating existing chat...");
           await updateChat(chatId, messagesToSave);
-          console.log("Chat updated successfully");
         }
       }
 
@@ -375,7 +409,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                     <div
                       className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
                       dangerouslySetInnerHTML={{
-                        __html: marked.parse(displayContent) as string,
+                        __html: marked.parse(displayContent ?? ""),
                       }}
                     />
                   </div>

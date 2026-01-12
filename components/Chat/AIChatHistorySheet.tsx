@@ -11,15 +11,24 @@ import {
 import { auth } from "@/lib/firebase";
 import { Trash2, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 interface Props {
   open: boolean;
   setOpen: any;
+  setChatId: any;
+  setHistory: any;
 }
 
-export default function AIChatHistorySheet({ open, setOpen }: Props) {
+export default function AIChatHistorySheet({
+  open,
+  setOpen,
+  setChatId,
+  setHistory
+}: Props) {
   const { chats, loading, deleteChat } = useChatHistory(auth.currentUser?.uid);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleDelete = async (chatId: string) => {
     if (window.confirm("Are you sure you want to delete this chat?")) {
@@ -28,21 +37,22 @@ export default function AIChatHistorySheet({ open, setOpen }: Props) {
     }
   };
 
-//   const formatDate = (timestamp: Date) => {
-//     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-//     const now = new Date();
-//     const diffInMs = now.getTime() - date.getTime();
-//     const diffInHours = diffInMs / (1000 * 60 * 60);
-//     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+  //   const formatDate = (timestamp: Date) => {
+  //     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+  //     const now = new Date();
+  //     const diffInMs = now.getTime() - date.getTime();
+  //     const diffInHours = diffInMs / (1000 * 60 * 60);
+  //     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
-//     if (diffInHours < 24) {
-//       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-//     } else if (diffInDays < 7) {
-//       return date.toLocaleDateString('en-US', { weekday: 'short' });
-//     } else {
-//       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-//     }
-//   };
+  //     if (diffInHours < 24) {
+  //       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  //     } else if (diffInDays < 7) {
+  //       return date.toLocaleDateString('en-US', { weekday: 'short' });
+  //     } else {
+  //       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  //     }
+  //   };
+
 
   return (
     <>
@@ -55,7 +65,7 @@ export default function AIChatHistorySheet({ open, setOpen }: Props) {
               View and manage your previous AI conversations
             </SheetDescription>
           </SheetHeader>
-          
+
           <div className="mt-6 overflow-y-auto h-[calc(100vh-120px)]">
             {loading ? (
               <div className="flex items-center justify-center py-8">
@@ -77,7 +87,16 @@ export default function AIChatHistorySheet({ open, setOpen }: Props) {
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
-                    onClick={() => setSelectedChatId(chat.id)}
+                    onClick={() => {
+                      setChatId(chat.id);
+                      setHistory(chat.messages);
+                      setOpen(false);
+                      router.push(
+                        `/home/${chat.advisorName}/${encodeURIComponent(
+                          chat.advisorCategory
+                        )}`
+                      );
+                    }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -85,7 +104,7 @@ export default function AIChatHistorySheet({ open, setOpen }: Props) {
                         <h3 className="font-semibold text-gray-900 truncate mb-1">
                           {chat.title}
                         </h3>
-                        
+
                         {/* Advisor Info */}
                         <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
                           <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
@@ -94,19 +113,19 @@ export default function AIChatHistorySheet({ open, setOpen }: Props) {
                           <span className="text-gray-400">•</span>
                           <span>{chat.advisorCategory}</span>
                         </div>
-                        
+
                         {/* Last Message */}
                         <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                           {chat.lastMessage}
                         </p>
-                        
+
                         {/* Timestamp */}
                         {/* <div className="flex items-center gap-1 text-xs text-gray-500">
                           <Clock size={12} />
                           <span>{formatDate(chat.timestamp)}</span>
                         </div> */}
                       </div>
-                      
+
                       {/* Delete Button */}
                       <Button
                         variant="ghost"

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect} from 'react'
 import { AIChat, AIChatHandle } from '../Chat/AIChat'
 import { ChevronLeft, Wallet, History, Plus, User } from 'lucide-react'
 import Image from 'next/image'
@@ -21,6 +21,11 @@ interface JaiyaProps {
   onBack?: () => void;
 }
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 function Jaiya({ 
   isSidebarOpen, 
   categoryKey,
@@ -32,9 +37,10 @@ function Jaiya({
   const chatRef = useRef<AIChatHandle>(null);
   const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
   const { walletBalance } = usePayment();
-  //for chat history
+  //states for chat history
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false)
+  const [msgHistory, setMsgHistory] = useState<Message[] | null>(null);
 
   const isAdvisorChat = !!categoryKey;
   
@@ -48,9 +54,8 @@ function Jaiya({
   const handleNewChat = () => {
     chatRef.current?.clearMessages();
     setCurrentChatId(null);
+    setMsgHistory(null);
   };
-
-  
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -147,6 +152,7 @@ function Jaiya({
           isJaiya={!isAdvisorChat}
           chatId={currentChatId}
           setChatId={setCurrentChatId}
+          history={msgHistory}
         />
       </div>
 
@@ -156,7 +162,7 @@ function Jaiya({
         categoryKey={categoryKey}
         subcategoryTitle={subcategoryTitle}
       />
-      <AIChatHistorySheet open={isOpen} setOpen={setIsOpen} />
+      <AIChatHistorySheet open={isOpen} setOpen={setIsOpen} setChatId={setCurrentChatId} setHistory={setMsgHistory} />
     </div>
   )
 }

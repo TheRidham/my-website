@@ -306,6 +306,7 @@ export const useChatAI = ({
     error,
     sendMessage,
     sendMessageStream,
-    clearMessages
+    clearMessages,
+    setMessages
   };
 };
