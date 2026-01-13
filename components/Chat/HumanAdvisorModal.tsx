@@ -4,7 +4,14 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { usePayment } from "@/providers/PaymentProvider";
 import { usePrice } from "@/providers/PriceProvider";
-import { Loader2, User, Star, MessageSquare, Wallet, DollarSign } from "lucide-react";
+import {
+  Loader2,
+  User,
+  Star,
+  MessageSquare,
+  Wallet,
+  DollarSign,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import CardSwipeLoader from "../CardSwipeLoader";
 
 interface Advisor {
   id: string;
@@ -42,7 +50,8 @@ export function HumanAdvisorModal({
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { walletBalance, createDodoPaymentSession, payWithWallet } = usePayment();
+  const { walletBalance, createDodoPaymentSession, payWithWallet } =
+    usePayment();
   const { price } = usePrice();
 
   const router = useRouter();
@@ -112,7 +121,7 @@ export function HumanAdvisorModal({
       const amountInPaise = price * 100;
       // Use Dodo instead of Razorpay
       const result = await createDodoPaymentSession(amountInPaise, advisorId);
-      console.log("dodo result:", result)
+      console.log("dodo result:", result);
       if (result.paymentUrl) {
         // Store sessionId in sessionStorage as a backup for verification
         if (result.sessionId) {
@@ -206,29 +215,35 @@ export function HumanAdvisorModal({
               </div>
 
               <div className="grid grid-cols-1 gap-3">
-                <Button
-                  onClick={() => handleWalletPayment(selectedAdvisor.id)}
-                  disabled={isProcessing}
-                  className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
-                >
-                  <div className="flex items-center gap-3">
-                    <Wallet className="w-5 h-5" />
-                    <span>{isProcessing ? "Processing..." : "Pay with Wallet"}</span>
-                  </div>
-                  <span className="text-lg">₹{price}</span>
-                </Button>
-
-                <Button
-                  onClick={() => handleRazorpayPayment(selectedAdvisor.id)}
-                  disabled={isProcessing}
-                  className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
-                >
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="w-5 h-5" />
-                    <span>{isProcessing ? "Processing..." : "Pay with Razorpay"}</span>
-                  </div>
-                  <span className="text-lg">₹{price}</span>
-                </Button>
+                {isProcessing ? <CardSwipeLoader /> : null}
+                {isProcessing ? null : (
+                  <Button
+                    onClick={() => handleWalletPayment(selectedAdvisor.id)}
+                    disabled={isProcessing}
+                    className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Wallet className="w-5 h-5" />
+                      <span>Pay with Wallet</span>
+                    </div>
+                    <span className="text-lg">₹{price}</span>
+                  </Button>
+                )}
+                {isProcessing ? null : (
+                  <Button
+                    onClick={() => handleRazorpayPayment(selectedAdvisor.id)}
+                    disabled={isProcessing}
+                    className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
+                  >
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="w-5 h-5" />
+                      <span>
+                        Pay via UPI / Card
+                      </span>
+                    </div>
+                    <span className="text-lg">₹{price}</span>
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
