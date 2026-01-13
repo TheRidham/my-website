@@ -24,6 +24,8 @@ interface PaymentContextType {
   payWithWallet: (advisorId: string, amount: number) => Promise<any>
   verifyPayment: (sessionId: string, advisorId: string, paymentId?: string, paymentLinkId?: string) => Promise<any>
   verifyWalletPayment: (sessionId: string, paymentId?: string, paymentLinkId?: string) => Promise<any>
+  createDodoPaymentSession: (amount: number, advisorId: string) => Promise<any>
+  createDodoWalletTopup: (amount: number) => Promise<any>
 }
 
 const PaymentContext = createContext<PaymentContextType | undefined>(undefined)
@@ -145,6 +147,35 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
     return result.data
   }, [])
 
+  // ========================================
+  // DODO PAYMENT METHODS (NEW)
+  // ========================================
+
+  const createDodoPaymentSession = useCallback(async (amount: number, advisorId: string) => {
+    const createDodoAdvisorSession = httpsCallable(functions, 'createDodoAdvisorSession')
+
+    const result = await createDodoAdvisorSession({
+      amount,
+      advisorId,
+      returnUrl: `${window.location.origin}/payment-callback`,
+      isDev: process.env.NODE_ENV === 'development'
+    })
+
+    return result.data
+  }, [])
+
+  const createDodoWalletTopup = useCallback(async (amount: number) => {
+    const createDodoWalletTopupSession = httpsCallable(functions, 'createDodoWalletTopupSession')
+
+    const result = await createDodoWalletTopupSession({
+      amount,
+      returnUrl: `${window.location.origin}/wallet/callback`,
+      isDev: process.env.NODE_ENV === 'development'
+    })
+
+    return result.data
+  }, [])
+
   return (
     <PaymentContext.Provider value={{
       walletBalance,
@@ -154,7 +185,9 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
       topUpWallet,
       payWithWallet,
       verifyPayment,
-      verifyWalletPayment
+      verifyWalletPayment,
+      createDodoPaymentSession,
+      createDodoWalletTopup
     }}>
       {children}
     </PaymentContext.Provider>

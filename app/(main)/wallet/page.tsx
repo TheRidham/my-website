@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
 export default function WalletPage() {
-  const { walletBalance, isLoading, topUpWallet, transactions } = usePayment()
+  const { walletBalance, isLoading, createDodoWalletTopup, transactions } = usePayment()
   const [isTopUpLoading, setIsTopUpLoading] = useState(false)
   const [amount, setAmount] = useState('500')
   const [mounted, setMounted] = useState(false)
@@ -28,7 +28,8 @@ export default function WalletPage() {
 
     setIsTopUpLoading(true)
     try {
-      const result = await topUpWallet(numAmount * 100) // Convert to paise
+      // Use Dodo instead of Razorpay
+      const result = await createDodoWalletTopup(numAmount * 100)
       if (result.paymentUrl) {
         // Store sessionId in sessionStorage as a backup for verification
         if (result.sessionId) {

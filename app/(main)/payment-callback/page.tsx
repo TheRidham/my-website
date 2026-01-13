@@ -26,6 +26,8 @@ function PaymentCallbackContent() {
     // Wait for auth to settle
     if (isLoading || verificationStarted) return;
 
+    // Extract parameters
+    const gateway = searchParams.get("gateway") || "razorpay";
     const sessionId =
       searchParams.get("sessionId") ||
       searchParams.get("razorpay_payment_link_reference_id") ||
@@ -33,11 +35,20 @@ function PaymentCallbackContent() {
     const razorpayPaymentId = searchParams.get("razorpay_payment_id");
     const razorpayPaymentLinkId = searchParams.get("razorpay_payment_link_id");
     const advisorId = searchParams.get("advisorId");
+    const cancelled = searchParams.get("cancelled");
 
     console.log("sessionId", sessionId);
     console.log("razorPayPaymentId", razorpayPaymentId);
     console.log("razorPayPaymentLinkId", razorpayPaymentLinkId);
     console.log("advisorId", advisorId);
+    console.log("gateway", gateway);
+
+    // Handle cancelled payment
+    if (cancelled === 'true') {
+      setStatus("error");
+      setError("Payment was cancelled");
+      return;
+    }
 
     if ((!sessionId && !razorpayPaymentLinkId) || !advisorId) {
       setStatus("error");
@@ -71,31 +82,74 @@ function PaymentCallbackContent() {
           }
         }
 
-        const result = await verifyPayment(
-          sessionId || razorpayPaymentLinkId!,
-          advisorId,
-          razorpayPaymentId || "pending",
-          razorpayPaymentLinkId || undefined
-        );
+        if (gateway === 'dodo') {
+          // ========================================
+          // DODO PAYMENT HANDLER
+          // Webhook processes payment asynchronously
+          // Poll session status until webhook completes
+          // ========================================
 
-        if (result.success) {
-          // Clear the stored session ID on success
-          sessionStorage.removeItem("last_payment_session_id");
-
-          if (result.alreadyProcessed) {
-            setSuccessMessage(
-              "Payment already processed! Redirecting to chat..."
-            );
-          }
-
+          setSuccessMessage("Payment is being processed. You'll be connected to your advisor shortly...");
           setStatus("success");
-          // Redirect to chat after a short delay
-          setTimeout(() => {
-            router.push(`/home/humanChat/${result.roomId}/${advisorId}`);
-          }, 3000);
+
+          // Poll for session completion
+          let attempts = 0;
+          const maxAttempts = 20; // 1 minute total (20 * 3 seconds)
+
+          const pollInterval = setInterval(async () => {
+            attempts++;
+
+            try {
+              // Check session status in Firestore
+              const sessionDoc = await getDoc(doc(db, 'paymentSessions', sessionId!));
+              const sessionData = sessionDoc.data();
+
+              if (sessionData?.status === 'completed' && sessionData?.roomId) {
+                // Payment processed, redirect to chat
+                clearInterval(pollInterval);
+                setTimeout(() => {
+                  router.push(`/home/humanChat/${sessionData.roomId}/${advisorId}`);
+                }, 1000);
+              } else if (attempts >= maxAttempts) {
+                // Timeout - show helpful message
+                clearInterval(pollInterval);
+                setError("Payment is taking longer than expected. Please check your wallet in a few minutes.");
+                setStatus("error");
+              }
+            } catch (error) {
+              console.error('[Dodo Callback] Polling error:', error);
+            }
+          }, 3000); // Check every 3 seconds
+
+          return;
+
         } else {
-          setStatus("error");
-          setError("Payment verification failed");
+          // ========================================
+          // RAZORPAY PAYMENT HANDLER (EXISTING - KEEP)
+          // ========================================
+
+          const result = await verifyPayment(
+            sessionId || razorpayPaymentLinkId!,
+            advisorId,
+            razorpayPaymentId || "pending",
+            razorpayPaymentLinkId || undefined
+          );
+
+          if (result.success) {
+            sessionStorage.removeItem("last_payment_session_id");
+
+            if (result.alreadyProcessed) {
+              setSuccessMessage("Payment already processed! Redirecting to chat...");
+            }
+
+            setStatus("success");
+            setTimeout(() => {
+              router.push(`/home/humanChat/${result.roomId}/${advisorId}`);
+            }, 3000);
+          } else {
+            setStatus("error");
+            setError("Payment verification failed");
+          }
         }
       } catch (err: any) {
         console.error("Verification error:", err);

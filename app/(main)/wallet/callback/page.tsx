@@ -24,11 +24,20 @@ function WalletCallbackContent() {
     // Wait for auth to settle
     if (isLoading || verificationStarted) return
 
-    const sessionId = searchParams.get('sessionId') || 
+    const gateway = searchParams.get("gateway") || "razorpay"
+    const sessionId = searchParams.get('sessionId') ||
                      searchParams.get('razorpay_payment_link_reference_id') ||
                      sessionStorage.getItem('last_wallet_session_id')
     const razorpayPaymentId = searchParams.get('razorpay_payment_id')
     const razorpayPaymentLinkId = searchParams.get('razorpay_payment_link_id')
+    const cancelled = searchParams.get("cancelled")
+
+    // Handle cancelled payment
+    if (cancelled === 'true') {
+      setStatus("error")
+      setError("Payment was cancelled")
+      return
+    }
 
     if (!sessionId && !razorpayPaymentLinkId) {
       setStatus('error')
@@ -39,37 +48,74 @@ function WalletCallbackContent() {
     const verify = async () => {
       setVerificationStarted(true)
       try {
-        // Ensure user document exists in Firestore to avoid backend NOT_FOUND error
-        const currentUser = auth.currentUser
-        if (currentUser) {
-          const userRef = doc(db, 'users', currentUser.uid)
-          const userSnap = await getDoc(userRef)
-        }
-        
-        // Use sessionId if available, otherwise fallback to razorpayPaymentLinkId
-        const result = await verifyWalletPayment(
-          sessionId || razorpayPaymentLinkId!, 
-          razorpayPaymentId || 'pending',
-          razorpayPaymentLinkId || undefined
-        )
-        
-        if (result.success) {
-          // Clear the stored session ID on success
-          sessionStorage.removeItem('last_wallet_session_id')
-          
-          if (result.alreadyProcessed) {
-            setSuccessMessage('Payment already processed! Redirecting to wallet...')
-          } else if (result.amount) {
-            setSuccessMessage(`Payment successful! ₹${(result.amount / 100).toFixed(2)} added to your wallet.`)
-          }
+        if (gateway === 'dodo') {
+          // ========================================
+          // DODO WALLET HANDLER
+          // Webhook processes payment asynchronously
+          // ========================================
 
-          setStatus('success')
-          setTimeout(() => {
-            router.push('/wallet')
+          setSuccessMessage("Payment is being processed. Your wallet will be credited shortly...")
+          setStatus("success")
+
+          // Poll for session completion
+          let attempts = 0
+          const maxAttempts = 20
+
+          const pollInterval = setInterval(async () => {
+            attempts++
+
+            try {
+              const sessionDoc = await getDoc(doc(db, 'walletSessions', sessionId!))
+              const sessionData = sessionDoc.data()
+
+              if (sessionData?.status === 'completed') {
+                // Payment processed
+                clearInterval(pollInterval)
+                setSuccessMessage(`Payment successful! ₹${(sessionData.amount / 100).toFixed(2)} added to your wallet.`)
+
+                setTimeout(() => {
+                  router.push('/wallet')
+                }, 3000)
+              } else if (attempts >= maxAttempts) {
+                clearInterval(pollInterval)
+                setError("Payment is taking longer than expected. Please check your wallet in a few minutes.")
+                setStatus("error")
+              }
+            } catch (error) {
+              console.error('[Dodo Wallet Callback] Polling error:', error)
+            }
           }, 3000)
+
+          return
+
         } else {
-          setStatus('error')
-          setError('Wallet top-up verification failed')
+          // ========================================
+          // RAZORPAY HANDLER (EXISTING - KEEP)
+          // ========================================
+
+          const result = await verifyWalletPayment(
+            sessionId || razorpayPaymentLinkId!,
+            razorpayPaymentId || "pending",
+            razorpayPaymentLinkId || undefined
+          )
+
+          if (result.success) {
+            sessionStorage.removeItem('last_wallet_session_id')
+
+            if (result.alreadyProcessed) {
+              setSuccessMessage('Payment already processed! Redirecting to wallet...')
+            } else if (result.amount) {
+              setSuccessMessage(`Payment successful! ₹${(result.amount / 100).toFixed(2)} added to your wallet.`)
+            }
+
+            setStatus("success")
+            setTimeout(() => {
+              router.push('/wallet')
+            }, 3000)
+          } else {
+            setStatus("error")
+            setError('Wallet top-up verification failed')
+          }
         }
       } catch (err: any) {
         console.error('Verification error:', err)

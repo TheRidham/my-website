@@ -42,7 +42,7 @@ export function HumanAdvisorModal({
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { walletBalance, createPaymentSession, payWithWallet } = usePayment();
+  const { walletBalance, createDodoPaymentSession, payWithWallet } = usePayment();
   const { price } = usePrice();
 
   const router = useRouter();
@@ -110,9 +110,9 @@ export function HumanAdvisorModal({
     setIsProcessing(true);
     try {
       const amountInPaise = price * 100;
-      // Pay with Razorpay
-      const result = await createPaymentSession(amountInPaise, advisorId);
-      console.log("razorpay result:", result)
+      // Use Dodo instead of Razorpay
+      const result = await createDodoPaymentSession(amountInPaise, advisorId);
+      console.log("dodo result:", result)
       if (result.paymentUrl) {
         // Store sessionId in sessionStorage as a backup for verification
         if (result.sessionId) {
