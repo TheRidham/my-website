@@ -158,7 +158,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
       amount,
       advisorId,
       returnUrl: `${window.location.origin}/payment-callback`,
-      isDev: process.env.NODE_ENV === 'development'
+      isDev: true  // TODO: Change to false when going live with real API key
     })
 
     return result.data
@@ -170,7 +170,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
     const result = await createDodoWalletTopupSession({
       amount,
       returnUrl: `${window.location.origin}/wallet/callback`,
-      isDev: process.env.NODE_ENV === 'development'
+      isDev: true  // TODO: Change to false when going live with real API key
     })
 
     return result.data
