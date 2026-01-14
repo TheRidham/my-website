@@ -63,7 +63,7 @@ function Jaiya({
       <div className={`border-b border-gray-200 bg-white backdrop-blur-sm transition-all duration-300 ${!isSidebarOpen && "md:pl-12"}`}>
         <div className="w-full flex items-center justify-between px-6 py-4">
           <div className="flex items-center">
-            {(onBack || isAdvisorChat) && (
+            {(isAdvisorChat) && (
               <button 
                 onClick={onBack}
                 className="mr-4 text-gray-600 hover:text-blue-600 transition-colors"

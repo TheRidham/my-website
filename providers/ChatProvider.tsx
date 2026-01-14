@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 
 interface Advisor {
   name: string
@@ -28,13 +29,18 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const pathname = usePathname();
   const [activeChat, setActiveChat] = useState({
     advisorName: "Super AI",
     advisorAvatar: null,
     categoryKey: undefined as string | undefined,
     subcategoryTitle: undefined as string | undefined,
     initialMessage: undefined as string | undefined,
+  })
+
+  useEffect(() => {
+    if(pathname!=='/') setIsSidebarOpen(true);
   })
 
   const switchChat = useCallback((advisor: Advisor) => {

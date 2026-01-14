@@ -108,7 +108,7 @@ function PaymentCallbackContent() {
                 // Payment processed, redirect to chat
                 clearInterval(pollInterval);
                 setTimeout(() => {
-                  router.push(`/home/humanChat/${sessionData.roomId}/${advisorId}`);
+                  router.push(`//humanChat/${sessionData.roomId}/${advisorId}`);
                 }, 1000);
               } else if (attempts >= maxAttempts) {
                 // Timeout - show helpful message
@@ -144,7 +144,7 @@ function PaymentCallbackContent() {
 
             setStatus("success");
             setTimeout(() => {
-              router.push(`/home/humanChat/${result.roomId}/${advisorId}`);
+              router.push(`/humanChat/${result.roomId}/${advisorId}`);
             }, 3000);
           } else {
             setStatus("error");
@@ -222,7 +222,7 @@ function PaymentCallbackContent() {
             {error || "Something went wrong with your payment."}
           </p>
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => router.push("/home")}>
+            <Button variant="outline" onClick={() => router.push("/")}>
               Back to Home
             </Button>
             <Button onClick={() => window.location.reload()}>Try Again</Button>

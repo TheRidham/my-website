@@ -180,7 +180,7 @@ export default function HumanChatWeb() {
       // If chat is already closed, just navigate back
       if (latestRequest.status === "closed") {
         alert("Session Ended");
-        router.replace("/home");
+        router.replace("/");
         return;
       }
       // Update the local chatRequest state with latest data
@@ -191,7 +191,7 @@ export default function HumanChatWeb() {
         roomId: roomId,
         chatRequestId: chatRequest.id,
       });
-      router.replace("/home");
+      router.replace("/");
     } catch (error) {
       console.error("Error fetching chat request:", error);
       alert("Could not verify chat session status");

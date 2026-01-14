@@ -5,7 +5,6 @@ import BottomNav from "@/components/BottomNav";
 import React, { useEffect } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useChat } from "@/providers/ChatProvider";
-import { SubcategoryList } from "@/components/SubcategoryList";
 import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -28,22 +27,16 @@ function Layout({ children }: { children: React.ReactNode }) {
         categoryKey,
         subcategoryTitle,
       });
-    } else if (!pathname.includes("/home/")) {
-      if (pathname === "/jaiya" || pathname === "/home") {
+    } else if (!pathname.includes("/")) {
+      if (pathname === "/") {
         resetChat();
       }
     }
   }, [categoryKey, subcategoryTitle, pathname, switchChat, resetChat]);
 
-  //route protection
+  //route protection handled by AuthOverlay
   const router = useRouter();
   const { user, loading } = useAuth();
-  useEffect(() => {
-    if (loading) return;
-    if (!loading && !user) {
-      router.replace("/auth/login");
-    }
-  }, [user, loading]);
 
   if (loading)
     return (
@@ -57,7 +50,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar (Left Section) */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-40 w-full md:relative md:z-auto h-full
+          fixed inset-y-0 left-0 z-30 w-full md:relative md:z-auto h-full
           transition-all duration-300 ease-in-out flex flex-col bg-white border-r border-gray-200
           ${
             isSidebarOpen
@@ -81,7 +74,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         {isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="hidden md:flex absolute right-4 top-5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all z-50"
+            className="hidden md:flex absolute right-4 top-5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all z-40"
             title="Close sidebar"
           >
             <PanelLeftClose size={22} />

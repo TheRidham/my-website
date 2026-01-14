@@ -88,7 +88,7 @@ export default function ProfileSetup() {
       });
       */
       alert("✅ Profile saved successfully! Redirecting to home...");
-      router.push('/home');
+      router.push('/');
     } catch (e: any) {
       alert(`Failed to save: ${e?.message ?? "Please try again"}`);
     } finally {
@@ -101,11 +101,11 @@ export default function ProfileSetup() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Avatar */}
-      <div className="relative h-80 bg-gradient-to-br from-amber-100 via-purple-100 to-pink-100 flex items-end justify-center pb-16">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 pointer-events-none"></div>
+      <div className="relative h-80 bg-linear-to-br from-amber-100 via-purple-100 to-pink-100 flex items-end justify-center pb-16">
+        <div className="absolute inset-0 bg-linear-to-b from-transparent to-gray-50 pointer-events-none"></div>
 
         <div className="relative w-32 h-32 rounded-full bg-white shadow-2xl flex items-center justify-center ring-4 ring-white">
-          <div className="w-[120px] h-[120px] rounded-full overflow-hidden bg-gray-200">
+          <div className="w-30 h-30 rounded-full overflow-hidden bg-gray-200">
             <img
               src={gender === "Male" ? maleAvatar : femaleAvatar}
               alt="Profile"

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react'
 import { Search, Star, MessageCircle, Phone, Video } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useChat } from '@/providers/ChatProvider'

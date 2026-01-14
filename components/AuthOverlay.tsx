@@ -9,12 +9,16 @@ import {
 import { useRouter } from "next/navigation";
 import { getDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
-export default function SignupPage() {
+interface AuthOverlayProps {
+  onClose?: () => void;
+}
+
+export default function AuthOverlay({ onClose }: AuthOverlayProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleSignin = async () => {
     setLoading(true);
     setError("");
     try {
@@ -29,7 +33,7 @@ export default function SignupPage() {
       if (userSnap.exists()) {
         // User already has a profile, redirect to home
         console.log("exist one");
-        router.push("/");
+        onClose?.();
       } else {
         await setDoc(userRef, {
           name: user.displayName,
@@ -40,19 +44,19 @@ export default function SignupPage() {
           gender: null,
           phone: null,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          indatedAt: serverTimestamp(),
         });
-        router.push("/");
+        onClose?.();
       }
     } catch (err: any) {
-      console.error("Error signing up with Google:", err);
+      console.error("Error signing in with Google:", err);
 
-      let errorMessage = "Failed to sign up with Google. Please try again.";
+      let errorMessage = "Failed to sign in with Google. Please try again.";
 
-      if (err.code === "auth/popup-closed-by-user") {
-        errorMessage = "Sign-up cancelled. Please try again.";
-      } else if (err.code === "auth/popup-blocked") {
-        errorMessage = "Popup was blocked. Please allow popups for this site.";
+      if (err.code === "auth/popin-closed-by-user") {
+        errorMessage = "Sign-in cancelled. Please try again.";
+      } else if (err.code === "auth/popin-blocked") {
+        errorMessage = "Popin was blocked. Please allow popins for this site.";
       } else if (err.code === "auth/account-exists-with-different-credential") {
         errorMessage = "An account already exists with the same email address.";
       }
@@ -63,7 +67,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleAnonymousSignup = async () => {
+  const handleAnonymousSignin = async () => {
     setLoading(true);
     setError("");
     try {
@@ -84,14 +88,15 @@ export default function SignupPage() {
           isAnonymous: true,
           walletBalance: 0,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          indatedAt: serverTimestamp(),
         });
       }
       router.push("/");
+      onClose?.();
     } catch (err: any) {
-      console.error("Error signing up anonymously:", err);
+      console.error("Error signing in anonymously:", err);
 
-      let errorMessage = "Failed to sign up anonymously. Please try again.";
+      let errorMessage = "Failed to sign in anonymously. Please try again.";
 
       if (err.code === "auth/operation-not-allowed") {
         errorMessage = "Anonymous authentication is not enabled.";
@@ -104,15 +109,21 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center text-gray-800 p-4">
-      <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-xl ">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 pointer-events-auto"
+      onClick={(e) => {
+        // Only close if clicking on the background, not the modal
+        if (e.target === e.currentTarget) return;
+      }}
+    >
+      <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-2xl text-gray-800 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
         <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
-          Create Account
+          Authenticate yourself
         </h2>
 
         <div className="flex flex-col gap-4">
           <button
-            onClick={handleGoogleSignup}
+            onClick={handleGoogleSignin}
             disabled={loading}
             className={`w-full py-3 px-4 cursor-pointer rounded-lg text-gray-800 font-semibold transition-all flex items-center justify-center gap-3 border border-gray-300 ${
               loading
@@ -121,7 +132,7 @@ export default function SignupPage() {
             }`}
           >
             {loading ? (
-              <span>Signing up...</span>
+              <span>Signing in...</span>
             ) : (
               <>
                 <svg className="w-6 h-6" viewBox="0 0 24 24">
@@ -154,7 +165,7 @@ export default function SignupPage() {
           </div>
 
           <button
-            onClick={handleAnonymousSignup}
+            onClick={handleAnonymousSignin}
             disabled={loading}
             className={`w-full py-3 px-4 cursor-pointer rounded-lg font-semibold transition-all flex items-center justify-center gap-3 border ${
               loading
@@ -163,7 +174,7 @@ export default function SignupPage() {
             }`}
           >
             {loading ? (
-              <span>Signing up...</span>
+              <span>Signing in...</span>
             ) : (
               <>
                 <svg
@@ -184,15 +195,7 @@ export default function SignupPage() {
             )}
           </button>
 
-          <div className="text-center text-sm text-gray-700 mt-4">
-            Already have an account?{" "}
-            <a
-              href="/auth/login"
-              className="text-blue-600 hover:text-blue-700 font-semibold underline"
-            >
-              Log in
-            </a>
-          </div>
+          <div className="text-center text-sm text-gray-700 mt-4"></div>
         </div>
 
         {error && (

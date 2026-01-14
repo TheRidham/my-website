@@ -28,7 +28,7 @@ export function SubcategoryList({ categoryKey: propCategoryKey }: { categoryKey?
     <div className="flex flex-col h-full bg-slate-50 pb-24">
       <div className="px-5 py-2 sticky top-0 bg-white backdrop-blur-md z-20 border-b border-gray-200/50 flex items-center gap-4">
         <Link 
-          href="/home"
+          href="/"
           className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
         >
           <ChevronLeft size={22} />
@@ -40,7 +40,7 @@ export function SubcategoryList({ categoryKey: propCategoryKey }: { categoryKey?
         {category.categories.map((sub) => (
           <Link 
             key={sub.id}
-            href={`/home/${categoryKey}/${encodeURIComponent(sub.title)}`}
+            href={`/${categoryKey}/${encodeURIComponent(sub.title)}`}
             onClick={() => switchChat({
               name: sub.title,
               categoryKey: categoryKey,

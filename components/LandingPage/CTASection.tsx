@@ -43,9 +43,9 @@ const CTASection = () => {
             />
           </div>
 
-          <Link href="/auth/signup" className="text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 font-medium">
+          <p className="text-primary hover:text-secondary transition-colors inline-flex items-center gap-1 font-medium">
             Or continue on web <ArrowRight className="w-4 h-4" />
-          </Link>
+          </p>
         </AnimatedSection>
       </div>
     </section>

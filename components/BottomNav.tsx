@@ -12,8 +12,8 @@ const BottomNav = () => {
   const pathname = usePathname()
 
   const navItems = [
-    { name: 'Home', icon: Home, path: '/home' },
-    { name: 'Advisors', icon: Users, path: '/home/allAdvisors' },
+    { name: 'Home', icon: Home, path: '/' },
+    { name: 'Advisors', icon: Users, path: '//allAdvisors' },
     { name: 'Ask Super AI', icon: null, path: '/jaiya', isJaiya: true },
   ]
 

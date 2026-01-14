@@ -52,13 +52,13 @@ export default function WalletPage() {
   return (
     <div className="flex flex-col h-full bg-slate-100">
       {/* Header Section - Compact for Sidebar */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 px-5 py-4">
+      <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 px-5 py-4 z-50">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => router.replace('/home')}
+              onClick={() => router.replace('/')}
               className="h-9 w-9 rounded-xl hover:bg-slate-100"
             >
               <ChevronLeft className="w-5 h-5" />

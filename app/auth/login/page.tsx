@@ -25,7 +25,7 @@ export default function LoginPage() {
       if (userSnap.exists()) {
         // User has a profile, redirect to home
         console.log("exist one");
-        router.push("/home");
+        router.push("/");
       } else {
         await setDoc(userRef, {
           name: user.displayName,
@@ -37,7 +37,7 @@ export default function LoginPage() {
           phone: null,
           createdAt: serverTimestamp(),
         });
-        router.push("/home");
+        router.push("/");
       }
     } catch (err: any) {
       console.error("Error logging in with Google:", err);

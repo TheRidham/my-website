@@ -102,7 +102,7 @@ export function HumanAdvisorModal({
         console.log("pay with wallet result");
         console.log(result);
         if (result.success) {
-          router.push(`/home/humanChat/${result.roomId}/${result.advisorId}`);
+          router.push(`/humanChat/${result.roomId}/${result.advisorId}`);
         }
       } else {
         alert("unsufficient wallet balance");

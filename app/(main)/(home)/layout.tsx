@@ -101,28 +101,28 @@ function Layout({ children }: { children: React.ReactNode }) {
       {/* Tabs */}
       <div className="px-5 flex gap-8 border-b border-gray-200 bg-white">
         <Link
-          href="/home"
+          href="/"
           className={`pb-3 text-[14px] font-bold transition-all relative ${
-            pathname === "/home"
+            pathname === "/"
               ? "text-blue-600"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
           Home
-          {pathname === "/home" && (
+          {pathname === "/" && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
           )}
         </Link>
         <Link
-          href="/home/allAdvisors"
+          href="/allAdvisors"
           className={`pb-3 text-[14px] font-bold transition-all relative ${
-            pathname === "/home/allAdvisors"
+            pathname === "/allAdvisors"
               ? "text-blue-600"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
           All Advisors
-          {pathname === "/home/allAdvisors" && (
+          {pathname === "/allAdvisors" && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
           )}
         </Link>

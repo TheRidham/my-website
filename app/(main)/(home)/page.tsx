@@ -63,12 +63,6 @@ function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user?.uid) {
-      router.replace("/auth/login");
-    }
-  }, [user]);
-
-  useEffect(() => {
     const fetchAdvisors = async () => {
       try {
         const q = query(
@@ -132,7 +126,7 @@ function HomePage() {
           {displayedCategories.map((cat) => (
             <Link 
               key={cat.key} 
-              href={`/home/${cat.key}`}
+              href={`/${cat.key}`}
               className={cat.className}
             >
               <div 
@@ -204,7 +198,7 @@ function HomePage() {
             Featured Advisors
           </h2>
           <Link
-            href="/home/allAdvisors"
+            href="/allAdvisors"
             className="text-blue-600 text-xs font-bold hover:underline"
           >
             See All

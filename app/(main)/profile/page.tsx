@@ -67,7 +67,6 @@ export default function ProfilePage() {
     try {
       // Replace with actual Firebase signOut:
       await signOut(auth);
-      router.push("/auth/signup");
     } catch (error) {
       console.error("Error signing out:", error);
       alert("Failed to logout. Please try again.");

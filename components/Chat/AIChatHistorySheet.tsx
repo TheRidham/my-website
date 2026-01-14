@@ -92,7 +92,7 @@ export default function AIChatHistorySheet({
                       setHistory(chat.messages);
                       setOpen(false);
                       router.push(
-                        `/home/${chat.advisorName}/${encodeURIComponent(
+                        `//${chat.advisorName}/${encodeURIComponent(
                           chat.advisorCategory
                         )}`
                       );
