@@ -103,7 +103,7 @@ export default function WalletPage() {
             <CardContent className="p-4 space-y-5">
               {/* Preset Amounts - 2x2 Grid for narrow width */}
               <div className="grid grid-cols-2 gap-2">
-                {[100, 200, 500, 1000].map((val) => (
+                {[10, 20, 50, 100].map((val) => (
                   <button 
                     key={val} 
                     onClick={() => setAmount(val.toString())}

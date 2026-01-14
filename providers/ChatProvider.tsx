@@ -40,8 +40,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
-    if(pathname!=='/') setIsSidebarOpen(true);
-  })
+    if(pathname!=='/') setIsSidebarOpen(true); 
+  }, [pathname])
 
   const switchChat = useCallback((advisor: Advisor) => {
     console.log('ChatProvider: switchChat called with:', advisor);

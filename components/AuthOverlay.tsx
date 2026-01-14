@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useChat } from "@/providers/ChatProvider";
 
 interface AuthOverlayProps {
   onClose?: () => void;
@@ -17,6 +18,7 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { setIsSidebarOpen } = useChat();
 
   const handleGoogleSignin = async () => {
     setLoading(true);
@@ -48,6 +50,8 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
         });
         onClose?.();
       }
+
+      setIsSidebarOpen(true);
     } catch (err: any) {
       console.error("Error signing in with Google:", err);
 
@@ -91,6 +95,8 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
           indatedAt: serverTimestamp(),
         });
       }
+      
+      setIsSidebarOpen(true);
       router.push("/");
       onClose?.();
     } catch (err: any) {
@@ -111,10 +117,6 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
   return (
     <div 
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 pointer-events-auto"
-      onClick={(e) => {
-        // Only close if clicking on the background, not the modal
-        if (e.target === e.currentTarget) return;
-      }}
     >
       <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-2xl text-gray-800 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
         <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
