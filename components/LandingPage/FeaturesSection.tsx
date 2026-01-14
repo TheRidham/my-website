@@ -34,7 +34,7 @@ const FeaturesSection = () => {
     {
       icon: Coins,
       title: "Wallet System",
-      description: "Add money once, use across all services. Get ₹100 free on signup"
+      description: "Add money once, use across all services. Get $10 free on signup"
     }
   ];
 

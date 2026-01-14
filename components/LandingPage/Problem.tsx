@@ -9,7 +9,7 @@ const ProblemSection = () => {
       icon: Wallet,
       title: "Expensive consultations",
       description:
-        "Traditional experts charge ₹500-2000 even for basic queries",
+        "Traditional experts charge $50-200 even for basic queries",
       color: "bg-red-50 text-red-500",
     },
     {

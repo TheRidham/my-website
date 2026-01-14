@@ -164,7 +164,7 @@ export function HumanAdvisorModal({
                   Wallet Balance
                 </div>
                 <div className="text-lg font-black text-blue-900">
-                  ₹{(walletBalance / 100).toFixed(2)}
+                  ${(walletBalance / 100).toFixed(2)}
                 </div>
               </div>
             </div>
@@ -226,7 +226,7 @@ export function HumanAdvisorModal({
                       <Wallet className="w-5 h-5" />
                       <span>Pay with Wallet</span>
                     </div>
-                    <span className="text-lg">₹{price}</span>
+                    <span className="text-lg">${price}</span>
                   </Button>
                 )}
                 {isProcessing ? null : (
@@ -241,7 +241,7 @@ export function HumanAdvisorModal({
                         Pay via UPI / Card
                       </span>
                     </div>
-                    <span className="text-lg">₹{price}</span>
+                    <span className="text-lg">${price}</span>
                   </Button>
                 )}
               </div>
@@ -307,7 +307,7 @@ export function HumanAdvisorModal({
                         {isProcessing ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
-                          `₹${price}`
+                          `$${price}`
                         )}
                       </Button>
                     </div>

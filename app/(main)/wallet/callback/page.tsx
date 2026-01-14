@@ -71,7 +71,7 @@ function WalletCallbackContent() {
               if (sessionData?.status === 'completed') {
                 // Payment processed
                 clearInterval(pollInterval)
-                setSuccessMessage(`Payment successful! ₹${(sessionData.amount / 100).toFixed(2)} added to your wallet.`)
+                setSuccessMessage(`Payment successful! $${(sessionData.amount / 100).toFixed(2)} added to your wallet.`)
 
                 setTimeout(() => {
                   router.push('/wallet')
@@ -105,7 +105,7 @@ function WalletCallbackContent() {
             if (result.alreadyProcessed) {
               setSuccessMessage('Payment already processed! Redirecting to wallet...')
             } else if (result.amount) {
-              setSuccessMessage(`Payment successful! ₹${(result.amount / 100).toFixed(2)} added to your wallet.`)
+              setSuccessMessage(`Payment successful! $${(result.amount / 100).toFixed(2)} added to your wallet.`)
             }
 
             setStatus("success")

@@ -136,7 +136,7 @@ function Jaiya({
               title="Wallet"
             >
               <Wallet size={20} />
-              <span className="hidden sm:inline text-xs font-bold">₹{(walletBalance / 100).toFixed(0)}</span>
+              <span className="hidden sm:inline text-xs font-bold">${(walletBalance / 100).toFixed(2)}</span>
             </button>
           </div>
         </div>

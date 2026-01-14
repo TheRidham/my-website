@@ -85,7 +85,7 @@ const HeroSection = () => {
                     <Coins className="w-4 h-4 text-purple-600" />
                   </div>
                   <span className="text-sm font-semibold">
-                    ₹100 Free Credit
+                    $10 Free Credit
                   </span>
                 </div>
                 <div className="flex items-center gap-2 glass-card rounded-xl px-4 py-2 shadow-sm">

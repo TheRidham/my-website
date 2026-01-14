@@ -5,7 +5,7 @@ import { AnimatedSection } from "@/hooks/useScrollAnimation";
 const ComparisonSection = () => {
   const comparisons = [
     { feature: "Response Time", traditional: "Hours to days", jai: "Instant" },
-    { feature: "Cost", traditional: "₹500-2000", jai: "Free - ₹49" },
+    { feature: "Cost", traditional: "$50-200", jai: "Free - $5" },
     { feature: "Availability", traditional: "Business hours", jai: "24/7" },
     { feature: "Language", traditional: "English only", jai: "Hindi + English" },
     { feature: "Analysis Tools", traditional: "None", jai: "Built-in AI tools" },

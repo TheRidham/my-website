@@ -92,7 +92,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="hidden md:flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all z-50 shadow-sm border border-gray-100 bg-white"
+            className="hidden md:flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all z-40 shadow-sm border border-gray-100 bg-white"
             title="Open sidebar"
           >
             <PanelLeftOpen size={22} />

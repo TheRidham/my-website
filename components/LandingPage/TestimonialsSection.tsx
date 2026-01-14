@@ -19,7 +19,7 @@ const TestimonialsSection = () => {
       color: "from-blue-500 to-cyan-400"
     },
     {
-      quote: "Human expert saved me from signing a bad contract. Worth every rupee!",
+      quote: "Human expert saved me from signing a bad contract. Worth every penny!",
       name: "Sneha",
       location: "Bangalore",
       avatar: "S",

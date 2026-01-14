@@ -17,7 +17,7 @@ const CTASection = () => {
             Join 200+ Users Getting Smarter Advice
           </h2>
           <p className="text-lg text-muted-foreground mb-10">
-            Start with ₹100 free credit. No credit card required.
+            Start with $10 free credit. No credit card required.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10 text-white">

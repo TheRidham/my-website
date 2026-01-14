@@ -16,7 +16,7 @@ const SolutionSection = () => {
       icon: Users,
       title: "Connect with Human Experts",
       description: "Get professional advice from verified advisors",
-      features: ["₹49 per session", "Real experts", "Chat or Voice"],
+      features: ["$5 per session", "Real experts", "Chat or Voice"],
       gradient: "from-secondary to-secondary-light",
       iconBg: "bg-secondary/10 text-secondary"
     },

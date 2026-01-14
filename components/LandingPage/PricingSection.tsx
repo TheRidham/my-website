@@ -67,7 +67,7 @@ const PricingSection = () => {
                 <p className="text-muted-foreground">per expert consultation</p>
               </div>
               <ul className="space-y-4 mb-8">
-                {["Verified professionals", "Voice & text chat", "Document review", "Follow-up sessions", "₹100 free credit for new users"].map((feature, index) => (
+                {["Verified professionals", "Voice & text chat", "Document review", "Follow-up sessions", "$10 free credit for new users"].map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center shrink-0">
                       <Check className="w-3 h-3 text-secondary" />

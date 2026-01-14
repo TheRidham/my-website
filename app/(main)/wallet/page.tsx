@@ -22,7 +22,7 @@ export default function WalletPage() {
   const handleTopUp = async () => {
     const numAmount = parseInt(amount)
     if (isNaN(numAmount) || numAmount < 10) {
-      alert('Please enter a valid amount (min ₹10)')
+      alert('Please enter a valid amount (min $1)')
       return
     }
 
@@ -68,7 +68,7 @@ export default function WalletPage() {
           <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/10">
             <Wallet className="w-4 h-4 text-primary" />
             <span className="text-sm font-bold text-primary">
-              ₹{(walletBalance / 100).toLocaleString('en-IN')}
+              ${(walletBalance / 100).toFixed(2)}
             </span>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default function WalletPage() {
           <CardContent className="p-6 relative z-10">
             <p className="text-xs font-medium opacity-80 uppercase tracking-wider mb-1">Total Balance</p>
             <h2 className="text-3xl font-black">
-              ₹{(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              ${(walletBalance / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </h2>
             <div className="mt-4 flex items-center gap-2 text-[10px] bg-white/20 w-fit px-2 py-1 rounded-full backdrop-blur-sm">
               <ShieldCheck className="w-3 h-3" />
@@ -114,7 +114,7 @@ export default function WalletPage() {
                         : "border-slate-50 bg-slate-50/50 hover:border-slate-100 text-slate-600"
                     )}
                   >
-                    ₹{val}
+                    ${val}
                   </button>
                 ))}
               </div>
@@ -122,7 +122,7 @@ export default function WalletPage() {
               {/* Custom Input */}
               <div className="space-y-3">
                 <div className="relative group">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400 group-focus-within:text-primary transition-colors">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400 group-focus-within:text-primary transition-colors">$</span>
                   <input 
                     type="number" 
                     value={amount}
@@ -188,7 +188,7 @@ export default function WalletPage() {
                           "text-sm font-black",
                           tx.type === 'credit' ? "text-green-600" : "text-slate-900"
                         )}>
-                          {tx.type === 'credit' ? '+' : '-'}₹{(tx.amount / 100).toLocaleString('en-IN')}
+                          {tx.type === 'credit' ? '+' : '-'}${(tx.amount / 100).toLocaleString('en-IN')}
                         </p>
                         <p className={cn(
                           "text-[9px] font-bold uppercase tracking-wider",

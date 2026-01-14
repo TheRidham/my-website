@@ -19,9 +19,9 @@ const PriceContext = createContext<IPriceContext | null>(null);
 
 export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
   const [priceData, setPriceData] = useState<IPriceData>({
-    price: 49,
-    currency: "INR",
-    formattedPrice: "₹49",
+    price: 5,
+    currency: "USD",
+    formattedPrice: "$5",
   });
 
   async function fetchPricing() {
