@@ -40,7 +40,7 @@ export interface AIChatHandle {
 }
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
@@ -54,7 +54,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       setChatId,
       history,
     },
-    ref
+    ref,
   ) => {
     const [input, setInput] = useState("");
     const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
@@ -67,6 +67,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     // Track if we've processed the initial message to avoid duplicates
     const initialMessageProcessedRef = useRef(false);
     const isHistoryLoadedRef = useRef(false);
+
+    // State for advisor prompt modal (shows every 4 messages)
+    const [showAdvisorModal, setShowAdvisorModal] = useState(false);
+    const userMessageCountRef = useRef(0);
+    const isBackPressedRef = useRef(false);
 
     // Configure marked options
     marked.setOptions({
@@ -89,11 +94,22 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         const advisorData = categoryData?.[subcategoryTitle];
 
         if (!advisorData) {
-          console.error('AIChat: Advisor data not found for:', { categoryKey, subcategoryTitle });
+          console.error("AIChat: Advisor data not found for:", {
+            categoryKey,
+            subcategoryTitle,
+          });
           if (advisorsPrompt) {
-            console.log('AIChat: Available categories:', Object.keys(advisorsPrompt));
+            console.log(
+              "AIChat: Available categories:",
+              Object.keys(advisorsPrompt),
+            );
             if (categoryData) {
-              console.log('AIChat: Available subcategories in', categoryKey, ':', Object.keys(categoryData));
+              console.log(
+                "AIChat: Available subcategories in",
+                categoryKey,
+                ":",
+                Object.keys(categoryData),
+              );
             }
           }
         }
@@ -115,11 +131,18 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       };
     }, [isJaiya, categoryKey, subcategoryTitle, jaiyaPrompt, advisorsPrompt]);
 
-    const { messages, isLoading, sendMessage, clearMessages, setMessages, isStreaming, sendMessageStream } =
-      useChatAI({
-        systemPrompt,
-        appendGeneralPrompt: !isJaiya,
-      });
+    const {
+      messages,
+      isLoading,
+      sendMessage,
+      clearMessages,
+      setMessages,
+      isStreaming,
+      sendMessageStream,
+    } = useChatAI({
+      systemPrompt,
+      appendGeneralPrompt: !isJaiya,
+    });
 
     // Load chat history when component mounts or history prop changes
     useEffect(() => {
@@ -144,10 +167,10 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
     // Update messagesRef whenever messages change (for streaming)
     useEffect(() => {
-      messagesRef.current = messages.map(msg => ({
+      messagesRef.current = messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
-        timestamp: msg.timestamp || new Date().toISOString()
+        timestamp: msg.timestamp || new Date().toISOString(),
       }));
     }, [messages]);
 
@@ -175,8 +198,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       // 2. We haven't processed it yet
       // 3. We're not in Jaiya mode
       // 4. Messages are empty (fresh chat)
-      if (initialMessage && !initialMessageProcessedRef.current && !isJaiya && messages.length === 0) {
-        console.log('AIChat: Auto-sending initial message:', initialMessage);
+      if (
+        initialMessage &&
+        !initialMessageProcessedRef.current &&
+        !isJaiya &&
+        messages.length === 0
+      ) {
+        console.log("AIChat: Auto-sending initial message:", initialMessage);
 
         // Mark as processed to prevent duplicates
         initialMessageProcessedRef.current = true;
@@ -197,13 +225,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       if (categoryKey && subcategoryTitle) {
         return (
           ADVISOR_CATEGORIES[categoryKey]?.categories.find(
-            (s) => s.title === subcategoryTitle
+            (s) => s.title === subcategoryTitle,
           )?.recommendedQuestions || []
         );
       }
       return Object.values(ADVISOR_CATEGORIES)
         .flatMap((cat) =>
-          cat.categories.flatMap((sub) => sub.recommendedQuestions)
+          cat.categories.flatMap((sub) => sub.recommendedQuestions),
         )
         .slice(0, 4);
     }, [categoryKey, subcategoryTitle]);
@@ -249,7 +277,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             chatTitle,
             messagesToSave,
             categoryKey as string,
-            subcategoryTitle as string
+            subcategoryTitle as string,
           );
 
           if (newChatId) {
@@ -263,7 +291,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       // Handle Jaiya's category matching logic
       if (isJaiya) {
         // Get the LATEST messages after streaming completes
-        const latestMessages = messagesRef.current.filter(m => m.role === 'assistant');
+        const latestMessages = messagesRef.current.filter(
+          (m) => m.role === "assistant",
+        );
         const lastAssistantMessage = latestMessages.pop();
         const response = lastAssistantMessage?.content;
 
@@ -281,7 +311,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               let category = ADVISOR_CATEGORIES[categoryTag];
               if (!category) {
                 const foundCategory = Object.values(ADVISOR_CATEGORIES).find(
-                  (cat) => cat.name.toLowerCase() === categoryName
+                  (cat) => cat.name.toLowerCase() === categoryName,
                 );
                 if (foundCategory) {
                   category = foundCategory;
@@ -290,12 +320,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
               if (category) {
                 const targetTag = Object.keys(ADVISOR_CATEGORIES).find(
-                  (key) => ADVISOR_CATEGORIES[key] === category
+                  (key) => ADVISOR_CATEGORIES[key] === category,
                 );
 
                 const subcategory = category.categories.find(
                   (c) =>
-                    c.title.toLowerCase() === data.subCategoryName?.toLowerCase()
+                    c.title.toLowerCase() ===
+                    data.subCategoryName?.toLowerCase(),
                 );
 
                 if (subcategory) {
@@ -308,7 +339,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                 } else {
                   console.warn(
                     "processMessage subcategory not found:",
-                    data.subCategoryName
+                    data.subCategoryName,
                   );
                 }
               } else {
@@ -316,13 +347,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                   "processMessage category not found for tag:",
                   categoryTag,
                   "or name:",
-                  categoryName
+                  categoryName,
                 );
               }
             } else {
               console.log(
                 "processMessage AI did not find a match. Response:",
-                data.response
+                data.response,
               );
             }
           } catch (e) {
@@ -336,6 +367,16 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       const msg = input;
       setInput("");
       await processMessage(msg);
+      userMessageCountRef.current += 1;
+      if (
+        userMessageCountRef.current == 2 ||
+        userMessageCountRef.current == 6
+      ) {
+        // Delay showing the prompt slightly so it doesn't interfere with the response
+        setTimeout(() => {
+          setShowAdvisorModal(true);
+        }, 1000);
+      }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -343,6 +384,15 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         e.preventDefault();
         handleSend();
       }
+    };
+
+    const handleShowAdvisorModal = () => {
+      setShowAdvisorModal(false);
+    };
+
+    const handleShowAdvisorModalConnect = () => {
+      setShowAdvisorModal(false);
+      setIsHumanModalOpen(true);
     };
 
     return (
