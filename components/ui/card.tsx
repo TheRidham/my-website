@@ -8,12 +8,12 @@ const cardVariants = cva(
     variants: {
       variant: {
         default: "bg-card text-card-foreground border border-border shadow-soft",
-        feature: "bg-blue-50 border border-blue-100 shadow-soft hover:shadow-soft-lg",
+        feature: "bg-primary/30 border border-blue-100 shadow-soft hover:shadow-soft-lg",
         glass: "bg-white/80 backdrop-blur-sm border border-white/20 shadow-soft",
         elevated: "bg-card border border-border shadow-soft-lg hover:shadow-xl",
         accent: "bg-gradient-to-br from-primary-lighter to-blue-100 border border-blue-200 shadow-soft",
         pricing: "bg-white border-2 border-border shadow-soft-lg hover:border-primary/30",
-        pricingFeatured: "bg-gradient-to-br from-blue-50 to-primary-lighter border-2 border-primary shadow-soft-lg",
+        pricingFeatured: "bg-gradient-to-br from-primary/30 to-primary-lighter border-2 border-primary shadow-soft-lg",
       },
     },
     defaultVariants: {

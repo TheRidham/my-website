@@ -6,11 +6,11 @@ import { AnimatedSection } from "@/hooks/useScrollAnimation";
 const CategoriesSection = () => {
   const categories = [
     { icon: Heart, title: "Health & Wellness", items: ["Mental Health", "Nutrition", "Fitness", "General Medicine"], color: "bg-red-50 text-red-500", ring: "ring-red-100" },
-    { icon: Wallet, title: "Finance", items: ["Investments", "Tax", "CA Services", "Debt Management"], color: "bg-emerald-50 text-emerald-600", ring: "ring-emerald-100" },
-    { icon: Scale, title: "Legal", items: ["Document Help", "Consumer Rights", "Property"], color: "bg-blue-50 text-blue-600", ring: "ring-blue-100" },
-    { icon: Briefcase, title: "Career", items: ["Job Search", "Skill Development", "Interview Prep"], color: "bg-purple-50 text-purple-600", ring: "ring-purple-100" },
-    { icon: Users, title: "Relationships", items: ["Family", "Dating", "Marriage Counseling"], color: "bg-pink-50 text-pink-500", ring: "ring-pink-100" },
-    { icon: GraduationCap, title: "Education", items: ["Study Abroad", "Career Guidance", "Skill Building"], color: "bg-amber-50 text-amber-600", ring: "ring-amber-100" },
+    { icon: Wallet, title: "Finance", items: ["Investments", "Tax", "CA Services", "Debt Management"], color: "bg-emerald-50 text-primary", ring: "ring-emerald-100" },
+    { icon: Scale, title: "Legal", items: ["Document Help", "Consumer Rights", "Property"], color: "bg-emerald-50 text-primary", ring: "ring-emerald-100" },
+    { icon: Briefcase, title: "Career", items: ["Job Search", "Skill Development", "Interview Prep"], color: "bg-emerald-50 text-primary", ring: "ring-emerald-100" },
+    { icon: Users, title: "Relationships", items: ["Family", "Dating", "Marriage Counseling"], color: "bg-emerald-50 text-primary", ring: "ring-emerald-100" },
+    { icon: GraduationCap, title: "Education", items: ["Study Abroad", "Career Guidance", "Skill Building"], color: "bg-emerald-50 text-primary", ring: "ring-emerald-100" },
   ];
 
   return (

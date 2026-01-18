@@ -26,7 +26,7 @@ const SolutionSection = () => {
       description: "Smart micro-apps for food analysis, medicine checker, lab reports & more",
       features: ["Image-based AI", "Instant results", "Save reports"],
       gradient: "from-emerald-500 to-teal-400",
-      iconBg: "bg-emerald-50 text-emerald-600"
+      iconBg: "bg-emerald-50 text-primary"
     }
   ];
 

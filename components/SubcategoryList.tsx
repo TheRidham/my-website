@@ -13,8 +13,8 @@ export function SubcategoryList({ categoryKey: propCategoryKey }: { categoryKey?
   const { switchChat } = useChat()
 
   //debugging
-  console.log("params: ", params)
-  console.log("propCategoryKey: ", propCategoryKey)
+  // console.log("params: ", params)
+  // console.log("propCategoryKey: ", propCategoryKey)
   
   const categoryKey = propCategoryKey || (params.category as string)
 
@@ -25,11 +25,11 @@ export function SubcategoryList({ categoryKey: propCategoryKey }: { categoryKey?
   console.log(category);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 pb-24">
+    <div className="flex flex-col h-full  pb-24">
       <div className="px-5 py-2 sticky top-0 bg-white backdrop-blur-md z-20 border-b border-gray-200/50 flex items-center gap-4">
         <Link 
           href="/"
-          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+          className="p-2 text-gray-600 hover:text-primary transition-colors"
         >
           <ChevronLeft size={22} />
         </Link>
@@ -48,19 +48,19 @@ export function SubcategoryList({ categoryKey: propCategoryKey }: { categoryKey?
               specialty: category.name,
               image: null
             })}
-            className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group flex items-center gap-4"
+            className="p-5 rounded-3xl border border-primary transition-all shadow-sm hover:border-primary-foreground hover:shadow-lg cursor-pointer group flex items-center gap-4"
           >
             <div 
-              className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform"
-              style={{ backgroundColor: category.bgColor, color: category.color }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform bg-muted text-primary"
+              // style={{ backgroundColor: category.bgColor, color: category.color }}
             >
               <LucideIcon name={sub.icon} size={24} />
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-gray-900">{sub.title}</h3>
-              <p className="text-xs text-gray-500 mt-1 line-clamp-1">{sub.tags.join(', ')}</p>
+              <p className="text-xs text-secondary-foreground mt-1 line-clamp-1">{sub.tags.join(', ')}</p>
             </div>
-            <ChevronRight size={20} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+            <ChevronRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
           </Link>
         ))}
       </div>

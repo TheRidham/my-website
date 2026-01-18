@@ -210,7 +210,7 @@ export default function HumanChatWeb() {
       {/* Header */}
       <header className="p-4 border-b flex items-center gap-6 bg-gray-100">
         <button className="group" onClick={() => setIsOpen(true)}>
-          <ArrowLeft className="w-6 h-6 group-hover:text-blue-500" />
+          <ArrowLeft className="w-6 h-6 group-hover:text-primary" />
         </button>
         {advisorProfile && (
           <div className="flex items-center gap-3">
@@ -312,7 +312,7 @@ export default function HumanChatWeb() {
                 <div
                   className={`p-3 rounded-2xl shadow-sm ${
                     isUser
-                      ? "bg-blue-500 text-white rounded-tr-sm"
+                      ? "bg-primary text-white rounded-tr-sm"
                       : "bg-gray-100 text-gray-800 rounded-tl-sm"
                   }`}
                 >
@@ -341,7 +341,7 @@ export default function HumanChatWeb() {
         />
         <button
           onClick={send}
-          className="px-4 rounded-lg bg-blue-600 text-white"
+          className="px-4 rounded-lg bg-primary text-white"
         >
           Send
         </button>

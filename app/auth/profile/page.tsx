@@ -101,7 +101,7 @@ export default function ProfileSetup() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Avatar */}
-      <div className="relative h-80 bg-linear-to-br from-amber-100 via-purple-100 to-pink-100 flex items-end justify-center pb-16">
+      <div className="relative h-80 bg-linear-to-br from-emerald-100 via-teal-100 to-emerald-100 flex items-end justify-center pb-16">
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-gray-50 pointer-events-none"></div>
 
         <div className="relative w-32 h-32 rounded-full bg-white shadow-2xl flex items-center justify-center ring-4 ring-white">
@@ -117,7 +117,7 @@ export default function ProfileSetup() {
 
       {/* Form Section */}
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold text-blue-900 mb-8 text-center">
+        <h1 className="text-3xl font-bold text-emerald-900 mb-8 text-center">
           Let's get to know you better
         </h1>
 
@@ -144,7 +144,7 @@ export default function ProfileSetup() {
                 className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-xl focus:outline-none transition-all ${
                   errors.name
                     ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                    : "border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    : "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                 }`}
               />
             </div>
@@ -178,7 +178,7 @@ export default function ProfileSetup() {
                 className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-xl focus:outline-none transition-all ${
                   errors.email
                     ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                    : "border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    : "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                 }`}
               />
             </div>
@@ -211,7 +211,7 @@ export default function ProfileSetup() {
               className={`w-full pl-11 pr-4 py-3.5 border-2 rounded-xl focus:outline-none transition-all ${
                 errors.name
                   ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-                  : "border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                  : "border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               }`}
             />
 

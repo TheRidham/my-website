@@ -41,12 +41,12 @@ function Layout({ children }: { children: React.ReactNode }) {
   if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
       </div>
     );
 
   return (
-    <section className="flex h-screen bg-slate-50 overflow-hidden">
+    <section className="flex h-screen  overflow-hidden">
       {/* Sidebar (Left Section) */}
       <div
         className={`
@@ -74,7 +74,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         {isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="hidden md:flex absolute right-4 top-5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all z-40"
+            className="hidden md:flex absolute right-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40"
             title="Close sidebar"
           >
             <PanelLeftClose size={22} />
@@ -92,7 +92,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="hidden md:flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all z-40 shadow-sm border border-gray-100 bg-white"
+            className="hidden md:flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40 shadow-sm border border-gray-100 bg-white"
             title="Open sidebar"
           >
             <PanelLeftOpen size={22} />

@@ -61,7 +61,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center text-gray-800 p-4">
       <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-xl">
-        <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
+        <h2 className="text-2xl font-bold text-center mb-6 text-primary">
           Login to your Account
         </h2>
 
@@ -106,7 +106,7 @@ export default function LoginPage() {
             Don't have an account?{" "}
             <a
               href="/auth/signup"
-              className="text-blue-600 hover:text-blue-700 font-semibold underline"
+              className="text-primary hover:text-emerald-700 font-semibold underline"
             >
               Sign up
             </a>

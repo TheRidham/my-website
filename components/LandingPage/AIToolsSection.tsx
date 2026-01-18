@@ -20,13 +20,13 @@ const AIToolsSection = () => {
       icon: FileText,
       title: "Lab Report Analyzer",
       description: "Upload blood reports, get AI interpretation",
-      color: "from-blue-500 to-cyan-400"
+      color: "from-emerald-500 to-teal-400"
     },
     {
       icon: Scale,
       title: "AI Judge",
       description: "Settle debates with multi-perspective AI judging",
-      color: "from-violet-500 to-purple-400"
+      color: "from-emerald-500 to-teal-400"
     }
   ];
 

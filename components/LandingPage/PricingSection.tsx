@@ -38,7 +38,7 @@ const PricingSection = () => {
                 {["Unlimited AI conversations", "50+ specialized domains", "File sharing included", "Hinglish support", "Voice messages"].map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                      <Check className="w-3 h-3 text-emerald-600" />
+                      <Check className="w-3 h-3 text-primary" />
                     </div>
                     <span className="text-foreground">{feature}</span>
                   </li>
@@ -76,7 +76,7 @@ const PricingSection = () => {
                   </li>
                 ))}
               </ul>
-              <Button size="lg" className="bg-linear-to-r from-teal-400 to-blue-500 w-full text-white font-semibold shadow-lg shadow-secondary/25">
+              <Button size="lg" className="bg-linear-to-r from-teal-400 to-primary w-full text-white font-semibold shadow-lg shadow-secondary/25">
                 Claim Free Credit
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>

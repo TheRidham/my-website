@@ -66,10 +66,10 @@ export default function AIChatHistorySheet({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6 overflow-y-auto h-[calc(100vh-120px)]">
+          <div className="m-2 overflow-y-auto h-[calc(100vh-120px)]">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : chats.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-500">
@@ -84,7 +84,7 @@ export default function AIChatHistorySheet({
                     key={chat.id}
                     className={`group relative bg-white border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer ${
                       selectedChatId === chat.id
-                        ? "border-blue-500 bg-blue-50"
+                        ? "border-primary bg-primary/30"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => {
@@ -107,7 +107,7 @@ export default function AIChatHistorySheet({
 
                         {/* Advisor Info */}
                         <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                          <span className="px-2 py-0.5 bg-accent text-primary rounded-full">
                             {chat.advisorName}
                           </span>
                           <span className="text-gray-400">•</span>

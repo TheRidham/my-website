@@ -26,15 +26,15 @@ const BottomNav = () => {
             key={item.name}
             href={item.path}
             className={`flex flex-col md:flex-row items-center gap-1.5 md:gap-3 md:w-full md:px-4 md:py-3 rounded-xl transition-all duration-300 ${
-              isActive ? 'text-blue-600 scale-110 md:scale-100 md:bg-blue-50' : 'text-gray-400 hover:text-gray-600 md:hover:bg-gray-50'
+              isActive ? 'text-primary scale-110 md:scale-100 md:bg-emerald-50' : 'text-gray-400 hover:text-gray-600 md:hover:bg-gray-50'
             }`}
           >
             {item.isJaiya ? (
-              <div className={`w-9 h-9 md:w-8 md:h-8 rounded-full overflow-hidden border-2 transition-all ${isActive ? 'border-blue-600 shadow-md shadow-blue-100' : 'border-transparent'}`}>
+              <div className={`w-9 h-9 md:w-8 md:h-8 rounded-full overflow-hidden border-2 transition-all ${isActive ? 'border-primary shadow-md shadow-emerald-100' : 'border-transparent'}`}>
                 <Image src={jaiyaAvatar} alt="Super AI" width={36} height={36} className="object-cover" />
               </div>
             ) : (
-              <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-blue-50 md:bg-transparent' : ''}`}>
+              <div className={`p-1 rounded-xl transition-all ${isActive ? 'bg-emerald-50 md:bg-transparent' : ''}`}>
                 {item.icon && <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />}
               </div>
             )}

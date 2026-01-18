@@ -8,8 +8,8 @@ export const GRADIENTS = {
   orangeDark: ["#FB923C", "#EA580C"], // from-orange-400 to-orange-600
 
   // Blue Gradients
-  blueLight: ["#93C5FD", "#3B82F6"], // from-blue-300 to-blue-500
-  blueDark: ["#60A5FA", "#2563EB"], // from-blue-400 to-blue-600
+  blueLight: ["#93C5FD", "#3B82F6"], // from-blue-300 to-primary
+  blueDark: ["#60A5FA", "#2563EB"], // from-blue-400 to-primary
 
   // Purple Gradients
   purpleLight: ["#aa97f4ff", "#8B5CF6"], // from-purple-300 to-purple-500
@@ -60,7 +60,7 @@ export const GRADIENTS = {
 export const COLORS = {
   emrald: {
     background: "#D1FAE5", // bg-emerald-100
-    text: "#059669", // text-emerald-600
+    text: "#059669", // text-primary
     border: "#A7F3D0", // border-emerald-200
   },
   orange: {
@@ -70,7 +70,7 @@ export const COLORS = {
   },
   blue: {
     background: "#DBEAFE", // bg-blue-100
-    text: "#2563EB", // text-blue-600
+    text: "#2563EB", // text-primary
     border: "#BFDBFE", // border-blue-200
   },
   purple: {
@@ -139,7 +139,7 @@ export const AI_APPS = {
     tag: "food",
     isTop: true,
     background: COLORS.emrald.background, // bg-emerald-100
-    text: COLORS.emrald.text, // text-emerald-600
+    text: COLORS.emrald.text, // text-primary
     border: COLORS.emrald.border, // border-emerald-200
     gradientLight: GRADIENTS.greenLight, // Tailwind: from-green-300 to-green-500
     gradientDark: GRADIENTS.greenDark, // Tailwind: from-green-400 to-green-600
@@ -167,10 +167,10 @@ export const AI_APPS = {
     tag: "prescription",
     isTop: true,
     background: COLORS.blue.background, // bg-blue-100
-    text: COLORS.blue.text, // text-blue-600
+    text: COLORS.blue.text, // text-primary
     border: COLORS.blue.border, // border-blue-200
-    gradientLight: GRADIENTS.blueLight, // from-blue-300 to-blue-500
-    gradientDark: GRADIENTS.blueDark, // from-blue-400 to-blue-600
+    gradientLight: GRADIENTS.blueLight, // from-blue-300 to-primary
+    gradientDark: GRADIENTS.blueDark, // from-blue-400 to-primary
     isCompleted: true,
   },
   lab: {

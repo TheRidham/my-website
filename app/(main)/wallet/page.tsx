@@ -111,7 +111,7 @@ export default function WalletPage() {
                       "py-3 rounded-xl border-2 transition-all duration-200 text-sm font-bold",
                       amount === val.toString() 
                         ? "border-primary bg-primary/5 text-primary" 
-                        : "border-slate-50 bg-slate-50/50 hover:border-slate-100 text-slate-600"
+                        : "border-slate-50  hover:border-primary/50 text-slate-600"
                     )}
                   >
                     ${val}
@@ -134,7 +134,7 @@ export default function WalletPage() {
                 <Button 
                   onClick={handleTopUp} 
                   disabled={isTopUpLoading || isLoading}
-                  className="w-full py-6 text-md font-bold shadow-lg shadow-primary/20 rounded-xl bg-blue-500/70 hover:bg-blue-500 hover:text-white"
+                  className="w-full py-6 text-md font-bold shadow-lg shadow-primary/20 rounded-xl bg-primary/70 hover:bg-primary hover:text-white"
                 >
                   {isTopUpLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -162,11 +162,11 @@ export default function WalletPage() {
               {transactions.length > 0 ? (
                 <div className="divide-y divide-slate-50">
                   {transactions.slice(0, 10).map((tx) => (
-                    <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                    <div key={tx.id} className="p-4 flex items-center justify-between hover: transition-colors">
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "w-10 h-10 rounded-full flex items-center justify-center",
-                          tx.type === 'credit' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                          tx.type === 'credit' ? "bg-green-50 text-green-600" : "bg-primary/30 text-primary"
                         )}>
                           {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                         </div>
@@ -203,7 +203,7 @@ export default function WalletPage() {
                 </div>
               ) : (
                 <div className="p-8 text-center space-y-3">
-                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12  rounded-full flex items-center justify-center mx-auto">
                     <History className="w-6 h-6 text-slate-300" />
                   </div>
                   <p className="text-xs font-medium text-slate-500">No transactions yet</p>
@@ -214,9 +214,9 @@ export default function WalletPage() {
         </div>
 
         {/* Help Section */}
-        <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+        <div className="p-4 bg-primary/30 border border-blue-100 rounded-2xl">
           <p className="text-[11px] font-bold text-blue-900 flex items-center gap-2 mb-1">
-            <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500" />
+            <span className="flex h-1.5 w-1.5 rounded-full bg-primary" />
             Payment Support
           </p>
           <p className="text-[10px] text-blue-700/80 leading-relaxed">

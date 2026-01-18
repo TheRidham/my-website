@@ -75,14 +75,14 @@ function AllAdvisorsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 pb-24">
+    <div className="flex flex-col h-full pb-24">
       {/* Search */}
-      <div className="px-5 py-4 sticky top-0 bg-white z-20 border-b">
+      <div className="px-5 py-4 sticky top-0 bg-background z-20 border-b">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             placeholder="Search by name or specialty"
-            className="w-full bg-slate-50 rounded-2xl py-3.5 pl-12 pr-4 text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
           />
         </div>
       </div>
@@ -91,7 +91,7 @@ function AllAdvisorsPage() {
       <div className="p-5 space-y-4">
         {loading && (
           <div className="flex flex-col items-center py-20">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-sm font-bold text-gray-400">Loading expert advisors...</p>
           </div>
         )}
@@ -102,7 +102,7 @@ function AllAdvisorsPage() {
               <div
                 key={advisor.uid}
                 onClick={() => handleAdvisorClick(advisor)}
-                className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
+                className="bg-secondary rounded-4xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
               >
                 <div className="flex gap-5">
                   <div className="relative w-20 h-20 rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner shrink-0">
@@ -121,7 +121,7 @@ function AllAdvisorsPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-black text-gray-900 text-lg truncate group-hover:text-blue-600 transition-colors">
+                      <h3 className="font-black text-gray-900 text-lg truncate group-hover:text-primary transition-colors">
                         {advisor.name}
                       </h3>
                       <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
@@ -154,8 +154,8 @@ function AllAdvisorsPage() {
                         </div>
                       </div>
                       
-                      <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                        <MessageCircle className="text-blue-600 group-hover:text-white transition-colors" size={20} />
+                      <div className="w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors">
+                        <MessageCircle className="text-primary group-hover:text-white transition-colors" size={20} />
                       </div>
                     </div>
                   </div>

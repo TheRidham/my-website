@@ -21,7 +21,7 @@ const CTASection = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10 text-white">
-            <Button size="xl" className="bg-linear-to-r from-teal-400 to-blue-500 shadow-xl shadow-secondary/30 group">
+            <Button size="xl" className="bg-linear-to-r from-teal-400 to-primary shadow-xl shadow-secondary/30 group">
               <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
               Download JAI App
               <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />

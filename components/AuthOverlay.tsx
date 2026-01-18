@@ -119,7 +119,7 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 pointer-events-auto"
     >
       <div className="w-full max-w-md rounded-xl p-8 bg-white shadow-2xl text-gray-800 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto">
-        <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
+        <h2 className="text-2xl font-bold text-center mb-6 text-primary">
           Authenticate yourself
         </h2>
 

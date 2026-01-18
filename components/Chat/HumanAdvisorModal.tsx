@@ -154,13 +154,13 @@ export function HumanAdvisorModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="flex items-center justify-between bg-blue-50 p-4 rounded-2xl border border-blue-100">
+          <div className="flex items-center justify-between bg-primary/30 p-4 rounded-2xl border border-blue-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-600 rounded-xl">
+              <div className="p-2 bg-primary rounded-xl">
                 <Wallet className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                <div className="text-[10px] font-bold text-primary uppercase tracking-wider">
                   Wallet Balance
                 </div>
                 <div className="text-lg font-black text-blue-900">
@@ -171,7 +171,7 @@ export function HumanAdvisorModal({
             {walletBalance < price * 100 && (
               <Button
                 variant="link"
-                className="text-blue-600 font-bold text-xs"
+                className="text-primary font-bold text-xs"
                 onClick={() => (window.location.href = "/wallet")}
               >
                 Top Up
@@ -181,7 +181,7 @@ export function HumanAdvisorModal({
 
           {selectedAdvisor ? (
             <div className="space-y-4">
-              <div className="p-4 border rounded-2xl bg-slate-50 flex items-center gap-4">
+              <div className="p-4 border rounded-2xl  flex items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden border-2 border-white">
                   {selectedAdvisor.image ? (
                     <img
@@ -220,7 +220,7 @@ export function HumanAdvisorModal({
                   <Button
                     onClick={() => handleWalletPayment(selectedAdvisor.id)}
                     disabled={isProcessing}
-                    className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
+                    className="h-14 rounded-2xl bg-primary hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
                   >
                     <div className="flex items-center gap-3">
                       <Wallet className="w-5 h-5" />
@@ -233,7 +233,7 @@ export function HumanAdvisorModal({
                   <Button
                     onClick={() => handleRazorpayPayment(selectedAdvisor.id)}
                     disabled={isProcessing}
-                    className="h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
+                    className="h-14 rounded-2xl bg-primary hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
                   >
                     <div className="flex items-center gap-3">
                       <DollarSign className="w-5 h-5" />
@@ -254,7 +254,7 @@ export function HumanAdvisorModal({
 
               {isLoading ? (
                 <div className="flex flex-col items-center py-12">
-                  <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
+                  <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
                   <p className="text-sm font-bold text-gray-400">
                     Finding the best experts for you...
                   </p>
@@ -264,7 +264,7 @@ export function HumanAdvisorModal({
                   {advisors.map((advisor) => (
                     <div
                       key={advisor.id}
-                      className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50/30 transition-all group"
+                      className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-primary/30/30 transition-all group"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
@@ -302,7 +302,7 @@ export function HumanAdvisorModal({
                         size="sm"
                         onClick={() => handleWalletPayment(advisor.id)}
                         disabled={isProcessing}
-                        className="bg-blue-600 hover:bg-blue-700 rounded-xl font-bold px-4"
+                        className="bg-primary hover:bg-blue-700 rounded-xl font-bold px-4"
                       >
                         {isProcessing ? (
                           <Loader2 className="w-3 h-3 animate-spin" />

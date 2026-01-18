@@ -42,7 +42,7 @@ const HeroSection = () => {
             <AnimatedSection animation="fade-up" delay={100}>
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-[1.1] mb-6">
                 Your Personal AI Advisor
-                <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-teal-500 block mt-2">
+                <span className="bg-clip-text text-transparent bg-linear-to-r from-primary to-teal-500 block mt-2">
                   Available 24/7
                 </span>
               </h1>
@@ -59,7 +59,7 @@ const HeroSection = () => {
             <AnimatedSection animation="fade-up" delay={300}>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
                 <Link href={"/auth/signup"}>
-                <Button className="shadow-lg group relative overflow-hidden bg-blue-500 text-white">
+                <Button className="shadow-lg group relative overflow-hidden bg-primary text-white">
                   Start Free Chat
                   <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full"></div>
@@ -67,10 +67,10 @@ const HeroSection = () => {
                 </Button>
                 </Link>
                 <Link href={"/auth/signup"}>
-                <Button className="shadow-lg group relative overflow-hidden border border-blue-500 bg-white text-blue-500">
+                <Button className="shadow-lg group relative overflow-hidden border border-primary bg-white text-primary hover:bg-white">
                   <Users className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   Talk to Human Expert
-                  <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-blue-400 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full"></div>
+                  <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-primary/70 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full"></div>
                   <div className="absolute inset-0 ring-1 ring-inset ring-white/20"></div>
                 </Button>
                 </Link>
@@ -198,12 +198,12 @@ const HeroSection = () => {
               </div>
 
               <div
-                className="absolute -left-4 bottom-1/4 glass-card rounded-xl p-3 shadow-lg shadow-blue-300 animate-bounce [animation-duration:4s]"
+                className="absolute -left-4 bottom-1/4 glass-card rounded-xl p-3 shadow-lg shadow-primary/70 animate-bounce [animation-duration:4s]"
                 style={{ animationDelay: "1s" }}
               >
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Scale className="w-4 h-4 text-blue-600" />
+                    <Scale className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-sm font-semibold">Legal</span>
                 </div>

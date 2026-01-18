@@ -8,7 +8,7 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { Send, Loader2, Trash2, Paperclip, Mic } from "lucide-react";
+import { Send, Loader2, Trash2, Paperclip, Mic, ArrowRightSquare, ArrowRight, Shield, MessageCircle, Group, Users, Sparkles } from "lucide-react";
 import { ADVISOR_CATEGORIES } from "@/constant/advisors";
 import { Button } from "@/components/ui/button";
 import { usePrompts } from "@/providers/PromptsProvider";
@@ -18,6 +18,7 @@ import { marked } from "marked";
 import { HumanAdvisorModal } from "./HumanAdvisorModal";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { auth } from "@/lib/firebase";
+import { LucideIcon } from "../ui/LucideIcon";
 
 
 interface Message {
@@ -345,27 +346,80 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     };
 
     return (
-      <div className="flex flex-col h-full bg-slate-50">
+      <div className="flex flex-col h-full bg-secondary">
         {/* Chat Messages Area */}
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto no-scrollbar scroll-smooth"
         >
-          <div className="max-w-4xl mx-auto w-full p-6 space-y-3">
-            {/* Welcome Message */}
-            {(welcomeMessage || isJaiya) && messages.length === 0 && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 max-w-[85%] shadow-sm">
-                  <div
-                    className="text-gray-700 text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: marked.parse(
-                        welcomeMessage ||
-                          "Hello! I'm Super AI, your AI companion. I can help you find the perfect AI advisor for any situation."
-                      ) as string,
-                    }}
-                  />
+          <div className="max-w-4xl mx-auto w-full px-6 py-2 space-y-3">
+            {/* New Welcome Screen */}
+            {messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
+                {/* Icon */}
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                  {isJaiya ? (
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  ) : (
+                    <LucideIcon 
+                      name={
+                        categoryKey 
+                          ? ADVISOR_CATEGORIES[categoryKey]?.categories.find(
+                              (s) => s.title === subcategoryTitle
+                            )?.icon || ADVISOR_CATEGORIES[categoryKey]?.icon || "Sparkles"
+                          : "Sparkles"
+                      }
+                      size={28}
+                      className="text-primary"
+                    />
+                  )}
                 </div>
+
+                {/* Title - Dynamic based on category/subcategory */}
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-3">
+                  {isJaiya ? "Hi, I'm your Super AI" : `Hi, I'm your ${subcategoryTitle + " Advisor" || "AI Advisor"}`}
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-gray-600 text-center mb-6 max-w-sm">
+                  Chat with me for free, or connect with a real expert for just $5.
+                </p>
+
+                {/* Stats Badges */}
+                <div className="flex flex-wrap gap-3 justify-center mb-4">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
+                    <MessageCircle size={16} />
+                    2M+ consultations
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
+                    <Users size={16} />
+                    $5 per expert
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
+                    <Shield size={16} />
+                    HIPAA compliant
+                  </div>
+                </div>
+
+                {/* What can I help with */}
+                <p className="text-gray-700 font-semibold mb-3 text-center">What can I help with?</p>
+
+                {/* Suggestions Grid */}
+                {suggestions.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => processMessage(suggestion)}
+                        className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-primary hover:bg-accent transition-all group shadow-sm text-left"
+                      >
+                        <p className="text-[13px] font-semibold text-gray-800 group-hover:text-primary">
+                          {suggestion}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -402,7 +456,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                   <div
                     className={`px-4 py-2 max-w-[85%] shadow-sm rounded-2xl ${
                       msg.role === "user"
-                        ? "bg-blue-600 text-white rounded-tr-none"
+                        ? "bg-primary text-white rounded-tr-none"
                         : "bg-white border border-gray-200 text-gray-700 rounded-tl-none"
                     }`}
                   >
@@ -424,7 +478,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               <div className="flex justify-start">
                 <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
                     <span className="text-[12px] text-gray-400 font-medium">
                       Thinking...
                     </span>
@@ -432,57 +486,40 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                 </div>
               </div>
             )}
-
-            {/* Suggestions */}
-            {messages.length === 0 && suggestions.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => processMessage(suggestion)}
-                    className="text-left p-4 rounded-2xl border border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 transition-all group shadow-sm"
-                  >
-                    <p className="text-[13px] font-bold text-gray-800 group-hover:text-blue-700">
-                      {suggestion}
-                    </p>
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Click to ask
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        {/* Input Area */}
-        <div className="p-4 bg-white border-t border-gray-200">
-          <div className="max-w-4xl mx-auto flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-            />
-            <Button
-              onClick={handleSend}
-              disabled={isLoading || !input.trim()}
-              className="rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
+            {/* Input Area */}
+      <div className="px-4 py-2">
+        <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Ask me anything..."
+            className="flex-1 px-4 py-2 focus:outline-none"
+          />
+          <Button
+            onClick={handleSend}
+            disabled={isLoading || !input.trim()}
+            className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square"
+          >
+            <ArrowRight size={24} />
+          </Button>
         </div>
-
-        <HumanAdvisorModal
-          isOpen={isHumanModalOpen}
-          onClose={() => setIsHumanModalOpen(false)}
-          categoryKey={categoryKey}
-          subcategoryTitle={subcategoryTitle}
-        />
       </div>
-    );
-  }
-);
+
+      <p className="text-muted-foreground text-xs text-center flex flex-row justify-center pb-4 gap-2">
+        <Shield size={14} className="text-muted-foreground" /> HIPAA Compliant • Private
+      </p>
+
+      <HumanAdvisorModal
+        isOpen={isHumanModalOpen}
+        onClose={() => setIsHumanModalOpen(false)}
+        categoryKey={categoryKey}
+        subcategoryTitle={subcategoryTitle}
+      />
+    </div>
+  )
+})

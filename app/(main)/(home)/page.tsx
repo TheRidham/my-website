@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { 
   Search, Star,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp,
+  Shield
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -99,19 +100,36 @@ function HomePage() {
   }
 
   return (
-    <div className="flex flex-col h-full pb-24 bg-slate-50">
+    <div className="flex flex-col h-full pb-24">
       {/* Search Section */}
-      <div className="px-5 py-4 sticky top-0 bg-white backdrop-blur-md z-20 border-b border-gray-200/50">
+      <div className="px-5 pt-4 sticky top-0 z-20">
         <div className="relative group">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors"
             size={18}
           />
           <input
             type="text"
             placeholder="Search AI Specialists"
-            className="w-full bg-slate-50/80 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-blue-300 focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
+            className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm"
           />
+        </div>
+      </div>
+      <div className='px-5 pb-4'>
+        {/* Stats Section */}
+        <div className="flex justify-between gap-4 mt-4 px-2 py-3 border rounded-lg">
+          <div className="flex-1 text-center">
+            <div className="text-sm font-bold text-gray-900">2.1M+</div>
+            <div className="text-xs text-muted-foreground">Chats</div>
+          </div>
+          <div className="flex-1 text-center border-l border-r border-gray-200">
+            <div className="text-sm font-bold text-gray-900">$5</div>
+            <div className="text-xs text-muted-foreground">Per Expert</div>
+          </div>
+          <div className="flex-1 text-center">
+            <Shield size={18} className='text-primary mx-auto mb-1'/>
+            <div className="text-xs text-muted-foreground">HIPAA</div>
+          </div>
         </div>
       </div>
 
@@ -130,12 +148,12 @@ function HomePage() {
               className={cat.className}
             >
               <div 
-                className="w-15 h-15 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300"
-                style={{ backgroundColor: cat.bgColor, color: cat.color }}
+                className="w-15 h-15 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 bg-muted text-primary"
+                // style={{ backgroundColor: cat.bgColor, color: cat.color }}
               >
                 <LucideIcon name={cat.icon} size={26} />
               </div>
-              <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-blue-600 transition-colors">
+              <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-primary transition-colors">
                 {cat.name}
               </span>
             </Link>
@@ -143,7 +161,7 @@ function HomePage() {
         </div>
         <button
           onClick={() => setShowAllCategories(!showAllCategories)}
-          className="w-full mt-6 py-3 text-blue-600 text-sm font-bold flex items-center justify-center gap-2 bg-blue-50/50 rounded-xl hover:bg-blue-50 transition-colors"
+          className="w-full mt-6 py-3 text-primary text-sm font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-primary/5 transition-colors"
         >
           {showAllCategories ? (
             <>
@@ -164,11 +182,11 @@ function HomePage() {
             <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
               AI Apps
             </h2>
-            <span className="bg-linear-to-r from-blue-600 to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+            <span className="bg-linear-to-r from-primary to-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
               New
             </span>
           </div>
-          <button className="text-blue-600 text-xs font-bold hover:underline">
+          <button className="text-primary text-xs font-bold hover:underline">
             See All
           </button>
         </div>
@@ -183,7 +201,7 @@ function HomePage() {
               >
                 <app.icon size={26} />
               </div>
-              <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-blue-600 transition-colors">
+              <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-primary transition-colors">
                 {app.name}
               </span>
             </div>
@@ -199,7 +217,7 @@ function HomePage() {
           </h2>
           <Link
             href="/allAdvisors"
-            className="text-blue-600 text-xs font-bold hover:underline"
+            className="text-primary text-xs font-bold hover:underline"
           >
             See All
           </Link>
@@ -238,7 +256,7 @@ function HomePage() {
                 <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">
                   {advisor.name}
                 </h3>
-                <p className="text-[10px] text-blue-600 font-bold text-center uppercase tracking-wider mt-0.5">
+                <p className="text-[10px] text-primary font-bold text-center uppercase tracking-wider mt-0.5">
                   {advisor.specialization?.[0] || 'Expert'}
                 </p>
                 <div className="flex items-center justify-center gap-1 mt-2">
