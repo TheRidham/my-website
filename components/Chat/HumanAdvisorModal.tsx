@@ -160,10 +160,10 @@ export function HumanAdvisorModal({
                 <Wallet className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                <div className="text-[10px] font-bold text-accent-foreground uppercase tracking-wider">
                   Wallet Balance
                 </div>
-                <div className="text-lg font-black text-blue-900">
+                <div className="text-lg font-black text-accent-foreground">
                   ${(walletBalance / 100).toFixed(2)}
                 </div>
               </div>
@@ -220,7 +220,7 @@ export function HumanAdvisorModal({
                   <Button
                     onClick={() => handleWalletPayment(selectedAdvisor.id)}
                     disabled={isProcessing}
-                    className="h-14 rounded-2xl bg-primary hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
+                    className="h-14 rounded-2xl bg-primary hover:bg-accent-foreground text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
                   >
                     <div className="flex items-center gap-3">
                       <Wallet className="w-5 h-5" />
@@ -233,7 +233,7 @@ export function HumanAdvisorModal({
                   <Button
                     onClick={() => handleRazorpayPayment(selectedAdvisor.id)}
                     disabled={isProcessing}
-                    className="h-14 rounded-2xl bg-primary hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
+                    className="h-14 rounded-2xl bg-primary hover:bg-accent-foreground text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-between px-6"
                   >
                     <div className="flex items-center gap-3">
                       <DollarSign className="w-5 h-5" />
@@ -302,7 +302,7 @@ export function HumanAdvisorModal({
                         size="sm"
                         onClick={() => handleWalletPayment(advisor.id)}
                         disabled={isProcessing}
-                        className="bg-primary hover:bg-blue-700 rounded-xl font-bold px-4"
+                        className="bg-primary hover:bg-accent-foreground rounded-xl font-bold px-4"
                       >
                         {isProcessing ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
