@@ -44,6 +44,8 @@
   /* Popovers */
   --color-popover: #FFFFFF;
   --color-popover-foreground: #1F2933;
+
+  --color-corporate: hsl(var(--background-corporate))
 }
 
 @layer base {
@@ -51,6 +53,7 @@
     /* Background & Foreground */
     --background: 0 0% 100%;
     --foreground: 140 20% 25%;
+    --background-corporate: 40 20% 97%;
     
     /* Card */
     --card: 0 0% 100%;
