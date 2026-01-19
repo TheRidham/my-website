@@ -186,7 +186,7 @@ export default function WellspringPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Personal Trainer */}
             <div
-              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 hover:shadow-xl transition-all duration-300 animate-fade-in group"
+              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 transition-all duration-300 animate-fade-in group"
               style={{ animationDelay: "0ms" }}
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -208,7 +208,7 @@ export default function WellspringPage() {
 
             {/* Personal Nutritionist */}
             <div
-              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 hover:shadow-xl transition-all duration-300 animate-fade-in group"
+              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 transition-all duration-300 animate-fade-in group"
               style={{ animationDelay: "100ms" }}
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -230,7 +230,7 @@ export default function WellspringPage() {
 
             {/* Personal Physician */}
             <div
-              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 hover:shadow-xl transition-all duration-300 animate-fade-in group"
+              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 transition-all duration-300 animate-fade-in group"
               style={{ animationDelay: "200ms" }}
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -583,32 +583,10 @@ export default function WellspringPage() {
 
         {/* Footer CTA */}
         <section className="mt-24 py-16 px-8 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Join 18+ Enterprises Getting Smarter Health Advice
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1B2232] mb-8">
+            Join 150+ Enterprises Getting Smarter Health Advice
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-            Available on all platforms. No credit card required to get started.
-          </p>
-          <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-14 px-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium mb-8">
-            <span className="flex items-center gap-2">
-              Download Wellspring App
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-arrow-right w-5 h-5"
-              >
-                <path d="M5 12h14"></path>
-                <path d="m12 5 7 7-7 7"></path>
-              </svg>
-            </span>
-          </button>
+          
           <div className="flex items-center justify-center gap-4 mb-6">
             <Link
               href="https://play.google.com/store/apps/details?id=com.anonymous.jaiai"
@@ -616,7 +594,7 @@ export default function WellspringPage() {
               className="inline-block transition-transform hover:scale-105"
               aria-label="Download on Google Play"
             >
-              <div className="flex items-center gap-2 px-4 py-3 bg-foreground text-background rounded-lg">
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#1B2232] text-background rounded-2xl">
                 <svg
                   viewBox="0 0 24 24"
                   className="w-6 h-6"
@@ -636,7 +614,7 @@ export default function WellspringPage() {
               className="inline-block transition-transform hover:scale-105"
               aria-label="Download on App Store"
             >
-              <div className="flex items-center gap-2 px-4 py-3 bg-foreground text-background rounded-lg">
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#1B2232] text-background rounded-2xl">
                 <svg
                   viewBox="0 0 24 24"
                   className="w-6 h-6"
