@@ -29,7 +29,7 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const pathname = usePathname();
   const [activeChat, setActiveChat] = useState({
     advisorName: "Super AI",
