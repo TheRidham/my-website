@@ -148,7 +148,7 @@ function HomePage() {
               className={cat.className}
             >
               <div 
-                className="w-15 h-15 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 bg-muted text-primary"
+                className="w-15 h-15 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 bg-muted text-primary"
                 // style={{ backgroundColor: cat.bgColor, color: cat.color }}
               >
                 <LucideIcon name={cat.icon} size={26} />
