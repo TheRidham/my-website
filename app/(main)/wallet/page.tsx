@@ -21,7 +21,7 @@ export default function WalletPage() {
 
   const handleTopUp = async () => {
     const numAmount = parseInt(amount)
-    if (isNaN(numAmount) || numAmount < 10) {
+    if (isNaN(numAmount) || numAmount < 1) {
       alert('Please enter a valid amount (min $1)')
       return
     }
@@ -227,3 +227,4 @@ export default function WalletPage() {
     </div>
   )
 }
+
