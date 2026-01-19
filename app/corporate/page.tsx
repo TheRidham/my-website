@@ -4,7 +4,7 @@ import Logo from "@/assets/logo.png";
 import Link from "next/link";
 import ExpertCard from "@/components/ExpertCard";
 import { expertCardData } from "@/components/ExpertCard";
-import { Target, Heart, Shield, Stethoscope } from "lucide-react";
+import { Target, Heart, Shield, Stethoscope, ArrowLeft } from "lucide-react";
 import BusinessCaseSection from "@/components/BusinessCase";
 
 export default function WellspringPage() {
@@ -191,11 +191,11 @@ export default function WellspringPage() {
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                  our focus
+                  Clinical Support Only
                 </div>
               </div>
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/15 transition-colors">
-                <Heart className="lucide lucide-dumbbell w-10 h-10 text-primary" />
+                <Heart className="lucide lucide-dumbbell w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-3 text-center">
                 Wellness & Preventive
@@ -213,11 +213,11 @@ export default function WellspringPage() {
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                  our focus
+                  Clinical Support Only
                 </div>
               </div>
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/15 transition-colors">
-                <Shield className="lucide lucide-dumbbell w-10 h-10 text-primary" />
+                <Shield className="lucide lucide-dumbbell w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-3 text-center">
                 Self Treatment
@@ -230,24 +230,35 @@ export default function WellspringPage() {
 
             {/* Personal Physician */}
             <div
-              className="relative p-8 rounded-3xl bg-primary/5 border border-primary/30 shadow-lg hover:border-primary/60 transition-all duration-300 animate-fade-in group"
+              className="animate-fade-in"
               style={{ animationDelay: "200ms" }}
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                  our focus
+              <div className="relative p-8 rounded-3xl bg-primary-foreground group flex flex-col items-center opacity-60">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/15 transition-colors">
+                  <Stethoscope className="lucide lucide-dumbbell w-8 h-8 text-muted-foreground" />
                 </div>
+                <h3 className="text-xl font-semibold text-foreground mb-3 text-center">
+                  Clinical Support
+                </h3>
+                <p className="text-muted-foreground leading-relaxed text-center text-sm mb-6">
+                  Doctor consultations, specialist referrals, and medical
+                  treatment pathways
+                </p>
+                <p className="text-muted-foreground italic text-xs text-center mt-auto">
+                  Traditional healthcare focus
+                </p>
               </div>
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/15 transition-colors">
-                <Stethoscope className="lucide lucide-dumbbell w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3 text-center">
-                Clinical Support
-              </h3>
-              <p className="text-muted-foreground leading-relaxed text-center sm">
-                Doctor consultations, specialist referrals, and medical
-                treatment pathways
-              </p>
+            </div>
+          </div>
+          <div className="flex justify-center">
+            <div
+              className="inline-flex items-center gap-2 px-6 py-3 bg-card border border-border/60 text-primary mt-8 rounded-full"
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm text-foreground font-medium">
+                Shifting focus from treatment to prevention
+              </span>
+              <ArrowLeft size={20} />
             </div>
           </div>
         </section>
@@ -545,9 +556,9 @@ export default function WellspringPage() {
               </p>
               <div className="flex items-center gap-3">
                 <img
-                  src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                   alt="Emily Thompson"
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-12 h-12 rounded-full object-cover "
                 />
                 <div className="flex-1">
                   <div className="font-semibold text-foreground">
