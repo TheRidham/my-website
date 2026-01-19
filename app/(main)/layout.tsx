@@ -1,7 +1,6 @@
 "use client";
 
 import Jaiya from "@/components/Jaiya/Index";
-import BottomNav from "@/components/BottomNav";
 import React, { useEffect } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useChat } from "@/providers/ChatProvider";
@@ -46,7 +45,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     );
 
   return (
-    <section className="flex h-screen  overflow-hidden">
+    <section className="flex h-screen overflow-hidden">
       {/* Sidebar (Left Section) */}
       <div
         className={`
@@ -66,15 +65,12 @@ function Layout({ children }: { children: React.ReactNode }) {
         >
           {children}
         </div>
-        <div className={`shrink-0 md:hidden`}>
-          <BottomNav />
-        </div>
 
         {/* Desktop Toggle Button (Inside Sidebar when open) */}
         {isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="hidden md:flex absolute right-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40"
+            className="flex absolute right-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40"
             title="Close sidebar"
           >
             <PanelLeftClose size={22} />
@@ -92,7 +88,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         {!isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="hidden md:flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40 shadow-sm border border-gray-100 bg-white"
+            className="flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40 shadow-sm border border-gray-100 bg-white"
             title="Open sidebar"
           >
             <PanelLeftOpen size={22} />
@@ -114,7 +110,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Overlay Backdrop */}
       {isSidebarOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-20"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
