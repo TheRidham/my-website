@@ -61,7 +61,7 @@ function Jaiya({
     <div className="flex flex-col h-full bg-secondary">
       {/* Header */}
       <div className={`border-b border-gray-200 bg-white backdrop-blur-sm transition-all duration-300 ${!isSidebarOpen && "pl-12"}`}>
-        <div className="w-full flex items-center justify-between px-6 py-4">
+        <div className="w-full flex items-center justify-between px-6 py-1.5">
           <div className="flex items-center">
             {(isAdvisorChat) && (
               <button 
