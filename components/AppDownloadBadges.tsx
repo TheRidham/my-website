@@ -6,7 +6,7 @@ export default function AppDownloadBadges() {
     <div className="flex items-center justify-center gap-2 py-2.5">
       {/* App Store Button */}
       <Link
-        href="https://play.google.com/store/apps/details?id=com.anonymous.jaiai" 
+        href="https://apps.apple.com/in/app/jai-quick-personal-advisory/id6755586022" 
         target="_blank"
         className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground/5 hover:bg-foreground/10 rounded-2xl transition-all hover:scale-105 border border-border/50"
       >
@@ -19,7 +19,7 @@ export default function AppDownloadBadges() {
 
       {/* Google Play Button */}
       <Link
-        href="https://apps.apple.com/in/app/jai-quick-personal-advisory/id6755586022"
+        href="https://play.google.com/store/apps/details?id=com.anonymous.jaiai"
         target="_blank"
         className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground/5 hover:bg-foreground/10 rounded-2xl transition-all hover:scale-105 border border-border/50"
       >
