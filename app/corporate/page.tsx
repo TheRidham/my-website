@@ -402,7 +402,7 @@ export default function WellspringPage() {
               What Our Clients Say
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              See how Wellspring has helped organizations improve employee
+              See how Quik Advise has helped organizations improve employee
               wellness
             </p>
           </div>
@@ -428,7 +428,7 @@ export default function WellspringPage() {
                 <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
               </svg>
               <p className="text-foreground leading-relaxed mb-6">
-                "Wellspring has transformed how our employees approach their
+                "Quik has transformed how our employees approach their
                 health. The 24/7 access to experts means fewer sick days and
                 happier team members."
               </p>
@@ -443,7 +443,7 @@ export default function WellspringPage() {
                     Sarah Mitchell
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    HR Director, TechFlow Inc.
+                    HR Director, Tetr 
                   </div>
                 </div>
               </div>
@@ -489,8 +489,8 @@ export default function WellspringPage() {
                 <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path>
               </svg>
               <p className="text-foreground leading-relaxed mb-6">
-                "The nutrition and supplement advisory helped me optimize my
-                health routine. I've never felt better, and the app makes it so
+                "The nutrition and supplement advisory helped us optimize our
+                health. We've never felt better, and the app makes it so
                 easy to get expert advice."
               </p>
               <div className="flex items-center gap-3">
@@ -504,7 +504,7 @@ export default function WellspringPage() {
                     James Anderson
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    CEO, Greenleaf Wellness
+                    CHRO, Acerox Inc.
                   </div>
                 </div>
               </div>
