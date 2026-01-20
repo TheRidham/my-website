@@ -49,8 +49,8 @@ export default function BusinessCaseSection() {
         </h2>
 
         <p className="text-[16px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Implementing Quik costs less than 5% of your annual group
-          insurance/health expenses—and delivers measurable returns.
+          Implementing Quik costs ~3% of your annual group
+          insurance/health expenses
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default function BusinessCaseSection() {
         <StatCard
           value="$5"
           title="ROI for Every $1 Spent"
-          description="Typical return on investment within 2–3 years of implementation"
+          description="Typical return on investment within 1-2 years of implementation"
           delay="200ms"
         />
       </div>
@@ -85,16 +85,12 @@ export default function BusinessCaseSection() {
           The Hidden Killer: Presenteeism
         </h3>
         <p className="text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed text-sm">
-          <span className="font-semibold text-foreground">
-            People at work but not productive
-          </span>
-          —this is often more costly than absenteeism. Our wellness programs
-          improve:
+            People at work but not productive, this is often more costly than absenteeism.
         </p>
 
         <div className="flex flex-wrap justify-center gap-4">
           <FeaturePill label="Better Sleep" />
-          <FeaturePill label="Mental Health" />
+          <FeaturePill label="Illness" />
           <FeaturePill label="Stress" />
           <FeaturePill label="Energy Levels" />
         </div>
