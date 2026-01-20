@@ -20,6 +20,7 @@ import { useChatHistory } from "@/hooks/useChatHistory";
 import { auth } from "@/lib/firebase";
 import { LucideIcon } from "../ui/LucideIcon";
 import ChatSection from "../ChatSection";
+import AppDownloadBadges from "../AppDownloadBadges";
 
 
 interface Message {
@@ -498,9 +499,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         </div>
       </div>
 
-      <p className="text-muted-foreground text-xs text-center flex flex-row justify-center pb-4 gap-2">
-        <Shield size={14} className="text-muted-foreground" /> HIPAA Compliant • Private
-      </p>
+      <AppDownloadBadges />
 
       <HumanAdvisorModal
         isOpen={isHumanModalOpen}
