@@ -63,14 +63,14 @@ function Jaiya({
       <div className={`border-b border-gray-200 bg-white backdrop-blur-sm transition-all duration-300 ${!isSidebarOpen && "pl-12"}`}>
         <div className="w-full flex items-center justify-between px-6 py-1.5">
           <div className="flex items-center">
-            {(isAdvisorChat) && (
+            {/* {(isAdvisorChat) && (
               <button 
                 onClick={onBack}
                 className="mr-4 text-gray-600 hover:text-primary transition-colors"
               >
                 <ChevronLeft size={24} />
               </button>
-            )}
+            )} */}
             <div className="flex items-center gap-4">
               <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-emerald-50 flex items-center justify-center">
                 {isAdvisorChat ? (
@@ -122,12 +122,12 @@ function Jaiya({
             )}
             <button 
               onClick={handleNewChat}
-              className="p-2.5 text-gray-500 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all" 
+              className="hidden md:inline-block p-2.5 text-gray-500 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all" 
               title="New Chat"
             >
               <Plus size={22} />
             </button>
-            <button onClick={() => setIsOpen(true)} className="p-2.5 text-gray-500 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all" title="Chat History">
+            <button onClick={() => setIsOpen(true)} className="hidden md:inline-block p-2.5 text-gray-500 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all" title="Chat History">
               <History size={22} />
             </button>
             <button 

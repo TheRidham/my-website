@@ -29,7 +29,7 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const pathname = usePathname();
   const [activeChat, setActiveChat] = useState({
     advisorName: "Super AI",
@@ -40,7 +40,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
-    if(pathname!=='/') setIsSidebarOpen(true); 
+    if(pathname!=='/' && (typeof window !== 'undefined' && window.innerWidth >= 768)) setIsSidebarOpen(true); 
   }, [pathname])
 
   const switchChat = useCallback((advisor: Advisor) => {

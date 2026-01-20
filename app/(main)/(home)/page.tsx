@@ -48,7 +48,7 @@ function HomePage() {
   const [loading, setLoading] = useState(true)
   const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { switchChat } = useChat()
+  const { resetChat } = useChat()
 
   const categoriesList = Object.entries(ADVISOR_CATEGORIES).map(([key, value]) => ({
     key,
@@ -102,22 +102,43 @@ function HomePage() {
   return (
     <div className="flex flex-col h-full pb-24">
       {/* Search Section */}
-      <div className="px-5 pt-4 sticky top-0 z-20">
-        <div className="relative group">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Search AI Specialists"
-            className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm"
-          />
+      <div className="px-5 pt-4 pb-2 sticky top-0 z-20 backdrop-blur-2xl">
+        <div className="relative flex items-center gap-3 w-full">
+          {/* Search input wrapper */}
+          <div className="relative flex-1 group">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors"
+              size={18}
+            />
+
+            <input
+              type="text"
+              placeholder="Ask me anything and I will connect you to that AI Advisor"
+              className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm"
+            />
+          </div>
+
+          {/* Avatar + label */}
+          <button 
+            onClick={() => resetChat()}
+            className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer bg-none border-none p-0"
+            title="Switch to Super AI"
+          >
+            <div className="relative w-9 h-9 rounded-lg overflow-hidden">
+              <Image
+                src={jaiyaAvatar}
+                alt="Super AI logo"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <p className="text-xs font-medium whitespace-nowrap">Super AI</p>
+          </button>
         </div>
       </div>
       <div className='px-5 pb-4'>
         {/* Stats Section */}
-        <div className="flex justify-between gap-4 mt-4 px-2 py-3 border rounded-lg">
+        <div className="flex justify-between gap-4 mt-2 px-2 py-3 border rounded-lg">
           <div className="flex-1 text-center">
             <div className="text-sm font-bold text-gray-900">2.1M+</div>
             <div className="text-xs text-muted-foreground">Chats</div>
