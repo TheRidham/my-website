@@ -44,7 +44,7 @@ export default function DemoForm() {
           Request a Demo
         </h2>
         <p className="text-muted-foreground mb-8">
-          See how Wellspring can benefit your organization
+          See how QuikAdvise can benefit your organization
         </p>
         {submitStatus === 'success' && (
           <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-sm">
@@ -108,7 +108,7 @@ export default function DemoForm() {
           <textarea
             className="flex min-h-[80px] w-full border px-3 py-2 text-sm ring-offset-accent-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-xl border-border/60 focus:border-primary/50 bg-corporate resize-none"
             name="message"
-            placeholder="Tell us about your organization's health and wellness goals..."
+            placeholder="Anything else you'd like to share... (Optional) "
             rows={4}
           ></textarea>
           <button
@@ -121,9 +121,6 @@ export default function DemoForm() {
               <ArrowRight className="w-4 h-4" />
             </span>
           </button>
-          <p className="text-xs text-muted-foreground text-center">
-            By submitting, you agree to our Terms of Service and Privacy Policy
-          </p>
         </form>
       </div>
   );
