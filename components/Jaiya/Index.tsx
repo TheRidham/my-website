@@ -11,6 +11,7 @@ import { HumanAdvisorModal } from '../Chat/HumanAdvisorModal'
 import { Button } from '../ui/button'
 import { usePayment } from '@/providers/PaymentProvider'
 import AIChatHistorySheet from '../Chat/AIChatHistorySheet'
+import AppDownloadBadges from '../AppDownloadBadges'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -60,7 +61,7 @@ function Jaiya({
   return (
     <div className="flex flex-col h-full bg-secondary">
       {/* Header */}
-      <div className={`border-b border-gray-200 bg-white backdrop-blur-sm transition-all duration-300 ${!isSidebarOpen && "pl-12"}`}>
+      <div className={`bg-transparent transition-all duration-300 ${!isSidebarOpen && "pl-12"}`}>
         <div className="w-full flex items-center justify-between px-6 py-1.5">
           <div className="flex items-center">
             {/* {(isAdvisorChat) && (
@@ -72,7 +73,7 @@ function Jaiya({
               </button>
             )} */}
             <div className="flex items-center gap-4">
-              <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-emerald-50 flex items-center justify-center">
+              <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white shadow-md bg-emerald-50 flex items-center justify-center">
                 {isAdvisorChat ? (
                   <div 
                     className="w-full h-full flex items-center justify-center bg-muted text-primary"
@@ -90,18 +91,18 @@ function Jaiya({
                 )}
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-gray-900 text-[16px] tracking-tight">
+                <span className="font-black text-gray-900 text-[15px] tracking-tight">
                   {isAdvisorChat ? subcategoryTitle : advisorName}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {isAdvisorChat ? (
-                    <span className="text-[11px] font-bold text-primary uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                       {category?.name} Expert
                     </span>
                   ) : (
                     <>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-[11px] font-bold text-green-600 uppercase tracking-wider">Online</span>
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Online</span>
                     </>
                   )}
                 </div>
@@ -125,10 +126,10 @@ function Jaiya({
               className="hidden md:inline-block p-2.5 text-gray-500 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all" 
               title="New Chat"
             >
-              <Plus size={22} />
+              <Plus size={20} />
             </button>
             <button onClick={() => setIsOpen(true)} className="hidden md:inline-block p-2.5 text-gray-500 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all" title="Chat History">
-              <History size={22} />
+              <History size={20} />
             </button>
             <button 
               onClick={() => window.location.href = '/wallet'}

@@ -29,7 +29,7 @@ export default function ChatSection() {
     return () => clearInterval(interval);
   }, []);
   return (
-    <section className="py-6 flex items-center justify-center">
+    <section className="py-8 flex items-center justify-center">
       <div className="max-w-2xl mx-auto w-full px-4">
         <div className="text-center space-y-8">
           {/* Top Graphic Section */}
@@ -93,7 +93,7 @@ export default function ChatSection() {
             {/* Pill Statistic */}
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full hover:bg-primary/15 transition-colors cursor-default">
               <Leaf className="w-4 h-4" />
-              <span className="text-sm font-bold">{count}</span>
+              <span className="text-sm font-bold">{count.toLocaleString()}</span>
               <span className="text-xs text-primary/80 font-medium">times people helped</span>
             </div>
 
