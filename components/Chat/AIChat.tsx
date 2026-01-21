@@ -8,7 +8,20 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { Send, Loader2, Trash2, Paperclip, Mic, ArrowRightSquare, ArrowRight, Shield, MessageCircle, Group, Users, Sparkles } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  Trash2,
+  Paperclip,
+  Mic,
+  ArrowRightSquare,
+  ArrowRight,
+  Shield,
+  MessageCircle,
+  Group,
+  Users,
+  Sparkles,
+} from "lucide-react";
 import { ADVISOR_CATEGORIES } from "@/constant/advisors";
 import { Button } from "@/components/ui/button";
 import { usePrompts } from "@/providers/PromptsProvider";
@@ -21,7 +34,7 @@ import { auth } from "@/lib/firebase";
 import { LucideIcon } from "../ui/LucideIcon";
 import ChatSection from "../ChatSection";
 import AppDownloadBadges from "../AppDownloadBadges";
-
+import AdvisorPromptModal from "../AdvisorPromptModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -71,7 +84,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     const isHistoryLoadedRef = useRef(false);
 
     // State for advisor prompt modal (shows every 4 messages)
-    const [showAdvisorModal, setShowAdvisorModal] = useState(false);
+    const [showAdvisorModal, setShowAdvisorModal] = useState(true);
     const userMessageCountRef = useRef(0);
     const isBackPressedRef = useRef(false);
 
@@ -369,6 +382,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       setInput("");
       await processMessage(msg);
       userMessageCountRef.current += 1;
+      console.log(userMessageCountRef.current);
       if (
         userMessageCountRef.current == 2 ||
         userMessageCountRef.current == 6
@@ -407,7 +421,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {/* New Welcome Screen */}
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
-                  <ChatSection />
+                <ChatSection />
               </div>
             )}
 
@@ -462,50 +476,57 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {/* Loading State */}
             {/* For Jaiya: Show during entire loading/streaming */}
             {/* For others: Show only when loading and no streaming message yet */}
-            {isLoading && (isJaiya || !messages.some(m => (m as any)._isStreaming)) && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                    <span className="text-[12px] text-gray-400 font-medium">
-                      Thinking...
-                    </span>
+            {isLoading &&
+              (isJaiya || !messages.some((m) => (m as any)._isStreaming)) && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                      <span className="text-[12px] text-gray-400 font-medium">
+                        Thinking...
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            </div>
+              )}
           </div>
-
-            {/* Input Area */}
-      <div className="px-4 py-2">
-        <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Ask me anything..."
-            className="flex-1 px-4 py-2 focus:outline-none"
-          />
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
-            className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square"
-          >
-            <ArrowRight size={24} />
-          </Button>
         </div>
+
+        {/* Input Area */}
+        <div className="px-4 py-2">
+          <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Ask me anything..."
+              className="flex-1 px-4 py-2 focus:outline-none"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || !input.trim()}
+              className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square"
+            >
+              <ArrowRight size={24} />
+            </Button>
+          </div>
+        </div>
+
+        <AppDownloadBadges />
+        <HumanAdvisorModal
+          isOpen={isHumanModalOpen}
+          onClose={() => setIsHumanModalOpen(false)}
+          categoryKey={categoryKey}
+          subcategoryTitle={subcategoryTitle}
+        />
+        <AdvisorPromptModal
+          visible={showAdvisorModal}
+          onClose={handleShowAdvisorModal}
+          onConnect={handleShowAdvisorModalConnect}
+          advisorCategory={categoryKey}
+        />
       </div>
-
-      <AppDownloadBadges />
-
-      <HumanAdvisorModal
-        isOpen={isHumanModalOpen}
-        onClose={() => setIsHumanModalOpen(false)}
-        categoryKey={categoryKey}
-        subcategoryTitle={subcategoryTitle}
-      />
-    </div>
-  )
-})
+    );
+  },
+);

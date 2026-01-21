@@ -30,6 +30,7 @@ interface Advisor {
   rating: number;
   experience: string;
   image?: string;
+  profilePhoto?: string
 }
 
 interface HumanAdvisorModalProps {
@@ -73,16 +74,16 @@ export function HumanAdvisorModal({
       let fetchedAdvisors = result.data.advisors || [];
 
       // Filter by category or subcategory if provided
-      if (subcategoryTitle) {
-        fetchedAdvisors = fetchedAdvisors.filter((a: any) => {
-          const specs = Array.isArray(a.specialization)
-            ? a.specialization
-            : [a.specialty];
-          return specs.some((s: string) =>
-            s.toLowerCase().includes(subcategoryTitle.toLowerCase())
-          );
-        });
-      }
+      // if (subcategoryTitle) {
+      //   fetchedAdvisors = fetchedAdvisors.filter((a: any) => {
+      //     const specs = Array.isArray(a.specialization)
+      //       ? a.specialization
+      //       : [a.specialty];
+      //     return specs.some((s: string) =>
+      //       s.toLowerCase().includes(subcategoryTitle.toLowerCase())
+      //     );
+      //   });
+      // }
 
       setAdvisors(fetchedAdvisors);
     } catch (error) {
@@ -268,9 +269,9 @@ export function HumanAdvisorModal({
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-                          {advisor.image ? (
+                          {advisor.profilePhoto ? (
                             <img
-                              src={advisor.image}
+                              src={advisor.profilePhoto}
                               alt={advisor.name}
                               className="w-full h-full object-cover"
                             />
