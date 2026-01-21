@@ -83,10 +83,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     const initialMessageProcessedRef = useRef(false);
     const isHistoryLoadedRef = useRef(false);
 
-    // State for advisor prompt modal (shows every 4 messages)
-    const [showAdvisorModal, setShowAdvisorModal] = useState(true);
+    // State for advisor prompt modal
+    const [showAdvisorModal, setShowAdvisorModal] = useState(false);
     const userMessageCountRef = useRef(0);
-    const isBackPressedRef = useRef(false);
 
     // Configure marked options
     marked.setOptions({
