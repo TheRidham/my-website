@@ -8,7 +8,20 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { Send, Loader2, Trash2, Paperclip, Mic, ArrowRightSquare, ArrowRight, Shield, MessageCircle, Group, Users, Sparkles } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  Trash2,
+  Paperclip,
+  Mic,
+  ArrowRightSquare,
+  ArrowRight,
+  Shield,
+  MessageCircle,
+  Group,
+  Users,
+  Sparkles,
+} from "lucide-react";
 import { ADVISOR_CATEGORIES } from "@/constant/advisors";
 import { Button } from "@/components/ui/button";
 import { usePrompts } from "@/providers/PromptsProvider";
@@ -22,7 +35,7 @@ import { LucideIcon } from "../ui/LucideIcon";
 import ChatSection from "../ChatSection";
 import AppDownloadBadges from "../AppDownloadBadges";
 import Link from "next/link";
-
+import AdvisorPromptModal from "../AdvisorPromptModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -71,10 +84,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     const initialMessageProcessedRef = useRef(false);
     const isHistoryLoadedRef = useRef(false);
 
-    // State for advisor prompt modal (shows every 4 messages)
+    // State for advisor prompt modal
     const [showAdvisorModal, setShowAdvisorModal] = useState(false);
     const userMessageCountRef = useRef(0);
-    const isBackPressedRef = useRef(false);
 
     // Configure marked options
     marked.setOptions({
@@ -370,6 +382,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       setInput("");
       await processMessage(msg);
       userMessageCountRef.current += 1;
+      console.log(userMessageCountRef.current);
       if (
         userMessageCountRef.current == 2 ||
         userMessageCountRef.current == 6
@@ -461,18 +474,20 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {/* Loading State */}
             {/* For Jaiya: Show during entire loading/streaming */}
             {/* For others: Show only when loading and no streaming message yet */}
-            {isLoading && (isJaiya || !messages.some(m => (m as any)._isStreaming)) && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                    <span className="text-[12px] text-gray-400 font-medium">
-                      Thinking...
-                    </span>
+            {isLoading &&
+              (isJaiya || !messages.some((m) => (m as any)._isStreaming)) && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                      <span className="text-[12px] text-gray-400 font-medium">
+                        Thinking...
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            }
           </div>
         </div>
 
@@ -515,6 +530,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
           categoryKey={categoryKey}
           subcategoryTitle={subcategoryTitle}
         />
+        <AdvisorPromptModal
+          visible={showAdvisorModal}
+          onClose={handleShowAdvisorModal}
+          onConnect={handleShowAdvisorModalConnect}
+          advisorCategory={categoryKey}
+        />
       </div>
-    )
-  })
+    );
+  },
+);
