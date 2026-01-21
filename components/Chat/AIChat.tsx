@@ -203,7 +203,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       if (
         initialMessage &&
         !initialMessageProcessedRef.current &&
-        !isJaiya &&
         messages.length === 0
       ) {
         console.log("AIChat: Auto-sending initial message:", initialMessage);

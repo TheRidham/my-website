@@ -4,12 +4,15 @@ import React, { useEffect, useState } from 'react'
 import { 
   Search, Star,
   ChevronDown, ChevronUp,
-  Shield
+  Shield, X,
+  ChevronLeft,
+  Loader,
+  Loader2
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { collection, getDocs, query, where, limit } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { db, functions } from '@/lib/firebase'
 import jaiyaAvatar from "@/assets/jaiya.jpg";
 import { ADVISOR_CATEGORIES } from '@/constant/advisors';
 import { LucideIcon } from '@/components/ui/LucideIcon';
@@ -17,6 +20,19 @@ import { useChat } from '@/providers/ChatProvider';
 import { useRouter } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
 import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
+import { usePrompts } from '@/providers/PromptsProvider';
+import { httpsCallable } from 'firebase/functions';
+
+const RECOMMENDED_QUESTIONS = [
+  "What should I eat to lose weight?",
+  "How can I improve my sleep?",
+  "What exercises should I do daily?",
+  "How do I manage stress?",
+  "What are the best vitamins for me?",
+  "How can I build muscle?",
+  "What's a healthy diet plan?",
+  "How do I stay motivated with fitness?",
+];
 
 type Advisor = {
   uid: string
@@ -48,7 +64,11 @@ function HomePage() {
   const [loading, setLoading] = useState(true)
   const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { resetChat } = useChat()
+  const [showSearchScreen, setShowSearchScreen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const { resetChat, switchChat } = useChat()
+  const { jaiyaPrompt } = usePrompts();
 
   const categoriesList = Object.entries(ADVISOR_CATEGORIES).map(([key, value]) => ({
     key,
@@ -99,8 +119,200 @@ function HomePage() {
     setIsModalOpen(true)
   }
 
+  const handleAdvisorSearch = async (query: string) => {
+    setSearchQuery(query)
+    
+    if (!query.trim() || isSearching) return
+
+    setIsSearching(true)
+
+    try {
+
+      if (!jaiyaPrompt) {
+        console.error('System prompt (jaiyaPrompt) is not available')
+        resetChat()
+        setShowSearchScreen(false)
+        setSearchQuery('')
+        setIsSearching(false)
+        return
+      }
+
+      const callOpenAI = httpsCallable<any, { text: string }>(functions, 'callOpenAI');
+    
+      const { data: response } = await callOpenAI({
+        systemPrompt: jaiyaPrompt.prompt,
+        formattedMessages: [{ role: 'user', text: query }]
+      });
+
+      if (response && response.text) {
+        try {
+          const jsonMatch = response.text.match(/\{[\s\S]*\}/)
+          const jsonStr = jsonMatch ? jsonMatch[0] : response.text
+
+          const data = JSON.parse(jsonStr)
+          console.log(data)
+
+          if (data.isfind && data.categoryTag) {
+            const categoryTag = data.categoryTag?.toLowerCase()
+            
+            let category = ADVISOR_CATEGORIES[categoryTag]
+            if (!category) {
+              const foundCategory = Object.values(ADVISOR_CATEGORIES).find(
+                (cat) => cat.name.toLowerCase() === data.categoryName?.toLowerCase(),
+              )
+              if (foundCategory) {
+                category = foundCategory
+              }
+            }
+
+            if (category) {
+              const targetTag = Object.keys(ADVISOR_CATEGORIES).find(
+                (key) => ADVISOR_CATEGORIES[key] === category,
+              )
+
+              const subcategory = category.categories.find(
+                (c) =>
+                  c.title.toLowerCase() ===
+                  data.subCategoryName?.toLowerCase(),
+              )
+
+              if (subcategory) {
+                switchChat({
+                  name: subcategory.title,
+                  categoryKey: targetTag,
+                  subcategoryTitle: subcategory.title,
+                  initialMessage: query,
+                })
+                setShowSearchScreen(false)
+                setSearchQuery('')
+              } else {
+                // No subcategory found, navigate to category
+                router.push(`/${targetTag}`)
+                setShowSearchScreen(false)
+                setSearchQuery('')
+              }
+            } else {
+              // Category not found, fallback to Super AI
+            }
+          } else {
+            switchChat({
+              name: "Super AI",
+              initialMessage: query,
+            })
+            setShowSearchScreen(false)
+            setSearchQuery('')
+          }
+        } catch (e) {
+          console.error("JSON parse error:", e)
+          // Fallback on error
+          resetChat()
+          setShowSearchScreen(false)
+          setSearchQuery('')
+        }
+      } else {
+        // No response or message, fallback to Super AI
+        resetChat()
+        setShowSearchScreen(false)
+        setSearchQuery('')
+      }
+    } catch (error) {
+      console.error("API call error:", error)
+      // Fallback on error
+      resetChat()
+      setShowSearchScreen(false)
+      setSearchQuery('')
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full pb-24">
+      {/* Search Screen Overlay */}
+      {showSearchScreen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          {/* Search Bar at Top */}
+          <div className="px-3 py-3 border-b border-gray-200">
+            <div className="relative flex items-center gap-1 w-full">
+              <button
+                onClick={() => {
+                  setShowSearchScreen(false)
+                  setSearchQuery('')
+                }}
+                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+              >
+                <ChevronLeft size={20} className="text-gray-600" />
+              </button>
+              <div className="relative flex-1 group">
+                <input
+                  type="search"
+                  autoFocus
+                  placeholder="Ask me anything and I will connect you to that AI Advisor"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => 
+                    e.key === 'Enter' && handleAdvisorSearch(searchQuery)
+                  }
+                  className="w-full bg-secondary rounded-2xl py-2.5 px-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  handleAdvisorSearch(searchQuery)
+                }}
+                disabled={isSearching}
+                className="p-2 hover:bg-secondary rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSearching ? (
+                  <div className="animate-spin">
+                    <Loader2
+                      className="text-primary"
+                      size={18}
+                    />
+                  </div>
+                ) : (
+                  <Search
+                    className="text-gray-400"
+                    size={18}
+                  />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Recommended Questions */}
+          <div className="flex-1 overflow-y-auto px-5 pt-6 pb-4">
+            {isSearching ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4">
+                <div className="animate-spin">
+                  <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full" />
+                </div>
+                <p className="text-sm text-gray-500">Searching for AI Advisor...</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-[15px] font-bold text-gray-900 mb-4">
+                  Recommended Questions
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {RECOMMENDED_QUESTIONS.map((question, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleAdvisorSearch(question)}
+                      className="text-left p-4 rounded-2xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all group"
+                    >
+                      <p className="text-sm text-gray-700 group-hover:text-primary font-medium">
+                        {question}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Search Section */}
       <div className="px-5 pt-4 pb-2 sticky top-0 z-20 backdrop-blur-2xl">
         <div className="relative flex items-center gap-3 w-full">
@@ -114,13 +326,17 @@ function HomePage() {
             <input
               type="text"
               placeholder="Ask me anything and I will connect you to that AI Advisor"
-              className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm"
+              onClick={() => setShowSearchScreen(true)}
+              className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm cursor-pointer"
             />
           </div>
 
           {/* Avatar + label */}
           <button 
-            onClick={() => resetChat()}
+            onClick={() => {
+              resetChat();
+              switchChat({ name: "Super AI" })
+            }}
             className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer bg-none border-none p-0"
             title="Switch to Super AI"
           >
