@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function AppDownloadBadges() {
   return (
-    <div className="flex items-center justify-center gap-2 py-2.5">
+    <div className="flex items-center justify-center gap-2 pt-2.5 pb-1.5">
       {/* App Store Button */}
       <Link
         href="https://apps.apple.com/in/app/jai-quick-personal-advisory/id6755586022" 

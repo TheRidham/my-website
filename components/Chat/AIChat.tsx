@@ -21,6 +21,7 @@ import { auth } from "@/lib/firebase";
 import { LucideIcon } from "../ui/LucideIcon";
 import ChatSection from "../ChatSection";
 import AppDownloadBadges from "../AppDownloadBadges";
+import Link from "next/link";
 
 
 interface Message {
@@ -407,7 +408,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {/* New Welcome Screen */}
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
-                  <ChatSection />
+                <ChatSection />
               </div>
             )}
 
@@ -437,16 +438,14 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               return (
                 <div
                   key={index}
-                  className={`flex ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div
-                    className={`px-4 py-2 max-w-[85%] shadow-sm rounded-2xl ${
-                      msg.role === "user"
+                    className={`px-4 py-2 max-w-[85%] shadow-sm rounded-2xl ${msg.role === "user"
                         ? "bg-primary text-white rounded-tr-none"
                         : "bg-white border border-gray-200 text-gray-700 rounded-tl-none"
-                    }`}
+                      }`}
                   >
                     <div
                       className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
@@ -474,38 +473,48 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                 </div>
               </div>
             )}
-            </div>
           </div>
-
-            {/* Input Area */}
-      <div className="px-4 py-2">
-        <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Ask me anything..."
-            className="flex-1 px-4 py-2 focus:outline-none"
-          />
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
-            className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square"
-          >
-            <ArrowRight size={24} />
-          </Button>
         </div>
+
+        {/* Input Area */}
+        <div className="px-4 py-2">
+          <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Ask me anything..."
+              className="flex-1 px-4 py-2 focus:outline-none"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || !input.trim()}
+              className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square"
+            >
+              <ArrowRight size={24} />
+            </Button>
+          </div>
+        </div>
+
+        <AppDownloadBadges />
+
+        <div className="flex items-center justify-center text-xs pb-1">
+          By continuing, you agree to our&nbsp;
+          <Link href="/terms" className="underline">
+            Terms of Service
+          </Link> &nbsp;and&nbsp; 
+          <Link href="/policy" className="underline">
+            Privacy Policy
+          </Link>.
+        </div>
+
+        <HumanAdvisorModal
+          isOpen={isHumanModalOpen}
+          onClose={() => setIsHumanModalOpen(false)}
+          categoryKey={categoryKey}
+          subcategoryTitle={subcategoryTitle}
+        />
       </div>
-
-      <AppDownloadBadges />
-
-      <HumanAdvisorModal
-        isOpen={isHumanModalOpen}
-        onClose={() => setIsHumanModalOpen(false)}
-        categoryKey={categoryKey}
-        subcategoryTitle={subcategoryTitle}
-      />
-    </div>
-  )
-})
+    )
+  })

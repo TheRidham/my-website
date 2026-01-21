@@ -247,7 +247,7 @@ function HomePage() {
                 <input
                   type="search"
                   autoFocus
-                  placeholder="Ask me anything and I will connect you to that AI Advisor"
+                  placeholder="Ask me anything, and I’ll connect you with the concerned AI advisorll connect you to that AI Advisor"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => 
@@ -325,7 +325,7 @@ function HomePage() {
 
             <input
               type="text"
-              placeholder="Ask me anything and I will connect you to that AI Advisor"
+              placeholder="Ask me anything, and I’ll connect you with the concerned AI advisorll connect you to that AI Advisor"
               onClick={() => setShowSearchScreen(true)}
               className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm cursor-pointer"
             />
@@ -352,8 +352,8 @@ function HomePage() {
           </button>
         </div>
       </div>
-      <div className='px-5 pb-4'>
         {/* Stats Section */}
+      {/* <div className='px-5 pb-4'>
         <div className="flex justify-between gap-4 mt-2 px-2 py-3 border rounded-lg">
           <div className="flex-1 text-center">
             <div className="text-sm font-bold text-gray-900">2.1M+</div>
@@ -368,7 +368,7 @@ function HomePage() {
             <div className="text-xs text-muted-foreground">HIPAA</div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Advisor Categories */}
       <div className="mt-2 px-5">

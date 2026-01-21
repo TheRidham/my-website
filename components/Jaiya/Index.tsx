@@ -73,26 +73,19 @@ function Jaiya({
               </button>
             )} */}
             <div className="flex items-center gap-4">
-              <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white shadow-md bg-emerald-50 flex items-center justify-center">
-                {isAdvisorChat ? (
+              {isAdvisorChat && (
+                <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white shadow-md bg-emerald-50 flex items-center justify-center">
                   <div 
                     className="w-full h-full flex items-center justify-center bg-muted text-primary"
                     // style={{ backgroundColor: category?.bgColor, color: category?.color }}
                   >
                     <LucideIcon name={subcategory?.icon || category?.icon || "Sparkles"} size={24} />
                   </div>
-                ) : (
-                  <Image
-                    src={advisorAvatar || jaiyaAvatar}
-                    alt={advisorName}
-                    fill
-                    className="object-cover"
-                  />
-                )}
-              </div>
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-black text-gray-900 text-[15px] tracking-tight">
-                  {isAdvisorChat ? subcategoryTitle : advisorName}
+                  {isAdvisorChat && subcategoryTitle}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {isAdvisorChat ? (
@@ -101,8 +94,8 @@ function Jaiya({
                     </span>
                   ) : (
                     <>
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Online</span>
+                      {/* <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Online</span> */}
                     </>
                   )}
                 </div>
