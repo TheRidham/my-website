@@ -42,15 +42,5 @@ export default function AppDownloadBadges() {
         </div>
       </div>
     </div>
-    <div style={{ fontSize: "0.8rem", marginTop: "1rem" }}>
-  By continuing, you agree to our{" "}
-  <span style={{ textDecoration: "underline", cursor: "pointer" }}>
-    Terms of Service
-  </span>{" "}
-  and{" "}
-  <span style={{ textDecoration: "underline", cursor: "pointer" }}>
-    Privacy Policy
-  </span>.
-</div>
   );
 }
