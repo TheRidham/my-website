@@ -41,7 +41,7 @@ export default function AppDownloadBadges() {
           <p className="text-[10px] font-semibold text-primary leading-tight">Private &amp; Secure</p>
         </div>
       </div>
-  <p style={{ fontSize: "0.8rem", marginTop: "1rem" }}>
+<div style={{ fontSize: "0.8rem", marginTop: "1rem" }}>
   By continuing, you agree to our{" "}
   <span style={{ textDecoration: "underline", cursor: "pointer" }}>
     Terms of Service
@@ -50,7 +50,7 @@ export default function AppDownloadBadges() {
   <span style={{ textDecoration: "underline", cursor: "pointer" }}>
     Privacy Policy
   </span>.
-</p>
+</div>
     </div>
   );
 }
