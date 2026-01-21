@@ -514,7 +514,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
         <AppDownloadBadges />
 
-        <div className="flex items-center justify-center text-xs pb-1">
+        <div className="flex items-center justify-center text-[9px] sm:text-xs pb-1">
           By continuing, you agree to our&nbsp;
           <Link href="/terms" className="underline">
             Terms of Service

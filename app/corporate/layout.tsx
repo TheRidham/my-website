@@ -13,8 +13,18 @@ export default function CorporateLayout({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`${dmSans.variable} font-sans`}>
-      {children}
-    </section>
+    <>
+      <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17732513189"></script>
+      <script>
+        {`window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'AW-17732513189');`}
+      </script>
+      <section className={`${dmSans.variable} font-sans`}>
+        {children}
+      </section>
+    </>
   );
 }
