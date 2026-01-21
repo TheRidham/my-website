@@ -100,7 +100,7 @@ export default function ChatSection() {
             {/* Bottom Links */}
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
               <span>
-                AI interactions are completely free. If you&quot;d like, you can chat or have a call with a human expert for just $5.
+                AI interactions are completely free. If you'd like, you can chat or have a call with a human expert for just $5.
               </span>
             </div>
           </div>
