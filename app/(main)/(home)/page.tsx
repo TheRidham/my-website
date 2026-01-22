@@ -379,48 +379,6 @@ function HomePage() {
           </div>
         </div> */}
 
-        {/* Advisor Categories */}
-        <div className="mt-2 px-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
-              Explore Advisor Categories
-            </h2>
-          </div>
-          <div className="grid grid-cols-4 gap-x-3 gap-y-6">
-            {displayedCategories.map((cat) => (
-              <Link 
-                key={cat.key} 
-                href={`/${cat.key}`}
-                className={cat.className}
-              >
-                <div 
-                  className="w-15 h-15 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 bg-muted text-primary"
-                  // style={{ backgroundColor: cat.bgColor, color: cat.color }}
-                >
-                  <LucideIcon name={cat.icon} size={26} />
-                </div>
-                <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-primary transition-colors">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-          <button
-            onClick={() => setShowAllCategories(!showAllCategories)}
-            className="w-full mt-6 py-3 text-primary text-sm font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-primary/5 transition-colors"
-          >
-            {showAllCategories ? (
-              <>
-                View Less <ChevronUp size={16} />
-              </>
-            ) : (
-              <>
-                View More <ChevronDown size={16} />
-              </>
-            )}
-          </button>
-        </div>
-
         {/* AI Apps Section */}
         {/* <div className="mt-10 px-5">
           <div className="flex items-center justify-between mb-5">
@@ -456,7 +414,7 @@ function HomePage() {
         </div> */}
 
         {/* Featured Advisors */}
-        <div className="mt-10 px-5">
+        <div className="mt-2 px-5">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
               Featured Advisors
@@ -515,6 +473,48 @@ function HomePage() {
               ))
             )}
           </div>
+        </div>
+
+        {/* Advisor Categories */}
+        <div className="mt-10 px-5">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
+              Explore Advisor Categories
+            </h2>
+          </div>
+          <div className="grid grid-cols-4 gap-x-3 gap-y-6">
+            {displayedCategories.map((cat) => (
+              <Link 
+                key={cat.key} 
+                href={`/${cat.key}`}
+                className={cat.className}
+              >
+                <div 
+                  className="w-15 h-15 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 bg-muted text-primary"
+                  // style={{ backgroundColor: cat.bgColor, color: cat.color }}
+                >
+                  <LucideIcon name={cat.icon} size={26} />
+                </div>
+                <span className="text-[11px] text-center font-semibold text-gray-600 leading-tight group-hover:text-primary transition-colors">
+                  {cat.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowAllCategories(!showAllCategories)}
+            className="w-full mt-6 py-3 text-primary text-sm font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-primary/5 transition-colors"
+          >
+            {showAllCategories ? (
+              <>
+                View Less <ChevronUp size={16} />
+              </>
+            ) : (
+              <>
+                View More <ChevronDown size={16} />
+              </>
+            )}
+          </button>
         </div>
 
         {selectedAdvisor && (
