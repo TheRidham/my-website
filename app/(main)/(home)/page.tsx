@@ -236,6 +236,22 @@ function HomePage() {
 
         gtag('config', 'AW-17732513189');`}
       </script>
+<script>
+function gtag_report_conversion(url) {
+  var callback = function () {
+    if (typeof(url) != 'undefined') {
+      window.location = url;
+    }
+  };
+  gtag('event', 'conversion', {
+      'send_to': 'AW-17732513189/OrccCIms0ekbEKXbwodC',
+      'value': 1.0,
+      'currency': 'INR',
+      'event_callback': callback
+  });
+  return false;
+}
+</script>
       <div className="flex flex-col h-full pb-24">
         {/* Search Screen Overlay */}
         {showSearchScreen && (
@@ -530,3 +546,4 @@ function HomePage() {
 }
 
 export default HomePage;
+
