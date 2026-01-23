@@ -19,7 +19,7 @@ import { getAuth } from "firebase/auth";
 import { useParams } from "next/navigation";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getApp } from "firebase/app";
-import { ArrowLeft, ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import { ArrowLeft, ArrowLeftToLine, ArrowRightToLine, Phone } from "lucide-react";
 
 import {
   Dialog,
@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/dialog";
 
 import { Button } from "@/components/ui/button";
+import VideoCall from "@/components/Chat/VideoCall";
+import { CallInitiator } from "@/components/Chat/CallInitiator";
 
 // type Msg = {
 //   id: string;
@@ -51,7 +53,9 @@ export default function HumanChatWeb() {
   const router = useRouter();
   const params = useParams();
   const roomId = params.roomId as string;
-  const advisorId = params.advisorId as string;
+  // TODO: Uncomment and delete hardcoded one
+  // const advisorId = params.advisorId as string; 
+  const advisorId = "FFeAObP6AuWjjB80FyFua81SPHn1"; 
 
   const db = getFirestore();
   const auth = getAuth();
@@ -67,6 +71,8 @@ export default function HumanChatWeb() {
   const [chatRequest, setChatRequest] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setIsLoading] = useState(false);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -205,6 +211,28 @@ export default function HumanChatWeb() {
     setIsOpen(false);
   }
 
+  const handleCallInitiated = (roomName: string) => {
+    setVideoRoomName(roomName);
+    setIsVideoCallActive(true);
+  };
+
+  const handleCallEnd = () => {
+    setIsVideoCallActive(false);
+    setVideoRoomName(null);
+  };
+
+  // If video call is active, show video component
+  if (isVideoCallActive && videoRoomName) {
+    return (
+      <VideoCall
+        roomName={videoRoomName}
+        calleeId={advisorId}
+        isCaller={true}
+        onCallEnd={handleCallEnd}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
@@ -213,7 +241,7 @@ export default function HumanChatWeb() {
           <ArrowLeft className="w-6 h-6 group-hover:text-primary" />
         </button>
         {advisorProfile && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
             <img
               src={advisorProfile.photoURL}
               alt={advisorProfile.name}
@@ -238,6 +266,17 @@ export default function HumanChatWeb() {
             </div>
           </div>
         )}
+        
+        {/* Video Call Button */}
+        <Button
+          onClick={() => handleCallInitiated(`call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)}
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Phone className="h-4 w-4" />
+          Call
+        </Button>
+
         {chatRequest && chatRequest.status !== "closed" && (
           <button
             onClick={() => setIsOpen(true)}
