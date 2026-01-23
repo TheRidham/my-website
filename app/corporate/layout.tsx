@@ -22,6 +22,24 @@ export default function CorporateLayout({
 
         gtag('config', 'AW-17732513189');`}
       </script>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `function gtag_report_conversion(url) {
+            var callback = function () {
+              if (typeof(url) != 'undefined') {
+                window.location = url;
+              }
+            };
+            gtag('event', 'conversion', {
+                'send_to': 'AW-17732513189/OrccCIms0ekbEKXbwodC',
+                'value': 1.0,
+                'currency': 'INR',
+                'event_callback': callback
+            });
+            return false;
+          }`,
+        }}
+      />
       <section className={`${dmSans.variable} font-sans`}>
         {children}
       </section>
