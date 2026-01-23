@@ -22,7 +22,6 @@ export default function CorporateLayout({
 
         gtag('config', 'AW-17732513189');`}
       </script>
-<<<<<<< HEAD
       <script
         dangerouslySetInnerHTML={{
           __html: `function gtag_report_conversion(url) {
