@@ -236,6 +236,7 @@ function HomePage() {
 
         gtag('config', 'AW-17732513189');`}
       </script>
+<<<<<<< HEAD
       <script
         dangerouslySetInnerHTML={{
           __html: `function gtag_report_conversion(url) {
@@ -548,3 +549,4 @@ function HomePage() {
 }
 
 export default HomePage;
+
