@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react'
-import { 
+import {
   Search, Star,
   ChevronDown, ChevronUp,
   Shield, X,
@@ -22,6 +22,7 @@ import { getAuth } from 'firebase/auth';
 import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 import { usePrompts } from '@/providers/PromptsProvider';
 import { httpsCallable } from 'firebase/functions';
+import ExpertCallCard from '@/components/ExpertCallCard';
 
 const RECOMMENDED_QUESTIONS = [
   "What should I eat to lose weight?",
@@ -121,7 +122,7 @@ function HomePage() {
 
   const handleAdvisorSearch = async (query: string) => {
     setSearchQuery(query)
-    
+
     if (!query.trim() || isSearching) return
 
     setIsSearching(true)
@@ -138,7 +139,7 @@ function HomePage() {
       }
 
       const callOpenAI = httpsCallable<any, { text: string }>(functions, 'callOpenAI');
-    
+
       const { data: response } = await callOpenAI({
         systemPrompt: jaiyaPrompt.prompt,
         formattedMessages: [{ role: 'user', text: query }]
@@ -154,7 +155,7 @@ function HomePage() {
 
           if (data.isfind && data.categoryTag) {
             const categoryTag = data.categoryTag?.toLowerCase()
-            
+
             let category = ADVISOR_CATEGORIES[categoryTag]
             if (!category) {
               const foundCategory = Object.values(ADVISOR_CATEGORIES).find(
@@ -277,7 +278,7 @@ function HomePage() {
                     placeholder="Ask me anything, and I’ll connect you with the concerned AI advisorll connect you to that AI Advisor"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => 
+                    onKeyDown={(e) =>
                       e.key === 'Enter' && handleAdvisorSearch(searchQuery)
                     }
                     className="w-full bg-secondary rounded-2xl py-2.5 px-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm"
@@ -340,6 +341,12 @@ function HomePage() {
           </div>
         )}
 
+        {/* video call to expert 1-on-1 */}
+        <div className='flex justify-center my-4'>
+          <ExpertCallCard />
+        </div>
+
+
         {/* Search Section */}
         <div className="px-5 pt-4 pb-2 sticky top-0 z-20 backdrop-blur-2xl">
           <div className="relative flex items-center gap-3 w-full">
@@ -359,7 +366,7 @@ function HomePage() {
             </div>
 
             {/* Avatar + label */}
-            <button 
+            <button
               onClick={() => {
                 resetChat();
                 switchChat({ name: "Super AI" })
@@ -379,7 +386,7 @@ function HomePage() {
             </button>
           </div>
         </div>
-          {/* Stats Section */}
+        {/* Stats Section */}
         {/* <div className='px-5 pb-4'>
           <div className="flex justify-between gap-4 mt-2 px-2 py-3 border rounded-lg">
             <div className="flex-1 text-center">
@@ -455,7 +462,7 @@ function HomePage() {
               ))
             ) : (
               advisors.map((advisor) => (
-                <div 
+                <div
                   key={advisor.uid}
                   onClick={() => handleAdvisorClick(advisor)}
                   className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
@@ -468,11 +475,10 @@ function HomePage() {
                       className="rounded-2xl object-cover group-hover:scale-105 transition-transform"
                     />
                     <div
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                        !advisor.busy
-                          ? "bg-green-500"
-                          : "bg-amber-500"
-                      }`}
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${!advisor.busy
+                        ? "bg-green-500"
+                        : "bg-amber-500"
+                        }`}
                     />
                   </div>
                   <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">
@@ -502,14 +508,14 @@ function HomePage() {
           </div>
           <div className="grid grid-cols-4 gap-x-3 gap-y-6">
             {displayedCategories.map((cat) => (
-              <Link 
-                key={cat.key} 
+              <Link
+                key={cat.key}
                 href={`/${cat.key}`}
                 className={cat.className}
               >
-                <div 
+                <div
                   className="w-15 h-15 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-xs group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 bg-muted text-primary"
-                  // style={{ backgroundColor: cat.bgColor, color: cat.color }}
+                // style={{ backgroundColor: cat.bgColor, color: cat.color }}
                 >
                   <LucideIcon name={cat.icon} size={26} />
                 </div>
