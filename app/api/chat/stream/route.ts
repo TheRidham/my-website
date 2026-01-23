@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Call Firebase function with POST + JSON
     const response = await fetch(
-      `https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE`,
+      `https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_withMemory`,
       {
         method: 'POST',
         headers: {
