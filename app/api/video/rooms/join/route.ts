@@ -1,69 +1,44 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
-import { verifyUser } from "@/lib/firebase-admin";
+import { firestore, verifyUser } from "@/lib/firebase-admin";
+import type { Participant } from "@/types/VideoRoom";
+
+interface JoinRoomBody {
+  roomId: string;
+}
 
 export async function POST(req: Request) {
   try {
-
     const user = await verifyUser(req);
+    const body = (await req.json()) as JoinRoomBody;
 
-    // Parse and validate request body
-    const body = await req.json();
-    const { roomId } = body;
-
-    // Input validation
-    if (!roomId) {
+    if (!body.roomId) {
       return NextResponse.json(
-        { error: "missing required params: roomId" },
+        { error: "roomId is required" },
         { status: 400 },
       );
     }
 
-    //callee creation
-    const participant = {
-      type: "callee",
+    const roomRef = firestore.doc(`rooms/${body.roomId}`);
+    const roomSnap = await roomRef.get();
+
+    if (!roomSnap.exists) {
+      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    const participant: Participant = {
       identity: user.uid,
       joinedAt: new Date(),
     };
 
-    //query chatRequests collection by roomId
-    const chatRequestsSnapshot = await adminDb
-      .collection("chatRequests")
-      .where("roomId", "==", roomId)
-      .limit(1)
-      .get();
+    await roomRef.collection("participants").doc(user.uid).set(participant);
 
-    if (chatRequestsSnapshot.empty) {
-      console.error("Chat request not found for roomId:", roomId);
-      return NextResponse.json(
-        { error: "Chat request not found" },
-        { status: 404 },
-      );
-    }
+    await roomRef.update({ status: "active" });
 
-    // Get the first matching document
-    const chatRequestDoc = chatRequestsSnapshot.docs[0];
-    const chatRequestRef = chatRequestDoc.ref;
-
-    // Update the document
-    await chatRequestRef.update({
-      participants: FieldValue.arrayUnion(participant),
-      videoCallStatus: "accepted",
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-      },
-      { status: 200 },
-    );
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (e: unknown) {
-    // Generic error fallback
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Internal server error" },
-      { status: 500 },
+      { error: e instanceof Error ? e.message : "Unauthorized" },
+      { status: 401 },
     );
   }
 }

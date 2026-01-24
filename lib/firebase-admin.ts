@@ -1,6 +1,5 @@
 import admin, { ServiceAccount } from "firebase-admin";
 import { DecodedIdToken } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
 
 const serviceAccount: ServiceAccount = {
   projectId: process.env.FIREBASE_PROJECT_ID,
@@ -27,6 +26,5 @@ export async function verifyUser(req: Request): Promise<DecodedIdToken> {
 
 export const firestore = admin.firestore();
 export const auth = admin.auth();
-export const adminDb = getFirestore();
 
 

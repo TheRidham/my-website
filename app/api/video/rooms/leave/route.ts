@@ -1,57 +1,41 @@
+import { firestore, verifyUser } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+
+interface LeaveRoomBody {
+  roomId: string;
+}
 
 export async function POST(req: Request) {
   try {
-    // Parse and validate request body
-    const body = await req.json();
-    const { roomId } = body;
+    const user = await verifyUser(req);
+    const body = (await req.json()) as LeaveRoomBody;
 
-    // Input validation
-    if (!roomId) {
+    if (!body.roomId) {
       return NextResponse.json(
-        { error: "missing required params: roomId" },
+        { error: "roomId is required" },
         { status: 400 },
       );
     }
 
-    //query chatRequests collection by roomId
-    const chatRequestsSnapshot = await adminDb
-      .collection("chatRequests")
-      .where("roomId", "==", roomId)
-      .limit(1)
-      .get();
+    const participantsRef = firestore.collection(
+      `rooms/${body.roomId}/participants`,
+    );
 
-    if (chatRequestsSnapshot.empty) {
-      console.error("Chat request not found for roomId:", roomId);
-      return NextResponse.json(
-        { error: "Chat request not found" },
-        { status: 404 },
-      );
+    await participantsRef.doc(user.uid).delete();
+
+    const remaining = await participantsRef.get();
+    if (remaining.empty) {
+      await firestore.doc(`rooms/${body.roomId}`).update({
+        status: "ended",
+        closedAt: new Date(),
+      });
     }
 
-    // Get the first matching document
-    const chatRequestDoc = chatRequestsSnapshot.docs[0];
-    const chatRequestRef = chatRequestDoc.ref;
-
-    // Update the document
-    await chatRequestRef.update({
-      videoCallStatus: "ended",
-      endedAt: FieldValue.serverTimestamp(),
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-      },
-      { status: 200 },
-    );
+    return NextResponse.json({ success: true });
   } catch (e: unknown) {
-    // Generic error fallback
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Internal server error" },
-      { status: 500 },
+      { error: e instanceof Error ? e.message : "Unauthorized" },
+      { status: 401 },
     );
   }
 }

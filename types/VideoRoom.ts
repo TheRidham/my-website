@@ -4,6 +4,8 @@ export interface Room {
   status: RoomStatus;
   createdAt: FirebaseFirestore.Timestamp | Date;
   createdBy: string;
+  userId: string,
+  advisorId: string;
 }
 
 export interface Participant {

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
-import { adminDb, verifyUser } from "@/lib/firebase-admin";
+import { firestore, verifyUser } from "@/lib/firebase-admin";
 import AccessToken, { VideoGrant } from "twilio/lib/jwt/AccessToken";
+
+interface TokenBody {
+  roomId: string;
+}
 
 interface TokenResponse {
   token: string;
@@ -9,32 +13,21 @@ interface TokenResponse {
 export async function POST(req: Request) {
   try {
     const user = await verifyUser(req);
+    const body = (await req.json()) as TokenBody;
 
-    // Parse and validate request body
-    const body = await req.json();
-    const { roomId } = body;
-
-    // Input validation
-    if (!roomId) {
+    if (!body.roomId) {
       return NextResponse.json(
-        { error: "missing required params: roomId" },
+        { error: "roomId is required" },
         { status: 400 },
       );
     }
 
-    //query chatRequests collection by roomId
-    const chatRequestsSnapshot = await adminDb
-      .collection("chatRequests")
-      .where("roomId", "==", roomId)
-      .limit(1)
+    const participantSnap = await firestore
+      .doc(`rooms/${body.roomId}/participants/${user.uid}`)
       .get();
 
-    if (chatRequestsSnapshot.empty) {
-      console.error("Chat request not found for roomId:", roomId);
-      return NextResponse.json(
-        { error: "Chat request not found" },
-        { status: 404 },
-      );
+    if (!participantSnap.exists) {
+      return NextResponse.json({ error: "Not in room" }, { status: 403 });
     }
 
     const token = new AccessToken(
