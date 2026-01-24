@@ -1,5 +1,5 @@
 import { connect, Room, RemoteParticipant, RemoteTrack, Track } from "twilio-video";
-import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
+import { useLayoutEffect, useRef, useState, useCallback } from "react";
 import { getAuth } from "firebase/auth";
 
 export function useVideoRoom(roomId: string) {
@@ -56,7 +56,7 @@ export function useVideoRoom(roomId: string) {
             try {
               participant.tracks.forEach((pub) => {
                 try {
-                  if ("detach" in pub.track) {
+                  if (pub.track && "detach" in pub.track) {
                     pub.track.detach();
                   }
                 } catch (e) {
@@ -95,12 +95,12 @@ export function useVideoRoom(roomId: string) {
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      
+
       if (!user) throw new Error("Not signed in");
 
       const idToken = await user.getIdToken();
 
-      const joinRes = await fetch("/api/video/rooms/join", {
+      const joinRes = await fetch(`/api/video/rooms/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -114,7 +114,7 @@ export function useVideoRoom(roomId: string) {
         throw new Error(errorData.error || "Failed to join room");
       }
 
-      const tokenRes = await fetch("/api/video/rooms/token", {
+      const tokenRes = await fetch(`/api/video/rooms/token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +141,7 @@ export function useVideoRoom(roomId: string) {
       setRoom(joinedRoom);
 
       joinedRoom.localParticipant.tracks.forEach((pub) => {
-        if (pub.track && localVideoRef.current) {
+        if (pub.track && "attach" in pub.track && localVideoRef.current) {
           const mediaElement = pub.track.attach();
           mediaElement.style.width = "100%";
           mediaElement.style.height = "100%";
@@ -159,6 +159,7 @@ export function useVideoRoom(roomId: string) {
           mediaElement.style.objectFit = "cover";
           remoteVideoRef.current.appendChild(mediaElement);
           remoteTracksRef.current.push(mediaElement);
+          console.log("Track attached:", track.kind, track.name);
         }
       };
 
@@ -172,15 +173,19 @@ export function useVideoRoom(roomId: string) {
       };
 
       const handleParticipant = (participant: RemoteParticipant) => {
+        console.log("Handling participant:", participant.sid);
         setParticipants((prevParticipants) => [
           ...prevParticipants,
           participant,
         ]);
 
         participant.tracks.forEach((publication) => {
-          if (publication.isSubscribed) {
+          console.log("Publication:", publication.trackName, "subscribed:", publication.isSubscribed);
+          if (publication.track && publication.isSubscribed) {
             attachTrack(publication.track);
           }
+          // Note: Twilio automatically subscribes to tracks by default.
+          // If not yet subscribed, the 'trackSubscribed' event will fire when ready.
         });
 
         participant.on("trackSubscribed", attachTrack);
@@ -188,7 +193,11 @@ export function useVideoRoom(roomId: string) {
       };
 
       joinedRoom.participants.forEach(handleParticipant);
-      joinedRoom.on("participantConnected", handleParticipant);
+      joinedRoom.on("participantConnected", (participant) => {
+        console.log("Participant connected:", participant.sid);
+        handleParticipant(participant);
+        setStatus("active");  // Update status when someone joins
+      });
       joinedRoom.on("participantDisconnected", (participant) => {
         setParticipants((prevParticipants) =>
           prevParticipants.filter((p) => p !== participant)
