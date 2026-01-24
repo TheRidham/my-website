@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { verifyUser } from "@/lib/firebase-admin";
 
 export async function POST(req: Request) {
   try {
+
+    const user = await verifyUser(req);
+
     // Parse and validate request body
     const body = await req.json();
-    const { roomId, chatRequestId, advisorId } = body;
+    const { roomId } = body;
 
     // Input validation
-    if (!roomId || !chatRequestId || !advisorId) {
+    if (!roomId) {
       return NextResponse.json(
-        { error: "missing required params" },
+        { error: "missing required params: roomId" },
         { status: 400 },
       );
     }
@@ -19,28 +23,34 @@ export async function POST(req: Request) {
     //callee creation
     const participant = {
       type: "callee",
-      advisorId: advisorId,
+      identity: user.uid,
       joinedAt: new Date(),
     };
 
-    //update chatRequests doc with participant
-    const chatRequestRef = adminDb
+    //query chatRequests collection by roomId
+    const chatRequestsSnapshot = await adminDb
       .collection("chatRequests")
-      .doc(chatRequestId);
+      .where("roomId", "==", roomId)
+      .limit(1)
+      .get();
 
-    const chatRequestDoc = await chatRequestRef.get();
-    if (!chatRequestDoc.exists) {
-      console.error("Chat request not found:", chatRequestId);
+    if (chatRequestsSnapshot.empty) {
+      console.error("Chat request not found for roomId:", roomId);
       return NextResponse.json(
         { error: "Chat request not found" },
         { status: 404 },
       );
     }
 
+    // Get the first matching document
+    const chatRequestDoc = chatRequestsSnapshot.docs[0];
+    const chatRequestRef = chatRequestDoc.ref;
+
     // Update the document
     await chatRequestRef.update({
       participants: FieldValue.arrayUnion(participant),
       videoCallStatus: "accepted",
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return NextResponse.json(

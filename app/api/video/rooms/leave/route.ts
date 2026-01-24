@@ -6,29 +6,34 @@ export async function POST(req: Request) {
   try {
     // Parse and validate request body
     const body = await req.json();
-    const { chatRequestId } = body;
+    const { roomId } = body;
 
     // Input validation
-    if (!chatRequestId) {
+    if (!roomId) {
       return NextResponse.json(
-        { error: "missing required params" },
+        { error: "missing required params: roomId" },
         { status: 400 },
       );
     }
 
-    //update the doc
-    const chatRequestRef = adminDb
+    //query chatRequests collection by roomId
+    const chatRequestsSnapshot = await adminDb
       .collection("chatRequests")
-      .doc(chatRequestId);
+      .where("roomId", "==", roomId)
+      .limit(1)
+      .get();
 
-    const chatRequestDoc = await chatRequestRef.get();
-    if (!chatRequestDoc.exists) {
-      console.error("Chat request not found:", chatRequestId);
+    if (chatRequestsSnapshot.empty) {
+      console.error("Chat request not found for roomId:", roomId);
       return NextResponse.json(
         { error: "Chat request not found" },
         { status: 404 },
       );
     }
+
+    // Get the first matching document
+    const chatRequestDoc = chatRequestsSnapshot.docs[0];
+    const chatRequestRef = chatRequestDoc.ref;
 
     // Update the document
     await chatRequestRef.update({

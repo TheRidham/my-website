@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { verifyUser } from "@/lib/firebase-admin";
 
 export async function POST(req: Request) {
   try {
+
+    const user = await verifyUser(req);
+
     // Parse and validate request body
     const body = await req.json();
-    const { roomId, chatRequestId, userId } = body;
+    const { roomId, chatRequestId } = body;
 
     // Input validation
     if (!roomId || !chatRequestId) {
       return NextResponse.json(
-        { error: "missing required params" },
+        { error: "missing required params: roomId, chatRequestId" },
         { status: 400 },
       );
     }
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
     //caller creation
     const participant = {
       type: "caller",
-      userId: userId,
+      identity: user.uid,
       joinedAt: new Date(),
     };
 

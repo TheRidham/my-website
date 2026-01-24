@@ -33,9 +33,9 @@ export default function CallHomePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: "WSutIQlDoSNqsTuSJHoEdvrCe952",
           roomId: "rvBT5BsEgMqOC7NqRmSk",
           chatRequestId: "znsfc27aXKAFHD9xDsfw",
         }),
