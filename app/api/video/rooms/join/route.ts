@@ -1,50 +1,59 @@
 import { NextResponse } from "next/server";
-import { firestore, verifyUser } from "@/lib/firebase-admin";
-import type { Participant } from "@/types/VideoRoom";
-
-interface JoinRoomBody {
-  roomId: string;
-}
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(req: Request) {
   try {
-    const user = await verifyUser(req);
-    const body = (await req.json()) as JoinRoomBody;
+    // Parse and validate request body
+    const body = await req.json();
+    const { roomId, chatRequestId, advisorId } = body;
 
-    if (!body.roomId) {
+    // Input validation
+    if (!roomId || !chatRequestId || !advisorId) {
       return NextResponse.json(
-        { error: "roomId is required" },
-        { status: 400 }
+        { error: "missing required params" },
+        { status: 400 },
       );
     }
 
-    const roomRef = firestore.doc(`rooms/${body.roomId}`);
-    const roomSnap = await roomRef.get();
-
-    if (!roomSnap.exists) {
-      return NextResponse.json(
-        { error: "Room not found" },
-        { status: 404 }
-      );
-    }
-
-    const participant: Participant = {
-      identity: user.uid,
+    //callee creation
+    const participant = {
+      type: "callee",
+      advisorId: advisorId,
       joinedAt: new Date(),
     };
 
-    await roomRef
-      .collection("participants")
-      .doc(user.uid)
-      .set(participant);
+    //update chatRequests doc with participant
+    const chatRequestRef = adminDb
+      .collection("chatRequests")
+      .doc(chatRequestId);
 
-    await roomRef.update({ status: "active" });
+    const chatRequestDoc = await chatRequestRef.get();
+    if (!chatRequestDoc.exists) {
+      console.error("Chat request not found:", chatRequestId);
+      return NextResponse.json(
+        { error: "Chat request not found" },
+        { status: 404 },
+      );
+    }
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (e: unknown) {
+    // Update the document
+    await chatRequestRef.update({
+      participants: FieldValue.arrayUnion(participant),
+      videoCallStatus: "accepted",
+    });
+
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 }
+      {
+        success: true,
+      },
+      { status: 200 },
+    );
+  } catch (e: unknown) {
+    // Generic error fallback
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 },
     );
   }
 }

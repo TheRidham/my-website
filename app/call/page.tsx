@@ -27,15 +27,23 @@ export default function CallHomePage() {
 
       const token = await user.getIdToken();
 
+      console.log(token);
+
       const res = await fetch("/api/video/rooms/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          userId: "WSutIQlDoSNqsTuSJHoEdvrCe952",
+          roomId: "rvBT5BsEgMqOC7NqRmSk",
+          chatRequestId: "znsfc27aXKAFHD9xDsfw",
+        }),
       });
 
       const data = await res.json();
+
+      console.log(data);
       if (res.ok) {
         router.push(`/call/${data.roomId}`);
       } else {
@@ -93,7 +101,9 @@ export default function CallHomePage() {
   return (
     <div className="flex items-center justify-center min-h-screen p-5 bg-gradient-to-br from-purple-600 to-purple-800">
       <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
-        <h1 className="text-4xl font-bold text-center mb-2">1-to-1 Video Call</h1>
+        <h1 className="text-4xl font-bold text-center mb-2">
+          1-to-1 Video Call
+        </h1>
         <p className="text-center text-gray-600 mb-8">
           Connect with someone via high-quality video
         </p>
@@ -113,7 +123,9 @@ export default function CallHomePage() {
             >
               <div className="text-4xl">➕</div>
               <h3 className="font-semibold text-gray-800 text-sm">Start New</h3>
-              <p className="text-xs text-gray-600 text-center">Create new room</p>
+              <p className="text-xs text-gray-600 text-center">
+                Create new room
+              </p>
             </button>
 
             <button
@@ -129,7 +141,8 @@ export default function CallHomePage() {
         ) : mode === "create" ? (
           <div className="flex flex-col gap-4">
             <p className="text-gray-600 text-center text-sm">
-              Click below to create a new room. You'll receive a room ID to share with others.
+              Click below to create a new room. You'll receive a room ID to
+              share with others.
             </p>
             <button
               onClick={handleStartCall}

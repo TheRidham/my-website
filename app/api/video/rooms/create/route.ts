@@ -1,41 +1,61 @@
 import { NextResponse } from "next/server";
-import { firestore, verifyUser } from "@/lib/firebase-admin";
-import { nanoid } from "nanoid";
-import type { Participant, Room } from "@/types/VideoRoom";
-
-interface CreateRoomResponse {
-  roomId: string;
-}
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(req: Request) {
   try {
-    const user = await verifyUser(req);
-    const roomId = nanoid(12);
+    // Parse and validate request body
+    const body = await req.json();
+    const { roomId, chatRequestId, userId } = body;
 
-    const room: Room = {
-      status: "waiting",
-      createdAt: new Date(),
-      createdBy: user.uid,
-    };
+    // Input validation
+    if (!roomId || !chatRequestId) {
+      return NextResponse.json(
+        { error: "missing required params" },
+        { status: 400 },
+      );
+    }
 
-    const participant: Participant = {
-      identity: user.uid,
+    //caller creation
+    const participant = {
+      type: "caller",
+      userId: userId,
       joinedAt: new Date(),
     };
 
-    await firestore.doc(`rooms/${roomId}`).set(room);
-    await firestore
-      .doc(`rooms/${roomId}/participants/${user.uid}`)
-      .set(participant);
+    //update chatRequests doc with participant
+    const chatRequestRef = adminDb
+      .collection("chatRequests")
+      .doc(chatRequestId);
 
-    return NextResponse.json<CreateRoomResponse>(
-      { roomId },
-      { status: 200 }
+    const chatRequestDoc = await chatRequestRef.get();
+    if (!chatRequestDoc.exists) {
+      console.error("Chat request not found:", chatRequestId);
+      return NextResponse.json(
+        { error: "Chat request not found" },
+        { status: 404 },
+      );
+    }
+
+    // Update the document
+    await chatRequestRef.update({
+      participants: FieldValue.arrayUnion(participant),
+      isVideoChat: true,
+      videoCallStatus: "waiting",
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        roomId: roomId,
+      },
+      { status: 200 },
     );
   } catch (e: unknown) {
+    // Generic error fallback
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 }
+      { error: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 },
     );
   }
 }

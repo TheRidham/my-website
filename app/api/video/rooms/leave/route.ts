@@ -1,40 +1,52 @@
-import { firestore, verifyUser } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
-
-interface LeaveRoomBody {
-  roomId: string;
-}
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(req: Request) {
   try {
-    const user = await verifyUser(req);
-    const body = (await req.json()) as LeaveRoomBody;
+    // Parse and validate request body
+    const body = await req.json();
+    const { chatRequestId } = body;
 
-    if (!body.roomId) {
+    // Input validation
+    if (!chatRequestId) {
       return NextResponse.json(
-        { error: "roomId is required" },
-        { status: 400 }
+        { error: "missing required params" },
+        { status: 400 },
       );
     }
 
-    const participantsRef = firestore.collection(
-      `rooms/${body.roomId}/participants`
-    );
+    //update the doc
+    const chatRequestRef = adminDb
+      .collection("chatRequests")
+      .doc(chatRequestId);
 
-    await participantsRef.doc(user.uid).delete();
-
-    const remaining = await participantsRef.get();
-    if (remaining.empty) {
-      await firestore.doc(`rooms/${body.roomId}`).update({
-        status: "ended",
-      });
+    const chatRequestDoc = await chatRequestRef.get();
+    if (!chatRequestDoc.exists) {
+      console.error("Chat request not found:", chatRequestId);
+      return NextResponse.json(
+        { error: "Chat request not found" },
+        { status: 404 },
+      );
     }
 
-    return NextResponse.json({ success: true });
-  } catch (e: unknown) {
+    // Update the document
+    await chatRequestRef.update({
+      videoCallStatus: "ended",
+      endedAt: FieldValue.serverTimestamp(),
+    });
+
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 }
+      {
+        success: true,
+      },
+      { status: 200 },
+    );
+  } catch (e: unknown) {
+    // Generic error fallback
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Internal server error" },
+      { status: 500 },
     );
   }
 }
