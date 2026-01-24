@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     if (remaining.empty) {
       await firestore.doc(`rooms/${body.roomId}`).update({
         status: "ended",
+        closedAt: new Date(),
       });
     }
 

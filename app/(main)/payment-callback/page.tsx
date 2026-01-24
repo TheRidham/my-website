@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePayment } from "@/providers/PaymentProvider";
+import { useVideoRoom } from "@/hooks/useVideoRoom";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -11,6 +12,7 @@ function PaymentCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { verifyPayment, isLoading } = usePayment();
+  const { createRoom } = useVideoRoom();
 
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
@@ -82,6 +84,12 @@ function PaymentCallbackContent() {
           }
         }
 
+        // Check if this is a video session
+        const isVideoSession = sessionStorage.getItem("video_advisor_id");
+        const videoAdvisorId = sessionStorage.getItem("video_advisor_id");
+        const videoAmount = sessionStorage.getItem("video_amount");
+        const videoMethod = sessionStorage.getItem("video_method");
+
         if (gateway === 'dodo') {
           // ========================================
           // DODO PAYMENT HANDLER
@@ -105,11 +113,32 @@ function PaymentCallbackContent() {
               const sessionData = sessionDoc.data();
 
               if (sessionData?.status === 'completed' && sessionData?.roomId) {
-                // Payment processed, redirect to chat
                 clearInterval(pollInterval);
-                setTimeout(() => {
-                  router.push(`//humanChat/${sessionData.roomId}/${advisorId}`);
-                }, 1000);
+                
+                // If video session, create video room
+                if (isVideoSession && videoAdvisorId) {
+                  const videoRoomId = await createRoom(videoAdvisorId, {
+                    amount: parseInt(videoAmount || '0'),
+                    status: 'success',
+                    method: videoMethod as 'wallet' | 'card' | 'upi',
+                  });
+                  
+                  // TODO: Send email to advisor about video call session
+                  // sendEmailToAdvisor(videoAdvisorId, advisorName, videoRoomId)
+                  
+                  sessionStorage.removeItem("video_advisor_id");
+                  sessionStorage.removeItem("video_amount");
+                  sessionStorage.removeItem("video_method");
+                  
+                  setTimeout(() => {
+                    router.push(`/call/${videoRoomId}`);
+                  }, 1000);
+                } else {
+                  // Chat session - use existing logic
+                  setTimeout(() => {
+                    router.push(`/humanChat/${sessionData.roomId}/${advisorId}`);
+                  }, 1000);
+                }
               } else if (attempts >= maxAttempts) {
                 // Timeout - show helpful message
                 clearInterval(pollInterval);
@@ -142,10 +171,33 @@ function PaymentCallbackContent() {
               setSuccessMessage("Payment already processed! Redirecting to chat...");
             }
 
-            setStatus("success");
-            setTimeout(() => {
-              router.push(`/humanChat/${result.roomId}/${advisorId}`);
-            }, 3000);
+            // If video session, create video room
+            if (isVideoSession && videoAdvisorId) {
+              const videoRoomId = await createRoom(videoAdvisorId, {
+                amount: parseInt(videoAmount || '0'),
+                status: 'success',
+                method: videoMethod as 'wallet' | 'card' | 'upi',
+                transactionId: result.transactionId || sessionId || razorpayPaymentLinkId,
+              });
+              
+              // TODO: Send email to advisor about video call session
+              // sendEmailToAdvisor(videoAdvisorId, advisorName, videoRoomId)
+              
+              sessionStorage.removeItem("video_advisor_id");
+              sessionStorage.removeItem("video_amount");
+              sessionStorage.removeItem("video_method");
+              
+              setStatus("success");
+              setTimeout(() => {
+                router.push(`/call/${videoRoomId}`);
+              }, 3000);
+            } else {
+              // Chat session - use existing logic
+              setStatus("success");
+              setTimeout(() => {
+                router.push(`/humanChat/${result.roomId}/${advisorId}`);
+              }, 3000);
+            }
           } else {
             setStatus("error");
             setError("Payment verification failed");

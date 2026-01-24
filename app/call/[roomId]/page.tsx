@@ -23,7 +23,7 @@ export default function CallPage() {
     status,
     connecting,
     error,
-  } = useVideoRoom(roomId);
+  } = useVideoRoom({ roomId });
 
   // Wait for auth to be ready
   useEffect(() => {

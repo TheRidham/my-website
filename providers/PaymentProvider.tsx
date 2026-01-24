@@ -24,7 +24,7 @@ interface PaymentContextType {
   payWithWallet: (advisorId: string, amount: number) => Promise<any>
   verifyPayment: (sessionId: string, advisorId: string, paymentId?: string, paymentLinkId?: string) => Promise<any>
   verifyWalletPayment: (sessionId: string, paymentId?: string, paymentLinkId?: string) => Promise<any>
-  createDodoPaymentSession: (amount: number, advisorId: string) => Promise<any>
+  createDodoPaymentSession: (amount: number, advisorId: string, sessionType?: 'chat' | 'video') => Promise<any>
   createDodoWalletTopup: (amount: number) => Promise<any>
 }
 
@@ -151,12 +151,13 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
   // DODO PAYMENT METHODS (NEW)
   // ========================================
 
-  const createDodoPaymentSession = useCallback(async (amount: number, advisorId: string) => {
+  const createDodoPaymentSession = useCallback(async (amount: number, advisorId: string, sessionType: 'chat' | 'video' = 'chat') => {
     const createDodoAdvisorSession = httpsCallable(functions, 'createDodoAdvisorSession')
 
     const result = await createDodoAdvisorSession({
       amount,
       advisorId,
+      sessionType,
       returnUrl: `${window.location.origin}/payment-callback`,
       isDev: false  // using live keys right now
     })

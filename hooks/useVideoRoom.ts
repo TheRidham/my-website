@@ -2,8 +2,15 @@ import { connect, Room, RemoteParticipant, RemoteTrack, Track } from "twilio-vid
 import { useLayoutEffect, useRef, useState, useCallback } from "react";
 import { getAuth } from "firebase/auth";
 
-export function useVideoRoom(roomId: string) {
+export interface UseVideoRoomOptions {
+  roomId?: string;
+  advisorId?: string;
+}
+
+export function useVideoRoom(options: UseVideoRoomOptions = {}) {
+  const { roomId: initialRoomId, advisorId } = options;
   const [room, setRoom] = useState<Room | null>(null);
+  const [roomId, setRoomId] = useState<string | null>(initialRoomId || null);
   const [status, setStatus] = useState<"waiting" | "connecting" | "active" | "ended">("waiting");
   const [connecting, setConnecting] = useState<boolean>(false);
   const [cameraEnabled, setCameraEnabled] = useState(true);
@@ -30,6 +37,55 @@ export function useVideoRoom(roomId: string) {
     // Clear the track references
     localTracksRef.current = [];
     remoteTracksRef.current = [];
+  }, []);
+
+  // Create a room if it doesn't exist
+  const createRoom = useCallback(async (
+    advisorIdParam: string,
+    paymentDetails?: {
+      amount: number;
+      status: 'pending' | 'success' | 'failed';
+      transactionId?: string;
+      method?: 'wallet' | 'card' | 'upi' | 'dodo';
+    },
+    chatRequestId?: string,
+    roomIdParam?: string
+  ): Promise<string> => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) throw new Error("Not signed in");
+
+      const idToken = await user.getIdToken();
+
+      const createRes = await fetch("/api/video/rooms/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ 
+          advisorId: advisorIdParam,
+          roomId: roomIdParam,
+          ...(chatRequestId && { chatRequestId }),
+          ...(paymentDetails && { payment: paymentDetails }),
+        }),
+      });
+
+      if (!createRes.ok) {
+        const errorData = await createRes.json();
+        throw new Error(errorData.error || "Failed to create room");
+      }
+
+      const { roomId: newRoomId } = await createRes.json();
+      setRoomId(newRoomId);
+      return newRoomId;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create room";
+      setError(errorMessage);
+      throw err;
+    }
   }, []);
 
   const disconnectRoom = useCallback(() => {
@@ -81,9 +137,15 @@ export function useVideoRoom(roomId: string) {
     cleanupTracks();
   }, [cleanupTracks]);
 
-  const joinRoom = useCallback(async (): Promise<void> => {
+  const joinRoom = useCallback(async (roomIdParam?: string): Promise<void> => {
     if (joinInProgressRef.current || roomRef.current) {
       console.log("Join already in progress or already connected");
+      return;
+    }
+
+    const targetRoomId = roomIdParam || roomId;
+    if (!targetRoomId) {
+      setError("No room ID provided");
       return;
     }
 
@@ -106,7 +168,7 @@ export function useVideoRoom(roomId: string) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ roomId }),
+        body: JSON.stringify({ roomId: targetRoomId }),
       });
 
       if (!joinRes.ok) {
@@ -120,7 +182,7 @@ export function useVideoRoom(roomId: string) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ roomId }),
+        body: JSON.stringify({ roomId: targetRoomId }),
       });
 
       if (!tokenRes.ok) {
@@ -131,7 +193,7 @@ export function useVideoRoom(roomId: string) {
       const { token }: { token: string } = await tokenRes.json();
 
       const joinedRoom = await connect(token, {
-        name: roomId,
+        name: targetRoomId,
         audio: { echoCancellation: true },
         video: { width: 640, height: 480 },
         networkQuality: { local: 2, remote: 2 },
@@ -139,6 +201,7 @@ export function useVideoRoom(roomId: string) {
 
       roomRef.current = joinedRoom;
       setRoom(joinedRoom);
+      setRoomId(targetRoomId);
 
       joinedRoom.localParticipant.tracks.forEach((pub) => {
         if (pub.track && "attach" in pub.track && localVideoRef.current) {
@@ -253,6 +316,7 @@ export function useVideoRoom(roomId: string) {
   return {
     joinRoom,
     leaveRoom,
+    createRoom,
     status,
     connecting,
     cameraEnabled,
@@ -263,5 +327,6 @@ export function useVideoRoom(roomId: string) {
     remoteVideoRef,
     participants,
     error,
+    roomId,
   };
 }

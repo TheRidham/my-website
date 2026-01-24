@@ -4,6 +4,7 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { usePayment } from "@/providers/PaymentProvider";
 import { usePrice } from "@/providers/PriceProvider";
+import { useVideoRoom } from "@/hooks/useVideoRoom";
 import {
   Loader2,
   User,
@@ -39,6 +40,7 @@ interface HumanAdvisorModalProps {
   categoryKey?: string;
   subcategoryTitle?: string;
   selectedAdvisor?: Advisor | null;
+  sessionType?: 'chat' | 'video';
 }
 
 export function HumanAdvisorModal({
@@ -47,6 +49,7 @@ export function HumanAdvisorModal({
   categoryKey,
   subcategoryTitle,
   selectedAdvisor,
+  sessionType = 'chat',
 }: HumanAdvisorModalProps) {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +57,7 @@ export function HumanAdvisorModal({
   const { walletBalance, createDodoPaymentSession, payWithWallet } =
     usePayment();
   const { price } = usePrice();
+  const { createRoom } = useVideoRoom();
 
   const router = useRouter();
 
@@ -103,7 +107,24 @@ export function HumanAdvisorModal({
         console.log("pay with wallet result");
         console.log(result);
         if (result.success) {
-          router.push(`/humanChat/${result.roomId}/${result.advisorId}`);
+          if (sessionType === 'video') {
+            // Create video room with payment details
+            const roomId = await createRoom(advisorId, {
+              amount: amountInPaise,
+              status: 'success',
+              method: 'wallet',
+              transactionId: result.transactionId,
+            }, result.chatRequestId, result.roomId);
+            
+            // TODO: Send email to advisor about video call session
+            // sendEmailToAdvisor(advisorId, selectedAdvisor?.name, roomId)
+            
+            // Redirect to video call room
+            router.push(`/call/${roomId}`);
+          } else {
+            // Handle chat session redirect
+            router.push(`/humanChat/${result.roomId}/${result.advisorId}`);
+          }
         }
       } else {
         alert("unsufficient wallet balance");
@@ -121,13 +142,21 @@ export function HumanAdvisorModal({
     try {
       const amountInPaise = price * 100;
       // Use Dodo instead of Razorpay
-      const result = await createDodoPaymentSession(amountInPaise, advisorId);
+      const result = await createDodoPaymentSession(amountInPaise, advisorId, sessionType);
       console.log("dodo result:", result);
       if (result.paymentUrl) {
-        // Store sessionId in sessionStorage as a backup for verification
+        // Store payment and advisor info in sessionStorage for post-payment processing
         if (result.sessionId) {
           sessionStorage.setItem("last_payment_session_id", result.sessionId);
         }
+        // if (sessionType === 'video') {
+        //   sessionStorage.setItem("video_advisor_id", advisorId);
+        //   sessionStorage.setItem("video_amount", amountInPaise.toString());
+        //   sessionStorage.setItem("video_method", "card");
+        //   if (chatRequestId) {
+        //     sessionStorage.setItem("video_chat_request_id", chatRequestId);
+        //   }
+        // }
         window.location.href = result.paymentUrl;
       }
     } catch (error: any) {
@@ -147,7 +176,7 @@ export function HumanAdvisorModal({
           </DialogTitle>
           <DialogDescription>
             {selectedAdvisor
-              ? `Choose payment method to start chat with ${selectedAdvisor.name}`
+              ? `Choose payment method to start ${sessionType} with ${selectedAdvisor.name}`
               : `Get personalized advice from our expert ${
                   subcategoryTitle || "advisors"
                 }.`}

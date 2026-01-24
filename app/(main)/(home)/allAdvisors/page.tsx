@@ -38,6 +38,7 @@ function AllAdvisorsPage() {
   const [loading, setLoading] = useState(true)
   const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [sessionType, setSessionType] = useState<'chat' | 'video'>('chat')
 
   useEffect(() => {
     const fetchAdvisors = async () => {
@@ -62,7 +63,7 @@ function AllAdvisorsPage() {
     fetchAdvisors()
   }, [])
 
-  const handleAdvisorClick = (advisor: Advisor) => {
+  const handleAdvisorClick = (advisor: Advisor, type: 'chat' | 'video' = 'chat') => {
     setSelectedAdvisor({
       id: advisor.uid,
       name: advisor.name,
@@ -71,6 +72,7 @@ function AllAdvisorsPage() {
       rating: advisor.rating || 4.8,
       experience: advisor.experience || '6+ years'
     })
+    setSessionType(type)
     setIsModalOpen(true)
   }
 
@@ -101,8 +103,8 @@ function AllAdvisorsPage() {
             return (
               <div
                 key={advisor.uid}
-                onClick={() => handleAdvisorClick(advisor)}
-                className="bg-secondary rounded-4xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
+                // onClick={() => handleAdvisorClick(advisor)}
+                className="bg-secondary rounded-4xl p-5 py-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
               >
                 <div className="flex gap-5">
                   <div className="relative w-20 h-20 rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner shrink-0">
@@ -154,8 +156,19 @@ function AllAdvisorsPage() {
                         </div>
                       </div>
                       
-                      <div className="w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors">
+                    </div>
+                    <div className="flex items-center mt-3 gap-3">
+                      <div 
+                        onClick={() => handleAdvisorClick(advisor, 'chat')}
+                        className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors"
+                      >
                         <MessageCircle className="text-primary group-hover:text-white transition-colors" size={20} />
+                      </div>
+                      <div 
+                        onClick={() => handleAdvisorClick(advisor, 'video')}
+                        className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
+                      >
+                        <Video className="text-primary group-hover:text-white transition-colors" size={20} />
                       </div>
                     </div>
                   </div>
@@ -169,6 +182,7 @@ function AllAdvisorsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedAdvisor={selectedAdvisor}
+        sessionType={sessionType}
       />
     </div>
   )
