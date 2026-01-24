@@ -13,12 +13,12 @@ export async function POST(req: Request) {
     if (!body.roomId) {
       return NextResponse.json(
         { error: "roomId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const participantsRef = firestore.collection(
-      `rooms/${body.roomId}/participants`
+      `rooms/${body.roomId}/participants`,
     );
 
     await participantsRef.doc(user.uid).delete();
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }

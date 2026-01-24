@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     if (!body.roomId) {
       return NextResponse.json(
         { error: "roomId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,10 +22,7 @@ export async function POST(req: Request) {
     const roomSnap = await roomRef.get();
 
     if (!roomSnap.exists) {
-      return NextResponse.json(
-        { error: "Room not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
     const participant: Participant = {
@@ -33,10 +30,7 @@ export async function POST(req: Request) {
       joinedAt: new Date(),
     };
 
-    await roomRef
-      .collection("participants")
-      .doc(user.uid)
-      .set(participant);
+    await roomRef.collection("participants").doc(user.uid).set(participant);
 
     await roomRef.update({ status: "active" });
 
@@ -44,7 +38,7 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }
