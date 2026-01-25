@@ -62,9 +62,21 @@ export async function POST(req: Request) {
 
     return NextResponse.json<CreateRoomResponse>({ roomId }, { status: 200 });
   } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : "Unknown error";
+    console.error("[VIDEO ROOM CREATE] Error:", errorMessage, e);
+    
+    // Return 401 only for auth errors
+    if (errorMessage.includes("Unauthorized") || errorMessage.includes("auth")) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    
+    // Return 500 for other errors
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 },
+      { error: errorMessage },
+      { status: 500 },
     );
   }
 }
