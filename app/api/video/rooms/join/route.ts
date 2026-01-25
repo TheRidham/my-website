@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { firestore, verifyUser } from "@/lib/firebase-admin";
 import type { Participant } from "@/types/VideoRoom";

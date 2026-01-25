@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { firestore, verifyUser } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
 
