@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useVideoRoom } from "@/hooks/useVideoRoom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 
 export default function CallPage() {
   const router = useRouter();
   const { roomId } = useParams() as { roomId: string };
   const [authReady, setAuthReady] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
-  
+
   const {
     joinRoom,
     leaveRoom,
@@ -45,18 +47,13 @@ export default function CallPage() {
     return () => {
       const cleanup = async () => {
         try {
-          const auth = getAuth();
-          const user = auth.currentUser;
-          if (user) {
-            const token = await user.getIdToken();
-            await fetch("/api/video/rooms/leave", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ roomId }),
-            });
+          const leaveVideoRoom = httpsCallable(functions, "leaveVideoRoom");
+          const res = await leaveVideoRoom({ roomId });
+          const data = res.data as { success?: boolean };
+          if (data?.success !== true) {
+            throw new Error("Failed to leave room");
+          } else {
+            console.log("room is leaved!");
           }
         } catch (error) {
           console.error("Error leaving room on unmount:", error);
@@ -68,23 +65,17 @@ export default function CallPage() {
 
   const handleLeave = async () => {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        await fetch("/api/video/rooms/leave", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ roomId }),
-        });
+      const leaveVideoRoom = httpsCallable(functions, "leaveVideoRoom");
+      const res = await leaveVideoRoom({ roomId });
+      const data = res.data as { success?: boolean };
+      if (data?.success !== true) {
+        throw new Error("Failed to leave room");
+      } else {
+        console.log("room is leaved!");
       }
     } catch (error) {
       console.error("Error leaving room:", error);
     }
-    
     leaveRoom();
     router.push("/allAdvisors");
   };
@@ -122,7 +113,9 @@ export default function CallPage() {
         <h2 className="text-3xl font-bold mb-2">Room: {roomId}</h2>
         <p className="text-gray-600">
           Status:{" "}
-          <span className={`px-3 py-1 rounded font-semibold ${getStatusColor()}`}>
+          <span
+            className={`px-3 py-1 rounded font-semibold ${getStatusColor()}`}
+          >
             {status}
           </span>
         </p>

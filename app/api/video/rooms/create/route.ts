@@ -1,8 +1,5 @@
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { firestore, verifyUser } from "@/lib/firebase-admin";
-import { nanoid } from "nanoid";
 import type { Participant, Room } from "@/types/VideoRoom";
 
 interface CreateRoomBody {
