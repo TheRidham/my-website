@@ -21,9 +21,11 @@ interface CreateRoomResponse {
 
 export async function POST(req: Request) {
   try {
+    console.log("[VIDEO ROOM CREATE] Starting room creation");
     const user = await verifyUser(req);
+    console.log("[VIDEO ROOM CREATE] User verified:", user.uid);
+    
     const body = (await req.json()) as CreateRoomBody;
-
     const { roomId } = body;
 
     if (!body.advisorId) {
@@ -52,14 +54,20 @@ export async function POST(req: Request) {
       joinedAt: new Date(),
     };
 
+    console.log("[VIDEO ROOM CREATE] Updating chat request");
     await firestore
       .doc(`chatRequests/${body.chatRequestId}`)
       .update({ isVideo: true });
+    
+    console.log("[VIDEO ROOM CREATE] Creating room document");
     await firestore.doc(`rooms/${roomId}`).set(room);
+    
+    console.log("[VIDEO ROOM CREATE] Adding participant");
     await firestore
       .doc(`rooms/${roomId}/participants/${user.uid}`)
       .set(participant);
 
+    console.log("[VIDEO ROOM CREATE] Room created successfully:", roomId);
     return NextResponse.json<CreateRoomResponse>({ roomId }, { status: 200 });
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : "Unknown error";
