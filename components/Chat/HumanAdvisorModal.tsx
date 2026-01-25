@@ -108,12 +108,10 @@ export function HumanAdvisorModal({
         console.log(result);
         if (result.success) {
           if (sessionType === 'video') {
-            // Create video room with payment details
             const roomId = await createRoom(advisorId, {
               amount: amountInPaise,
               status: 'success',
               method: 'wallet',
-              transactionId: result.transactionId,
             }, result.chatRequestId, result.roomId);
             
             // TODO: Send email to advisor about video call session

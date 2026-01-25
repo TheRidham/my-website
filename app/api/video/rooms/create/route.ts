@@ -45,14 +45,6 @@ export async function POST(req: Request) {
           processedAt: new Date(),
         },
       }),
-      userId: user.uid,
-      advisorId: body.advisorId,
-      ...(body.payment && {
-        payment: {
-          ...body.payment,
-          processedAt: new Date(),
-        },
-      }),
     };
 
     const participant: Participant = {
@@ -62,18 +54,16 @@ export async function POST(req: Request) {
 
     await firestore
       .doc(`chatRequests/${body.chatRequestId}`)
-      .update({ isvideo: true });
+      .update({ isVideo: true });
     await firestore.doc(`rooms/${roomId}`).set(room);
     await firestore
       .doc(`rooms/${roomId}/participants/${user.uid}`)
       .set(participant);
 
     return NextResponse.json<CreateRoomResponse>({ roomId }, { status: 200 });
-    return NextResponse.json<CreateRoomResponse>({ roomId }, { status: 200 });
   } catch (e: unknown) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Unauthorized" },
-      { status: 401 },
       { status: 401 },
     );
   }

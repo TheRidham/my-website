@@ -86,7 +86,7 @@ export default function CallPage() {
     }
     
     leaveRoom();
-    router.push("/call");
+    router.push("/allAdvisors");
   };
 
   const getStatusColor = () => {
@@ -141,7 +141,16 @@ export default function CallPage() {
             className="relative flex-1 min-h-80 bg-black flex items-center justify-center overflow-hidden"
             ref={localVideoRef}
             suppressHydrationWarning
-          />
+          >
+            {!cameraEnabled && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-90 z-10">
+                <div className="text-center">
+                  <p className="text-white font-semibold text-lg">📹</p>
+                  <p className="text-gray-400 text-sm mt-2">Camera is off</p>
+                </div>
+              </div>
+            )}
+          </div>
           {connecting && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">
               <div className="text-white text-center">

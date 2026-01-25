@@ -292,9 +292,29 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
   const toggleCamera = useCallback((): void => {
     if (!roomRef.current) return;
     const newState = !cameraEnabled;
+    
     roomRef.current.localParticipant.videoTracks.forEach((pub) => {
       pub.track.enable(newState);
     });
+    
+    // If camera is being disabled, clear the local video preview
+    if (!newState && localVideoRef.current) {
+      localVideoRef.current.innerHTML = "";
+      localTracksRef.current = [];
+    } else if (newState && localVideoRef.current && localTracksRef.current.length === 0) {
+      // If camera is being enabled, re-attach the video tracks
+      roomRef.current.localParticipant.videoTracks.forEach((pub) => {
+        if (pub.track && "attach" in pub.track) {
+          const mediaElement = pub.track.attach();
+          mediaElement.style.width = "100%";
+          mediaElement.style.height = "100%";
+          mediaElement.style.objectFit = "cover";
+          localVideoRef.current?.appendChild(mediaElement);
+          localTracksRef.current.push(mediaElement);
+        }
+      });
+    }
+    
     setCameraEnabled(newState);
   }, [cameraEnabled]);
 
