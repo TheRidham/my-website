@@ -37,6 +37,7 @@ function PaymentCallbackContent() {
     const razorpayPaymentId = searchParams.get("razorpay_payment_id");
     const razorpayPaymentLinkId = searchParams.get("razorpay_payment_link_id");
     const advisorId = searchParams.get("advisorId");
+    let advisorName = searchParams.get("advisorName") || sessionStorage.getItem("video_advisor_name") || "Advisor";
     const cancelled = searchParams.get("cancelled");
 
     console.log("sessionId", sessionId);
@@ -131,7 +132,8 @@ function PaymentCallbackContent() {
                   sessionStorage.removeItem("video_method");
                   
                   setTimeout(() => {
-                    router.push(`/call/${videoRoomId}`);
+                    const advisorNameParam = encodeURIComponent(advisorName || 'Advisor');
+                    router.push(`/call/${videoRoomId}?advisorName=${advisorNameParam}`);
                   }, 1000);
                 } else {
                   // Chat session - use existing logic
@@ -189,7 +191,8 @@ function PaymentCallbackContent() {
               
               setStatus("success");
               setTimeout(() => {
-                router.push(`/call/${videoRoomId}`);
+                const advisorNameParam = encodeURIComponent(advisorName || 'Advisor');
+                router.push(`/call/${videoRoomId}?advisorName=${advisorNameParam}`);
               }, 3000);
             } else {
               // Chat session - use existing logic

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useVideoRoom } from "@/hooks/useVideoRoom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { httpsCallable } from "firebase/functions";
@@ -9,7 +9,9 @@ import { functions } from "@/lib/firebase";
 
 export default function CallPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { roomId } = useParams() as { roomId: string };
+  const advisorName = searchParams.get("advisorName") || "Advisor";
   const [authReady, setAuthReady] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
 
@@ -110,7 +112,7 @@ export default function CallPage() {
   return (
     <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto min-h-screen">
       <div className="text-center">
-        <h2 className="text-3xl font-bold mb-2">Room: {roomId}</h2>
+        <h2 className="text-3xl font-bold mb-2">Video Chat with {advisorName}</h2>
         <p className="text-gray-600">
           Status:{" "}
           <span

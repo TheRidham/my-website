@@ -117,8 +117,9 @@ export function HumanAdvisorModal({
             // TODO: Send email to advisor about video call session
             // sendEmailToAdvisor(advisorId, selectedAdvisor?.name, roomId)
             
-            // Redirect to video call room
-            router.push(`/call/${roomId}`);
+            // Redirect to video call room with advisor name
+            const advisorNameParam = encodeURIComponent(selectedAdvisor?.name || 'Advisor');
+            router.push(`/call/${roomId}?advisorName=${advisorNameParam}`);
           } else {
             // Handle chat session redirect
             router.push(`/humanChat/${result.roomId}/${result.advisorId}`);
@@ -147,14 +148,12 @@ export function HumanAdvisorModal({
         if (result.sessionId) {
           sessionStorage.setItem("last_payment_session_id", result.sessionId);
         }
-        // if (sessionType === 'video') {
-        //   sessionStorage.setItem("video_advisor_id", advisorId);
-        //   sessionStorage.setItem("video_amount", amountInPaise.toString());
-        //   sessionStorage.setItem("video_method", "card");
-        //   if (chatRequestId) {
-        //     sessionStorage.setItem("video_chat_request_id", chatRequestId);
-        //   }
-        // }
+        if (sessionType === 'video') {
+          sessionStorage.setItem("video_advisor_id", advisorId);
+          sessionStorage.setItem("video_advisor_name", selectedAdvisor?.name || 'Advisor');
+          sessionStorage.setItem("video_amount", amountInPaise.toString());
+          sessionStorage.setItem("video_method", "card");
+        }
         window.location.href = result.paymentUrl;
       }
     } catch (error: any) {

@@ -421,7 +421,62 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {/* New Welcome Screen */}
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
-                <ChatSection />
+                {isJaiya ? <ChatSection />:
+                <>
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                    <LucideIcon 
+                      name={
+                        categoryKey 
+                          ? ADVISOR_CATEGORIES[categoryKey]?.categories.find(
+                              (s) => s.title === subcategoryTitle
+                            )?.icon || ADVISOR_CATEGORIES[categoryKey]?.icon || "Sparkles"
+                          : "Sparkles"
+                      }
+                      size={28}
+                      className="text-primary"
+                    />
+                  </div>
+                  
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-3">
+                    Hi, I'm your {subcategoryTitle} Advisor
+                  </h1>
+
+                  <p className="text-gray-600 text-center mb-6 max-w-sm">
+                    Chat with me for free, or connect with a real expert for just $5.
+                  </p>
+
+                  <div className="flex flex-wrap gap-3 justify-center mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
+                      <MessageCircle size={16} />
+                      2M+ consultations
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
+                      <Users size={16} />
+                      $5 per expert
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
+                      <Shield size={16} />
+                      HIPAA compliant
+                    </div>
+                  </div>
+                  <p className="text-gray-700 font-semibold mb-3 text-center">What can I help with?</p>
+
+                  {suggestions.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => processMessage(suggestion)}
+                          className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-primary hover:bg-accent transition-all group shadow-sm text-left"
+                        >
+                          <p className="text-[13px] font-semibold text-gray-800 group-hover:text-primary">
+                            {suggestion}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>}
               </div>
             )}
 
@@ -491,8 +546,23 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
           </div>
         </div>
 
+        
+
         {/* Input Area */}
-        <div className="px-4 py-2">
+        <div className="px-4 py-1.5 relative">
+          {/* Tags */}
+          <div className="px-4 max-w-2xl mx-auto w-full pt-2 absolute -top-9 left-1/2 -translate-x-1/2">
+            <div className="flex gap-2 flex-wrap">
+              {['Quick', 'Thoughtful', 'Anonymized', 'For You']
+              .map((el, i) => {
+                return (
+                  <button className={`px-3 py-1 text-xs font-medium ${i%2==0 ? 'text-foreground' : 'text-primary'} bg-gray-100 hover:bg-gray-200 rounded-full transition-colors`}>
+                    {el}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
             <input
               type="text"
