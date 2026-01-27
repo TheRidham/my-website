@@ -346,46 +346,6 @@ function HomePage() {
           <ExpertCallCard />
         </div>
 
-
-        {/* Search Section */}
-        <div className="px-5 pt-4 pb-2 sticky top-0 z-20 backdrop-blur-2xl">
-          <div className="relative flex items-center gap-3 w-full">
-            {/* Search input wrapper */}
-            <div className="relative flex-1 group">
-              <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors"
-                size={18}
-              />
-
-              <input
-                type="text"
-                placeholder="Ask me anything, and I’ll connect you with the concerned AI advisorll connect you to that AI Advisor"
-                onClick={() => setShowSearchScreen(true)}
-                className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm cursor-pointer"
-              />
-            </div>
-
-            {/* Avatar + label */}
-            <button
-              onClick={() => {
-                resetChat();
-                switchChat({ name: "Super AI" })
-              }}
-              className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer bg-none border-none p-0"
-              title="Switch to Super AI"
-            >
-              <div className="relative w-9 h-9 rounded-lg overflow-hidden">
-                <Image
-                  src={jaiyaAvatar}
-                  alt="Super AI logo"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <p className="text-xs font-medium whitespace-nowrap">Super AI</p>
-            </button>
-          </div>
-        </div>
         {/* Stats Section */}
         {/* <div className='px-5 pb-4'>
           <div className="flex justify-between gap-4 mt-2 px-2 py-3 border rounded-lg">
@@ -499,8 +459,48 @@ function HomePage() {
           </div>
         </div>
 
+        {/* Search Section */}
+        <div className="px-5 pt-3 sticky top-0 z-20 backdrop-blur-2xl">
+          <div className="relative flex items-center gap-3 w-full">
+            {/* Search input wrapper */}
+            <div className="relative flex-1 group">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors"
+                size={18}
+              />
+
+              <input
+                type="text"
+                placeholder="Ask me anything, and I’ll connect you with the concerned AI advisorll connect you to that AI Advisor"
+                onClick={() => setShowSearchScreen(true)}
+                className="w-full bg-secondary rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none border border-gray-200 focus:border-primary/70 focus:ring-1 focus:ring-ring transition-all shadow-sm cursor-pointer"
+              />
+            </div>
+
+            {/* Avatar + label */}
+            <button
+              onClick={() => {
+                resetChat();
+                switchChat({ name: "Super AI" })
+              }}
+              className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer bg-none border-none p-0"
+              title="Switch to Super AI"
+            >
+              <div className="relative w-9 h-9 rounded-lg overflow-hidden">
+                <Image
+                  src={jaiyaAvatar}
+                  alt="Super AI logo"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <p className="text-xs font-medium whitespace-nowrap">Super AI</p>
+            </button>
+          </div>
+        </div>
+
         {/* Advisor Categories */}
-        <div className="mt-10 px-5">
+        <div className="mt-6 px-5">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-[17px] font-bold text-gray-900 tracking-tight">
               Explore Advisor Categories

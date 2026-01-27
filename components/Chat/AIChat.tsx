@@ -73,6 +73,8 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     ref,
   ) => {
     const [input, setInput] = useState("");
+    const [selectedTagGroup1, setSelectedTagGroup1] = useState<string>("Quick");
+    const [selectedTagGroup2, setSelectedTagGroup2] = useState<string>("Anonymized");
     const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { jaiyaPrompt, advisorsPrompt } = usePrompts();
@@ -550,17 +552,38 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
         {/* Input Area */}
         <div className="px-4 py-1.5 relative">
-          {/* Tags */}
-          <div className="px-4 max-w-2xl mx-auto w-full pt-2 absolute -top-9 left-1/2 -translate-x-1/2">
-            <div className="flex gap-2 flex-wrap">
-              {['Quick', 'Thoughtful', 'Anonymized', 'For You']
-              .map((el, i) => {
-                return (
-                  <button className={`px-3 py-1 text-xs font-medium ${i%2==0 ? 'text-foreground' : 'text-primary'} bg-gray-100 hover:bg-gray-200 rounded-full transition-colors`}>
-                    {el}
+          <div className="px-4 max-w-2xl w-full pt-2 absolute -top-10 left-1/2 -translate-x-1/2">
+            <div className="flex gap-6 flex-wrap">
+              <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
+                {['Quick', 'Thoughtful'].map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTagGroup1(tag)}
+                    className={`bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+                      selectedTagGroup1 === tag
+                        ? 'text-primary'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {tag}
                   </button>
-                )
-              })}
+                ))}
+              </div>
+              <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
+                {['Anonymized', 'For You'].map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTagGroup2(tag)}
+                    className={`bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+                      selectedTagGroup2 === tag
+                        ? 'text-primary'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
