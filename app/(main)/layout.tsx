@@ -7,7 +7,8 @@ import { useChat } from "@/providers/ChatProvider";
 import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+
+const aiAdvisorRoutes = ["nutrition", "fitness", "mental", "general", "sexual", "chronic", "skin", "addiction", "relationship"];
 
 function Layout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -19,6 +20,11 @@ function Layout({ children }: { children: React.ReactNode }) {
   const subcategoryTitle = params.subcategory
     ? decodeURIComponent(params.subcategory as string)
     : undefined;
+
+  
+  const firstSegment = pathname.split("/")[1];
+  const showButton = aiAdvisorRoutes.includes(firstSegment);
+  console.log("showButton", showButton);
 
   useEffect(() => {
     if (categoryKey && subcategoryTitle) {
@@ -86,16 +92,31 @@ function Layout({ children }: { children: React.ReactNode }) {
         }`}
       >
         {/* Desktop Toggle Button (When sidebar is closed) */}
-        {!isSidebarOpen && (
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="flex flex-col items-center gap-1 absolute left-4 top-2 p-1.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40 shadow-md border border-gray-100 bg-white"
-            title="Open sidebar"
-          >
-            <img src={"https://firebasestorage.googleapis.com/v0/b/jai-ai-30103.firebasestorage.app/o/profilePhotos%2Fd9dd1082-440c-439b-9113-9c2c344d0693.jpg?alt=media&token=205a0856-3170-4fd8-ba89-8c3e406806d7"} alt="human-advisor" className="w-12 h-12 rounded-xl object-cover" />
-            <p className="text-[11px] text-gray-500">Click to Chat</p>
-          </button>
-        )}
+        {!isSidebarOpen &&
+          (showButton ? (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex absolute left-4 top-5 p-2.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40"
+              title="Close sidebar"
+            >
+              <PanelLeftClose size={22} />
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex flex-col items-center gap-1 absolute left-4 top-2 p-1.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40 shadow-md border border-gray-100 bg-white"
+              title="Open sidebar"
+            >
+              <img
+                src={
+                  "https://firebasestorage.googleapis.com/v0/b/jai-ai-30103.firebasestorage.app/o/profilePhotos%2Fd9dd1082-440c-439b-9113-9c2c344d0693.jpg?alt=media&token=205a0856-3170-4fd8-ba89-8c3e406806d7"
+                }
+                alt="human-advisor"
+                className="w-12 h-12 rounded-xl object-cover"
+              />
+              <p className="text-[11px] text-gray-500">Click to Chat</p>
+            </button>
+          ))}
 
         <div className="flex-1 h-full">
           <Jaiya
