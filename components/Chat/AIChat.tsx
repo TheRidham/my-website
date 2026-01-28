@@ -30,6 +30,7 @@ import { useChat } from "@/providers/ChatProvider";
 import { marked } from "marked";
 import { HumanAdvisorModal } from "./HumanAdvisorModal";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { useChatAnalytics } from "@/hooks/useChatAnalytics";
 import { auth } from "@/lib/firebase";
 import { LucideIcon } from "../ui/LucideIcon";
 import ChatSection from "../ChatSection";
@@ -161,6 +162,8 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       appendGeneralPrompt: !isJaiya,
     });
 
+    const { trackChatStart, trackChatEnd } = useChatAnalytics();
+
     // Load chat history when component mounts or history prop changes
     useEffect(() => {
       if (history && history.length > 0 && !isHistoryLoadedRef.current) {
@@ -174,8 +177,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         setMessages(formattedHistory);
         messagesRef.current = formattedHistory;
         isHistoryLoadedRef.current = true;
+        
+        // Track chat start
+        trackChatStart("ai", categoryKey, subcategoryTitle);
       }
-    }, [history, setMessages]);
+    }, [history, setMessages, categoryKey, subcategoryTitle, trackChatStart]);
 
     // Reset history loaded flag when chatId changes (new chat or different chat selected)
     useEffect(() => {
@@ -203,8 +209,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     useEffect(() => {
       return () => {
         clearMessages();
+        trackChatEnd("ai");
       };
-    }, [clearMessages]);
+    }, [clearMessages, trackChatEnd]);
 
     // Auto-send initial message if provided (for Jaiya redirects)
     useEffect(() => {

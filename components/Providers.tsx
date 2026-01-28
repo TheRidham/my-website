@@ -61,15 +61,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <PriceProvider>
-      <PromptsProvider>
-        <PaymentProvider>
-          <ChatProvider>
-            {showAuthOverlay && <AuthOverlay onClose={handleCloseOverlay} />}
-            {children}
-          </ChatProvider>
-        </PaymentProvider>
-      </PromptsProvider>
-    </PriceProvider>
+    <>
+      <PriceProvider>
+        <PromptsProvider>
+          <PaymentProvider>
+            <ChatProvider>
+              {showAuthOverlay && <AuthOverlay onClose={handleCloseOverlay} />}
+              {children}
+            </ChatProvider>
+          </PaymentProvider>
+        </PromptsProvider>
+      </PriceProvider>
+    </>
   );
 }

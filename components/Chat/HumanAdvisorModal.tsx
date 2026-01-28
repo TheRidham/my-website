@@ -5,6 +5,7 @@ import { functions } from "@/lib/firebase";
 import { usePayment } from "@/providers/PaymentProvider";
 import { usePrice } from "@/providers/PriceProvider";
 import { useVideoRoom } from "@/hooks/useVideoRoom";
+import { useChatAnalytics } from "@/hooks/useChatAnalytics";
 import {
   Loader2,
   User,
@@ -58,6 +59,7 @@ export function HumanAdvisorModal({
     usePayment();
   const { price } = usePrice();
   const { createRoom } = useVideoRoom();
+  const { trackChatStart } = useChatAnalytics();
 
   const router = useRouter();
 
@@ -107,6 +109,9 @@ export function HumanAdvisorModal({
         console.log("pay with wallet result");
         console.log(result);
         if (result.success) {
+          // Track human chat start
+          trackChatStart("human", categoryKey, subcategoryTitle);
+          
           if (sessionType === 'video') {
             const roomId = await createRoom(advisorId, {
               amount: amountInPaise,
@@ -144,6 +149,9 @@ export function HumanAdvisorModal({
       const result = await createDodoPaymentSession(amountInPaise, advisorId, sessionType);
       console.log("dodo result:", result);
       if (result.paymentUrl) {
+        // Track human chat start
+        trackChatStart("human", categoryKey, subcategoryTitle);
+        
         // Store payment and advisor info in sessionStorage for post-payment processing
         if (result.sessionId) {
           sessionStorage.setItem("last_payment_session_id", result.sessionId);
