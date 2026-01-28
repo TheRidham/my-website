@@ -7,6 +7,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { notifyAdvisorNewSession } from "@/utils/email";
 
 function PaymentCallbackContent() {
   const router = useRouter();
@@ -115,6 +116,7 @@ function PaymentCallbackContent() {
 
               if (sessionData?.status === 'completed' && sessionData?.roomId) {
                 clearInterval(pollInterval);
+
                 
                 // If video session, create video room
                 if (isVideoSession && videoAdvisorId) {
@@ -136,6 +138,7 @@ function PaymentCallbackContent() {
                     router.push(`/call/${videoRoomId}?advisorName=${advisorNameParam}`);
                   }, 1000);
                 } else {
+                  (() => notifyAdvisorNewSession(sessionData.roomId))()
                   // Chat session - use existing logic
                   setTimeout(() => {
                     router.push(`/humanChat/${sessionData.roomId}/${advisorId}`);
@@ -151,7 +154,7 @@ function PaymentCallbackContent() {
               console.error('[Dodo Callback] Polling error:', error);
             }
           }, 3000); // Check every 3 seconds
-
+          
           return;
 
         } else {
@@ -173,6 +176,7 @@ function PaymentCallbackContent() {
               setSuccessMessage("Payment already processed! Redirecting to chat...");
             }
 
+            
             // If video session, create video room
             if (isVideoSession && videoAdvisorId) {
               const videoRoomId = await createRoom(videoAdvisorId, {
@@ -195,6 +199,7 @@ function PaymentCallbackContent() {
                 router.push(`/call/${videoRoomId}?advisorName=${advisorNameParam}`);
               }, 3000);
             } else {
+              (() => notifyAdvisorNewSession(result.roomId))()
               // Chat session - use existing logic
               setStatus("success");
               setTimeout(() => {

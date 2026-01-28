@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect} from 'react'
 import { AIChat, AIChatHandle } from '../Chat/AIChat'
-import { ChevronLeft, Wallet, History, Plus, User } from 'lucide-react'
+import { ChevronLeft, Wallet, History, Plus, User, Gift } from 'lucide-react'
 import Image from 'next/image'
 import jaiyaAvatar from "@/assets/jaiya.jpg";
 import { ADVISOR_CATEGORIES } from '@/constant/advisors'
@@ -12,6 +12,9 @@ import { Button } from '../ui/button'
 import { usePayment } from '@/providers/PaymentProvider'
 import AIChatHistorySheet from '../Chat/AIChatHistorySheet'
 import AppDownloadBadges from '../AppDownloadBadges'
+import { claimFreeOfferIfEligible } from '@/utils/promoCashClaim'
+import { getAuth } from 'firebase/auth'
+import { getFirestore, doc, getDoc } from 'firebase/firestore'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -42,6 +45,39 @@ function Jaiya({
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false)
   const [msgHistory, setMsgHistory] = useState<Message[] | null>(null);
+  const [isClaimingOffer, setIsClaimingOffer] = useState(false);
+  const [claimMessage, setClaimMessage] = useState<string>("");
+  const [isEligible, setIsEligible] = useState(false);
+
+  useEffect(() => {
+    // Check if user is authenticated and not a guest
+    const checkEligibility = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        setIsEligible(false);
+        return;
+      }
+      
+      // Check if user is a guest
+      const db = getFirestore();
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const isGuest = (userData?.isGuest || userData?.isAnonymous) ?? false;
+        const hasClaimed = userData?.hasClaimedFreeCash ?? false;
+        if (isGuest || hasClaimed) setIsEligible(false);
+        else setIsEligible(true);
+      } else {
+        // New user, not a guest
+        setIsEligible(true);
+      }
+    };
+    checkEligibility();
+  }, []);
 
   const isAdvisorChat = !!categoryKey;
   
@@ -58,8 +94,48 @@ function Jaiya({
     setMsgHistory(null);
   };
 
+  const handleClaimFreeOffer = async () => {
+    setIsClaimingOffer(true);
+    try {
+      const result = await claimFreeOfferIfEligible();
+      setClaimMessage(result.message);
+      
+      if (result.success) {
+        setIsEligible(false);
+        setTimeout(() => setClaimMessage(""), 3000);
+      }
+    } finally {
+      setIsClaimingOffer(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-secondary">
+      {/* Promo Banner */}
+      {!isAdvisorChat && isEligible && (
+        <div className="bg-primary/15 px-6 py-1.5">
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-xs font-semibold text-primary">
+              🎉 $10 free credit on signup — Start your wellness journey today!
+            </span>
+            <button 
+              onClick={handleClaimFreeOffer}
+              disabled={isClaimingOffer}
+              className="bg-primary hover:bg-primary/50 text-primary-foreground font-bold rounded-lg px-3 py-1 text-xs whitespace-nowrap disabled:opacity-50"
+              title="Claim $10 free credit"
+            >
+              <Gift size={14} className="mr-0.5 inline" />
+              Claim
+            </button>
+            {claimMessage && (
+              <span className={`text-xs font-semibold ml-2 ${claimMessage.includes("success") ? "text-green-600" : "text-amber-600"}`}>
+                {claimMessage}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className={`bg-transparent transition-all duration-300 ${!isSidebarOpen && "pl-12"}`}>
         <div className="w-full flex items-center justify-between px-6 py-1.5">
@@ -108,7 +184,7 @@ function Jaiya({
             {isAdvisorChat && (
               <Button 
                 onClick={() => setIsHumanModalOpen(true)}
-                className="hidden md:flex items-center gap-2 bg-primary hover:bg-emerald-700 text-white font-bold rounded-xl px-4 py-2 text-xs"
+                className="hidden md:flex items-center gap-2 bg-primary hover:bg-primtext-primary text-white font-bold rounded-xl px-4 py-2 text-xs"
               >
                 <User size={16} />
                 Connect with Human

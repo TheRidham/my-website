@@ -559,14 +559,14 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
         {/* Input Area */}
         <div className="px-4 py-1.5 relative">
-          <div className="px-4 max-w-2xl w-full pt-2 absolute -top-10 left-1/2 -translate-x-1/2">
-            <div className="flex gap-6 flex-wrap">
+          <div className="pl-6 max-w-2xl w-full pt-2 absolute -top-10 left-1/2 -translate-x-1/2">
+            <div className="flex gap-3 flex-wrap">
               <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
                 {['Quick', 'Thoughtful'].map((tag) => (
                   <button
                     key={tag}
                     onClick={() => setSelectedTagGroup1(tag)}
-                    className={`bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+                    className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
                       selectedTagGroup1 === tag
                         ? 'text-primary'
                         : 'text-gray-600 hover:text-gray-800'
@@ -581,7 +581,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                   <button
                     key={tag}
                     onClick={() => setSelectedTagGroup2(tag)}
-                    className={`bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+                    className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
                       selectedTagGroup2 === tag
                         ? 'text-primary'
                         : 'text-gray-600 hover:text-gray-800'

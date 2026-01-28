@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import CardSwipeLoader from "../CardSwipeLoader";
+import { notifyAdvisorNewSession } from "@/utils/email";
 
 interface Advisor {
   id: string;
@@ -127,6 +128,7 @@ export function HumanAdvisorModal({
             router.push(`/call/${roomId}?advisorName=${advisorNameParam}`);
           } else {
             // Handle chat session redirect
+            (() => notifyAdvisorNewSession(result.roomId))()
             router.push(`/humanChat/${result.roomId}/${result.advisorId}`);
           }
         }
