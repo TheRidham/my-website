@@ -51,7 +51,7 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
         onClose?.();
       }
 
-      setIsSidebarOpen(true);
+      setIsSidebarOpen(false);
     } catch (err: any) {
       console.error("Error signing in with Google:", err);
 
