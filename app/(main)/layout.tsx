@@ -8,7 +8,17 @@ import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
-const aiAdvisorRoutes = ["nutrition", "fitness", "mental", "general", "sexual", "chronic", "skin", "addiction", "relationship"];
+const aiAdvisorRoutes = [
+  "nutrition",
+  "fitness",
+  "mental",
+  "general",
+  "sexual",
+  "chronic",
+  "skin",
+  "addiction",
+  "relationship",
+];
 
 function Layout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -21,7 +31,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     ? decodeURIComponent(params.subcategory as string)
     : undefined;
 
-  
   const firstSegment = pathname.split("/")[1];
   const showButton = aiAdvisorRoutes.includes(firstSegment);
   console.log("showButton", showButton);
@@ -104,17 +113,46 @@ function Layout({ children }: { children: React.ReactNode }) {
           ) : (
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="flex flex-col items-center gap-1 absolute left-4 top-2 p-1.5 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-xl transition-all z-40 shadow-md border border-gray-100 bg-white"
+              className="absolute left-4 top-10 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-full transition-all z-40 shadow-md border border-gray-100 bg-white group"
               title="Open sidebar"
             >
-              <img
+              <div className="relative flex items-center justify-center w-14 h-14">
+                {/* Circular Text using SVG */}
+                <svg
+                  className="absolute inset-0 w-full h-full -rotate-90"
+                  viewBox="0 0 100 100"
+                >
+                  <defs>
+                    <path
+                      id="circlePath"
+                      d="M 50,50 m -40,0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0"
+                    />
+                  </defs>
+                  <text
+                    className="text-[12px] fill-gray-800 group-hover:fill-primary transition-colors font-bold"
+                    style={{ letterSpacing: "0.12em" }}
+                  >
+                    <textPath
+                      href="#circlePath"
+                      startOffset="50%"
+                      textAnchor="middle"
+                    >
+                      CLICK TO CHAT • CLICK TO CHAT •
+                    </textPath>
+                  </text>
+                </svg>
+
+                {/* Center Icon/Content */}
+                <div className="flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
+                  <img
                 src={
                   "https://firebasestorage.googleapis.com/v0/b/jai-ai-30103.firebasestorage.app/o/profilePhotos%2Fd9dd1082-440c-439b-9113-9c2c344d0693.jpg?alt=media&token=205a0856-3170-4fd8-ba89-8c3e406806d7"
                 }
                 alt="human-advisor"
-                className="w-12 h-12 rounded-xl object-cover"
-              />
-              <p className="text-[11px] text-gray-500">Click to Chat</p>
+                className="w-8 h-8 rounded-full object-cover"
+                />
+                </div>
+              </div>
             </button>
           ))}
 
