@@ -3,14 +3,13 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { getAuth } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/hooks/useAuth";
 
 function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [greetings, setGreetings] = useState("Good Morning!!!");
-  const user = getAuth().currentUser;
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<{
     name: string | null;
@@ -32,7 +31,10 @@ function Layout({ children }: { children: React.ReactNode }) {
     updateGreetings();
   }, []);
 
+  const {user, loading} = useAuth();
+
   useEffect(() => {
+    if(loading) return;
     const init = async () => {
       try {
         if (!user?.uid) {
@@ -69,7 +71,9 @@ function Layout({ children }: { children: React.ReactNode }) {
     };
 
     init();
-  }, [user]);
+  }, [user, loading]);
+
+  if(isLoading) <p>....loading</p>
 
   return (
     <div className="flex flex-col h-full">

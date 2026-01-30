@@ -15,6 +15,7 @@ import AppDownloadBadges from '../AppDownloadBadges'
 import { claimFreeOfferIfEligible } from '@/utils/promoCashClaim'
 import { getAuth } from 'firebase/auth'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
+import { useAuth } from '@/hooks/useAuth'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -49,11 +50,12 @@ function Jaiya({
   const [claimMessage, setClaimMessage] = useState<string>("");
   const [isEligible, setIsEligible] = useState(false);
 
+  const {user, loading} = useAuth();
+
   useEffect(() => {
+    if(loading) return;
     // Check if user is authenticated and not a guest
     const checkEligibility = async () => {
-      const auth = getAuth();
-      const user = auth.currentUser;
       
       if (!user) {
         setIsEligible(false);
@@ -77,7 +79,7 @@ function Jaiya({
       }
     };
     checkEligibility();
-  }, []);
+  }, [user, loading]);
 
   const isAdvisorChat = !!categoryKey;
   
