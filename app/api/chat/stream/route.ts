@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages, systemPrompt } = body;
+    const { messages, systemPrompt, functionName } = body;
+
+    console.log('[API ROUTE] Received payload:', { functionName, messagesCount: messages?.length, hasSystemPrompt: !!systemPrompt });
 
     if (!messages || !systemPrompt) {
       return NextResponse.json(
@@ -18,6 +20,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Function routing map
+    const FUNCTION_URLS: Record<string, string> = {
+      streamChatSSE: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE',
+      streamChatSSE_withMemory: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_withMemory',
+      streamChatSSE_testgpt: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_testgpt',
+      streamChatSSE_testgpt_noMemory: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_testgpt_noMemory',
+    };
+
+    const functionUrl = FUNCTION_URLS[functionName] || FUNCTION_URLS.streamChatSSE_withMemory;
 
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
 
@@ -28,20 +40,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[API ROUTE] Proxying to Firebase streamChatSSE...');
+    console.log('[API ROUTE] Proxying to Firebase', functionName, '...');
+
+    // Set up timeout (60 seconds to match Firebase function timeout)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     // Call Firebase function with POST + JSON
-    const response = await fetch(
-      `https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_withMemory`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ messages, systemPrompt }),
-      }
-    );
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ messages, systemPrompt }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();

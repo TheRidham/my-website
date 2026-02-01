@@ -9,6 +9,13 @@ import { ADVISOR_CATEGORIES } from '@/constant/advisors'
 import { LucideIcon } from '../ui/LucideIcon'
 import { HumanAdvisorModal } from '../Chat/HumanAdvisorModal'
 import { Button } from '../ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog'
 import { usePayment } from '@/providers/PaymentProvider'
 import AIChatHistorySheet from '../Chat/AIChatHistorySheet'
 import AppDownloadBadges from '../AppDownloadBadges'
@@ -16,6 +23,7 @@ import { claimFreeOfferIfEligible } from '@/utils/promoCashClaim'
 import { getAuth } from 'firebase/auth'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { useAuth } from '@/hooks/useAuth'
+import { useChat } from '@/providers/ChatProvider'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -31,16 +39,18 @@ interface Message {
   content: string;
 }
 
-function Jaiya({ 
-  isSidebarOpen, 
+function Jaiya({
+  isSidebarOpen,
   categoryKey,
   subcategoryTitle,
   advisorName = "Super AI",
   advisorAvatar = jaiyaAvatar,
-  onBack
+  onBack,
 }: JaiyaProps) {
   const chatRef = useRef<AIChatHandle>(null);
   const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
+  const [showAnonWarning, setShowAnonWarning] = useState(false);
+  const [privacyMode, setPrivacyMode] = useState<'forYou' | 'anonymized'>('forYou');
   const { walletBalance } = usePayment();
   //states for chat history
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -51,6 +61,7 @@ function Jaiya({
   const [isEligible, setIsEligible] = useState(false);
 
   const {user, loading} = useAuth();
+  const { activeChat } = useChat();
 
   useEffect(() => {
     if(loading) return;
@@ -94,6 +105,7 @@ function Jaiya({
     chatRef.current?.clearMessages();
     setCurrentChatId(null);
     setMsgHistory(null);
+    setPrivacyMode('forYou');
   };
 
   const handleClaimFreeOffer = async () => {
@@ -162,8 +174,13 @@ function Jaiya({
                 </div>
               )}
               <div className="flex flex-col">
-                <span className="font-black text-gray-900 text-[15px] tracking-tight">
+                <span className="font-black text-gray-900 text-[15px] tracking-tight flex items-center gap-2">
                   {isAdvisorChat && subcategoryTitle}
+                  {privacyMode === 'anonymized' && (
+                    <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-normal">
+                      Anonymous Chat
+                    </span>
+                  )}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {isAdvisorChat ? (
@@ -184,7 +201,7 @@ function Jaiya({
           {/* Header Actions */}
           <div className="flex items-center gap-3">
             {isAdvisorChat && (
-              <Button 
+              <Button
                 onClick={() => setIsHumanModalOpen(true)}
                 className="hidden md:flex items-center gap-2 bg-primary hover:bg-primtext-primary text-white font-bold rounded-xl px-4 py-2 text-xs"
               >
@@ -216,7 +233,7 @@ function Jaiya({
 
       {/* Chat Component */}
       <div className="flex-1 overflow-hidden">
-        <AIChat 
+        <AIChat
           key={`${categoryKey}-${subcategoryTitle}`}
           ref={chatRef}
           categoryKey={categoryKey}
@@ -225,16 +242,45 @@ function Jaiya({
           chatId={currentChatId}
           setChatId={setCurrentChatId}
           history={msgHistory}
+          onPrivacyModeChange={setPrivacyMode}
+          initialSpeedMode={activeChat.speedMode}
+          initialPrivacyMode={activeChat.privacyMode}
         />
       </div>
 
-      <HumanAdvisorModal 
+      <HumanAdvisorModal
         isOpen={isHumanModalOpen}
         onClose={() => setIsHumanModalOpen(false)}
         categoryKey={categoryKey}
         subcategoryTitle={subcategoryTitle}
       />
       <AIChatHistorySheet open={isOpen} setOpen={setIsOpen} setChatId={setCurrentChatId} setHistory={setMsgHistory} />
+
+      {/* Anonymous Mode Warning Dialog - COMMENTED OUT */}
+      {/* <Dialog open={showAnonWarning} onOpenChange={setShowAnonWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>⚠️ Privacy Warning</DialogTitle>
+            <DialogDescription>
+              You're in Anonymous mode. Your AI chat will be shared with the human expert
+              to provide context. The chat will be saved and switched to "For You" mode.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-4">
+            <Button variant="outline" onClick={() => setShowAnonWarning(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowAnonWarning(false);
+                setIsHumanModalOpen(true);
+              }}
+            >
+              Continue to Expert
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog> */}
     </div>
   )
 }

@@ -10,6 +10,8 @@ interface Advisor {
   subcategoryTitle?: string
   specialty?: string
   initialMessage?: string // Optional: message to auto-send after switch
+  speedMode?: 'quick' | 'thoughtful' // Persist speed mode on redirect
+  privacyMode?: 'forYou' | 'anonymized' // Persist privacy mode on redirect
 }
 
 interface ChatContextType {
@@ -19,6 +21,8 @@ interface ChatContextType {
     categoryKey?: string
     subcategoryTitle?: string
     initialMessage?: string // Store pending message
+    speedMode?: 'quick' | 'thoughtful'
+    privacyMode?: 'forYou' | 'anonymized'
   }
   switchChat: (advisor: Advisor) => void
   resetChat: () => void
@@ -37,6 +41,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     categoryKey: undefined as string | undefined,
     subcategoryTitle: undefined as string | undefined,
     initialMessage: undefined as string | undefined,
+    speedMode: undefined as 'quick' | 'thoughtful' | undefined,
+    privacyMode: undefined as 'forYou' | 'anonymized' | undefined,
   })
 
   useEffect(() => {
@@ -51,6 +57,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       categoryKey: advisor.categoryKey,
       subcategoryTitle: advisor.subcategoryTitle,
       initialMessage: advisor.initialMessage,
+      speedMode: advisor.speedMode,
+      privacyMode: advisor.privacyMode,
     })
     // On mobile, we might want to close the sidebar when a chat is selected
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -65,6 +73,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       categoryKey: undefined,
       subcategoryTitle: undefined,
       initialMessage: undefined,
+      speedMode: undefined,
+      privacyMode: undefined,
     })
   }, [])
 

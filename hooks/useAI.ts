@@ -3,6 +3,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
 import { usePrompts } from '@/providers/PromptsProvider';
 import { streamChatWithSSE, fallbackToCallable } from '@/lib/sse-client';
+import { CHAT_MODES, SpeedMode, PrivacyMode } from '@/constants/chatModes';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,6 +19,8 @@ interface useChatAIOptions {
   initialMessages?: Message[];
   appendGeneralPrompt?: boolean;
   isJaiya?: boolean;
+  speedMode?: SpeedMode;
+  privacyMode?: PrivacyMode;
 }
 
 const DEFAULT_MESSAGES: Message[] = [];
@@ -27,7 +30,9 @@ export const useChatAI = ({
   systemPrompt = "You are Super AI, a helpful AI companion.",
   initialMessages = DEFAULT_MESSAGES,
   appendGeneralPrompt = true,
-  isJaiya = false
+  isJaiya = false,
+  speedMode = 'quick',
+  privacyMode = 'forYou',
 }: useChatAIOptions = {}) => {
   const { generalPrompt } = usePrompts();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -133,6 +138,10 @@ export const useChatAI = ({
     }
 
     try {
+      // Get the chat mode configuration
+      const chatMode = CHAT_MODES[speedMode][privacyMode];
+      console.log('[useAI] Modes:', { speedMode, privacyMode }, '→ Function:', chatMode.functionName, 'Save DB:', chatMode.saveToDb);
+
       // Format messages for the API
       const formattedMessages = [
         ...messages.map(m => ({
@@ -221,7 +230,7 @@ export const useChatAI = ({
 
             // Fallback to non-streaming
             console.log('sendMessageStream: Falling back to non-streaming API');
-            fallbackToCallable(formattedMessages, combinedPrompt, functionName)
+            fallbackToCallable(formattedMessages, combinedPrompt, chatMode.functionName)
               .then((rawText) => {
                 if (requestId !== lastRequestIdRef.current) return;
 
@@ -242,7 +251,8 @@ export const useChatAI = ({
                 setIsLoading(false);
               });
           }
-        }
+        },
+        { functionName: chatMode.functionName }
       );
 
       return null; // Return null for consistency with sendMessage
@@ -256,6 +266,7 @@ export const useChatAI = ({
       setError(err.message || 'Failed to stream response');
 
       // Fallback to non-streaming
+      const chatMode = CHAT_MODES[speedMode][privacyMode];
       const formattedMessages = [
         ...messages.map(m => ({
           role: m.role,
@@ -265,7 +276,7 @@ export const useChatAI = ({
       ];
 
       try {
-        const rawText = await fallbackToCallable(formattedMessages, combinedPrompt, functionName);
+        const rawText = await fallbackToCallable(formattedMessages, combinedPrompt, chatMode.functionName);
         if (requestId !== lastRequestIdRef.current) return;
 
         const parts = rawText.split('|||').map(p => p.trim()).filter(p => p.length > 0);
@@ -285,7 +296,7 @@ export const useChatAI = ({
 
       return null;
     }
-  }, [systemPrompt, messages, appendGeneralPrompt, generalPrompt, functionName, isJaiya]);
+  }, [systemPrompt, messages, appendGeneralPrompt, generalPrompt, functionName, isJaiya, speedMode, privacyMode]);
 
   const clearMessages = useCallback(() => {
     setMessages(initialMessages);
@@ -307,6 +318,9 @@ export const useChatAI = ({
     sendMessage,
     sendMessageStream,
     clearMessages,
-    setMessages
+    setMessages,
+    shouldSaveToDb: CHAT_MODES[speedMode][privacyMode].saveToDb,
+    speedMode,
+    privacyMode,
   };
 };

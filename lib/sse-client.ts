@@ -31,6 +31,7 @@ export interface StreamingEventHandler {
 export interface StreamingOptions {
   enabled?: boolean;
   timeout?: number; // in milliseconds
+  functionName?: string; // Backend function name to call
 }
 
 /**
@@ -74,7 +75,10 @@ export async function streamChatWithSSE(
   const payload = {
     messages,
     systemPrompt,
+    functionName: options.functionName || 'streamChatSSE_withMemory',
   };
+
+  console.log('[SSE CLIENT] Using function:', payload.functionName, 'for', options.functionName || 'default');
 
   // Call Next.js API route (same-origin, no CORS issues)
   const functionUrl = `/api/chat/stream`;

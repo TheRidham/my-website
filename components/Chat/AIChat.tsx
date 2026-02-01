@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { ADVISOR_CATEGORIES } from "@/constant/advisors";
+import { SpeedMode, PrivacyMode, DEFAULT_SPEED_MODE, DEFAULT_PRIVACY_MODE } from "@/constants/chatModes";
 import { Button } from "@/components/ui/button";
 import { usePrompts } from "@/providers/PromptsProvider";
 import { useChatAI } from "@/hooks/useAI";
@@ -50,6 +51,9 @@ interface AIChatProps {
   chatId?: string | null;
   setChatId: any;
   history: Message[] | null;
+  onPrivacyModeChange?: (mode: PrivacyMode) => void;
+  initialSpeedMode?: SpeedMode;
+  initialPrivacyMode?: PrivacyMode;
 }
 
 export interface AIChatHandle {
@@ -70,12 +74,17 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       chatId,
       setChatId,
       history,
+      onPrivacyModeChange,
+      initialSpeedMode,
+      initialPrivacyMode,
     },
     ref,
   ) => {
     const [input, setInput] = useState("");
-    const [selectedTagGroup1, setSelectedTagGroup1] = useState<string>("Quick");
-    const [selectedTagGroup2, setSelectedTagGroup2] = useState<string>("Anonymized");
+    const [speedMode, setSpeedMode] = useState<SpeedMode>(initialSpeedMode || DEFAULT_SPEED_MODE);
+    const [privacyMode, setPrivacyMode] = useState<PrivacyMode>(initialPrivacyMode || DEFAULT_PRIVACY_MODE);
+    const [hasStartedChat, setHasStartedChat] = useState(false);
+    const [showAnonWarning, setShowAnonWarning] = useState(false);
     const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { jaiyaPrompt, advisorsPrompt } = usePrompts();
@@ -157,9 +166,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       setMessages,
       isStreaming,
       sendMessageStream,
+      shouldSaveToDb,
     } = useChatAI({
       systemPrompt,
       appendGeneralPrompt: !isJaiya,
+      speedMode,
+      privacyMode,
     });
 
     const { trackChatStart, trackChatEnd } = useChatAnalytics();
@@ -197,11 +209,19 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       }));
     }, [messages]);
 
+    // Notify parent when privacy mode changes
+    useEffect(() => {
+      onPrivacyModeChange?.(privacyMode);
+    }, [privacyMode, onPrivacyModeChange]);
+
     useImperativeHandle(ref, () => ({
       clearMessages: () => {
         clearMessages();
         messagesRef.current = [];
         isHistoryLoadedRef.current = false;
+        setHasStartedChat(false);
+        setSpeedMode(DEFAULT_SPEED_MODE);
+        setPrivacyMode(DEFAULT_PRIVACY_MODE);
       },
     }));
 
@@ -270,6 +290,13 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         return;
       }
 
+      console.log('[AIChat] Sending message with modes:', { speedMode, privacyMode, hasStartedChat });
+
+      // Mark chat as started (hides mode toggles)
+      if (!hasStartedChat) {
+        setHasStartedChat(true);
+      }
+
       // Send message using streaming
       // The hook will automatically add the user message and stream the response
       await sendMessageStream(content);
@@ -284,8 +311,8 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         }, 100);
       });
 
-      // Save messages to Firebase (only for non-Jaiya chats)
-      if (!isJaiya) {
+      // Save messages to Firebase (only for non-Jaiya chats and if shouldSaveToDb is true)
+      if (!isJaiya && shouldSaveToDb) {
         const messagesToSave = messagesRef.current.map((msg) => ({
           role: msg.role,
           text: msg.content,
@@ -358,6 +385,8 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                     categoryKey: targetTag,
                     subcategoryTitle: subcategory.title,
                     initialMessage: content, // Pass the original user message
+                    speedMode,
+                    privacyMode,
                   });
                 } else {
                   console.warn(
@@ -523,40 +552,42 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
         {/* Input Area */}
         <div className="px-4 py-1.5 relative">
-          <div className="pl-6 max-w-2xl w-full pt-2 absolute -top-10 left-1/2 -translate-x-1/2">
-            <div className="flex gap-3 flex-wrap">
-              <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
-                {['Quick', 'Thoughtful'].map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => setSelectedTagGroup1(tag)}
-                    className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
-                      selectedTagGroup1 === tag
-                        ? 'text-primary'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-              <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
-                {['Anonymized', 'For You'].map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => setSelectedTagGroup2(tag)}
-                    className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
-                      selectedTagGroup2 === tag
-                        ? 'text-primary'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+          {!hasStartedChat && (
+            <div className="pl-6 max-w-2xl w-full pt-2 absolute -top-10 left-1/2 -translate-x-1/2">
+              <div className="flex gap-3 flex-wrap">
+                <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
+                  {(['Quick', 'Thoughtful'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setSpeedMode(mode.toLowerCase() as SpeedMode)}
+                      className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
+                        speedMode === mode.toLowerCase()
+                          ? 'text-primary'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
+                  {(['Anonymized', 'For You'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setPrivacyMode(mode === 'For You' ? 'forYou' : 'anonymized' as PrivacyMode)}
+                      className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
+                        privacyMode === (mode === 'For You' ? 'forYou' : 'anonymized')
+                          ? 'text-primary'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
           <div className="max-w-2xl mx-auto flex gap-2 bg-background shadow-xl py-3 px-4 rounded-full">
             <input
               type="text"
