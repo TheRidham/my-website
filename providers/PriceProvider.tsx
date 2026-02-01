@@ -9,6 +9,7 @@ interface IPriceData {
   price: number;
   currency: string;
   formattedPrice: string;
+  videoFee: number
 }
 
 interface IPriceContext extends IPriceData {
@@ -22,6 +23,7 @@ export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
     price: 5,
     currency: "USD",
     formattedPrice: "$5",
+    videoFee: 9
   });
 
   async function fetchPricing() {
@@ -32,12 +34,14 @@ export const PriceProvider = ({ children }: { children: React.ReactNode }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const price = typeof data?.price === 'number' ? data.price : 49;
+        const videoFee = typeof data?.videoFee === 'number' ? data.videoFee : 49;
         const currency = typeof data?.currency === 'string' ? data.currency : 'INR';
         const symbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : '';
         setPriceData({
           price,
           currency,
           formattedPrice: `${symbol}${price}`,
+          videoFee
         });
       } else {
         console.warn('Pricing document not found, using defaults');

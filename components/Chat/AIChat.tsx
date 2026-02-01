@@ -432,42 +432,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
                 {isJaiya ? <ChatSection />:
                 <>
-                  {/* <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                    <LucideIcon 
-                      name={
-                        categoryKey 
-                          ? ADVISOR_CATEGORIES[categoryKey]?.categories.find(
-                              (s) => s.title === subcategoryTitle
-                            )?.icon || ADVISOR_CATEGORIES[categoryKey]?.icon || "Sparkles"
-                          : "Sparkles"
-                      }
-                      size={28}
-                      className="text-primary"
-                    />
-                  </div> */}
-                  
-                  {/* <h1 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-3">
-                    Hi, I'm your {subcategoryTitle} Advisor
-                  </h1>
-
-                  <p className="text-gray-600 text-center mb-6 max-w-sm">
-                    Chat with me for free, or connect with a real expert for just $5.
-                  </p> */}
-
-                  {/* <div className="flex flex-wrap gap-3 justify-center mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
-                      <MessageCircle size={16} />
-                      2M+ consultations
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
-                      <Users size={16} />
-                      $5 per expert
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium text-primary">
-                      <Shield size={16} />
-                      HIPAA compliant
-                    </div>
-                  </div> */}
                   <p className="text-gray-700 font-semibold mb-3 text-center">What can I help you with?</p>
 
                   {suggestions.length > 0 && (

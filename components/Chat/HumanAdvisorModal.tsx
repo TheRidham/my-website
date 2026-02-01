@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { usePayment } from "@/providers/PaymentProvider";
-import { usePrice } from "@/providers/PriceProvider";
 import { useVideoRoom } from "@/hooks/useVideoRoom";
 import { useChatAnalytics } from "@/hooks/useChatAnalytics";
 import {
@@ -25,6 +24,7 @@ import {
 import { useRouter } from "next/navigation";
 import CardSwipeLoader from "../CardSwipeLoader";
 import { notifyAdvisorNewSession } from "@/utils/email";
+import { usePrice } from "@/providers/PriceProvider";
 
 interface Advisor {
   id: string;
@@ -58,7 +58,8 @@ export function HumanAdvisorModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const { walletBalance, createDodoPaymentSession, payWithWallet } =
     usePayment();
-  const { price } = usePrice();
+  const { price, videoFee } = usePrice();
+  const fee = (sessionType==="chat" ? price : videoFee);
   const { createRoom } = useVideoRoom();
   const { trackChatStart } = useChatAnalytics();
 
@@ -103,7 +104,7 @@ export function HumanAdvisorModal({
   const handleWalletPayment = async (advisorId: string) => {
     setIsProcessing(true);
     try {
-      const amountInPaise = price * 100;
+      const amountInPaise = fee * 100;
       if (walletBalance >= amountInPaise) {
         // Pay with wallet
         const result = await payWithWallet(advisorId, amountInPaise);
@@ -146,7 +147,7 @@ export function HumanAdvisorModal({
   const handleRazorpayPayment = async (advisorId: string) => {
     setIsProcessing(true);
     try {
-      const amountInPaise = price * 100;
+      const amountInPaise = fee * 100;
       // Use Dodo instead of Razorpay
       const result = await createDodoPaymentSession(amountInPaise, advisorId, sessionType);
       console.log("dodo result:", result);
@@ -205,7 +206,7 @@ export function HumanAdvisorModal({
                 </div>
               </div>
             </div>
-            {walletBalance < price * 100 && (
+            {walletBalance < fee * 100 && (
               <Button
                 variant="link"
                 className="text-primary font-bold text-xs"
@@ -263,7 +264,7 @@ export function HumanAdvisorModal({
                       <Wallet className="w-5 h-5" />
                       <span>Pay with Wallet</span>
                     </div>
-                    <span className="text-lg">${price}</span>
+                    <span className="text-lg">${fee}</span>
                   </Button>
                 )}
                 {isProcessing ? null : (
@@ -278,7 +279,7 @@ export function HumanAdvisorModal({
                         Pay via UPI / Card
                       </span>
                     </div>
-                    <span className="text-lg">${price}</span>
+                    <span className="text-lg">${fee}</span>
                   </Button>
                 )}
               </div>
@@ -344,7 +345,7 @@ export function HumanAdvisorModal({
                         {isProcessing ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
-                          `$${price}`
+                          `$${fee}`
                         )}
                       </Button>
                     </div>

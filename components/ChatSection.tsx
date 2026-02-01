@@ -1,9 +1,12 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Bot, Brain, Heart, Leaf, Salad } from 'lucide-react';
+import { Bot, Brain, Heart, Leaf, Salad, Users, Video } from 'lucide-react';
+import Link from 'next/link';
+import { usePrice } from '@/providers/PriceProvider';
 
 export default function ChatSection() {
     // 1. Set the starting number
+    const { price, videoFee } = usePrice()
   const [count, setCount] = useState(2456678);
 
   // 2. Use useEffect to handle the "live" increasing logic
@@ -30,7 +33,7 @@ export default function ChatSection() {
   }, []);
   return (
     <section className="py-8 flex items-center justify-center">
-      <div className="max-w-2xl mx-auto w-full px-4">
+      <div className="max-w-2xl mx-auto w-full px-0">
         <div className="text-center space-y-8">
           {/* Top Graphic Section */}
           <div className="flex flex-col items-center gap-3">
@@ -95,6 +98,24 @@ export default function ChatSection() {
               <Leaf className="w-4 h-4" />
               <span className="text-sm font-bold">{count.toLocaleString()}</span>
               <span className="text-xs text-primary/80 font-medium">times people helped</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <Link 
+                href="/allAdvisor"
+                className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg font-bold text-xs transition-all hover:shadow-md"
+              >
+                <Users className="w-4 h-4" />
+                Live Human Chat ${price}
+              </Link>
+              <Link 
+                href="/allAdvisor"
+                className="inline-flex items-center gap-1.5 bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2.5 rounded-lg font-bold text-xs border border-border transition-all hover:shadow-md"
+              >
+                <Video className="w-4 h-4" />
+                Live Video Call ${videoFee}
+              </Link>
             </div>
           </div>
         </div>
