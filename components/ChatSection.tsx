@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { usePrice } from '@/providers/PriceProvider';
 
 export default function ChatSection() {
-    // 1. Set the starting number
-    const { price, videoFee } = usePrice()
+  // 1. Set the starting number
+  const { price, videoFee } = usePrice()
   const [count, setCount] = useState(2456678);
 
   // 2. Use useEffect to handle the "live" increasing logic
@@ -40,14 +40,14 @@ export default function ChatSection() {
             <div className="relative">
               {/* Glow Effect */}
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150"></div>
-              
+
               {/* Main Card */}
               <div className="relative flex items-center gap-6 bg-gradient-to-r from-secondary/80 via-secondary/60 to-secondary/80 px-6 py-4 rounded-3xl border border-border/30 shadow-lg backdrop-blur-sm">
-                
+
                 {/* AI Specialists Group */}
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex items-center -space-x-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-background shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300"> 
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-background shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
                       <Salad className="w-6 h-6 text-white" />
                     </div>
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center border-2 border-background shadow-lg transform rotate-6 hover:rotate-0 transition-transform duration-300">
@@ -102,19 +102,19 @@ export default function ChatSection() {
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Link 
-                href="/allAdvisor"
+              <Link
+                href="/allAdvisors"
                 className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg font-bold text-xs transition-all hover:shadow-md"
               >
                 <Users className="w-4 h-4" />
-                Live Human Chat ${price}
+                Expert Chat ${price}
               </Link>
-              <Link 
-                href="/allAdvisor"
+              <Link
+                href="/allAdvisors"
                 className="inline-flex items-center gap-1.5 bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2.5 rounded-lg font-bold text-xs border border-border transition-all hover:shadow-md"
               >
                 <Video className="w-4 h-4" />
-                Live Video Call ${videoFee}
+                Video Call ${videoFee}
               </Link>
             </div>
           </div>
