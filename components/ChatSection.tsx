@@ -3,11 +3,16 @@ import { useState, useEffect } from 'react';
 import { Bot, Brain, Heart, Leaf, Salad, Users, Video } from 'lucide-react';
 import Link from 'next/link';
 import { usePrice } from '@/providers/PriceProvider';
+import { useChat } from '@/providers/ChatProvider';
+import { useRouter } from 'next/navigation';
 
 export default function ChatSection() {
   // 1. Set the starting number
   const { price, videoFee } = usePrice()
   const [count, setCount] = useState(2456678);
+  const { isSidebarOpen, setIsSidebarOpen } = useChat();
+
+  const router = useRouter();
 
   // 2. Use useEffect to handle the "live" increasing logic
   useEffect(() => {
@@ -31,6 +36,14 @@ export default function ChatSection() {
     // Cleanup interval when component unmounts
     return () => clearInterval(interval);
   }, []);
+
+  function handleExpertCallAndVideo() {
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(true);
+    }
+    router.push("/allAdvisors");
+  }
+
   return (
     <section className="py-8 flex items-center justify-center">
       <div className="max-w-2xl mx-auto w-full px-0">
@@ -102,20 +115,20 @@ export default function ChatSection() {
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Link
-                href="/allAdvisors"
+              <button
+                onClick={handleExpertCallAndVideo}
                 className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg font-bold text-xs transition-all hover:shadow-md"
               >
                 <Users className="w-4 h-4" />
                 Expert Chat ${price}
-              </Link>
-              <Link
-                href="/allAdvisors"
+              </button>
+              <button
+                onClick={handleExpertCallAndVideo}
                 className="inline-flex items-center gap-1.5 bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2.5 rounded-lg font-bold text-xs border border-border transition-all hover:shadow-md"
               >
                 <Video className="w-4 h-4" />
                 Video Call ${videoFee}
-              </Link>
+              </button>
             </div>
           </div>
         </div>
