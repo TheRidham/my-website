@@ -65,7 +65,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar (Left Section) */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-30 w-full md:relative md:z-auto h-full
+          fixed inset-y-0 left-0 z-40 w-full md:relative md:z-auto h-full
           transition-all duration-300 ease-in-out flex flex-col bg-white border-r border-gray-200
           ${
             isSidebarOpen
@@ -113,7 +113,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           ) : (
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="absolute left-4 top-4 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-full transition-all z-40 shadow-md border border-gray-100 bg-white group"
+              className="absolute left-4 top-4 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-full transition-all z-50 shadow-md border border-gray-100 bg-white group"
               title="Open sidebar"
             >
               <div className="relative flex items-center justify-center w-14 h-14">

@@ -46,8 +46,7 @@ export default function ChatSection() {
 
   return (
     <section className="py-8 flex items-center justify-center">
-      <div className="max-w-2xl mx-auto w-full px-0">
-        <div className="text-center space-y-8">
+      <div className="max-w-2xl mx-auto w-full px-0 text-center space-y-8">
           {/* Top Graphic Section */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
@@ -131,7 +130,6 @@ export default function ChatSection() {
               </button>
             </div>
           </div>
-        </div>
       </div>
     </section>
   );

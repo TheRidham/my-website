@@ -38,6 +38,7 @@ import ChatSection from "../ChatSection";
 import AppDownloadBadges from "../AppDownloadBadges";
 import Link from "next/link";
 import AdvisorPromptModal from "../AdvisorPromptModal";
+import { ChatHeader } from "./ChatHeader";
 
 interface Message {
   role: "user" | "assistant";
@@ -54,6 +55,12 @@ interface AIChatProps {
   onPrivacyModeChange?: (mode: PrivacyMode) => void;
   initialSpeedMode?: SpeedMode;
   initialPrivacyMode?: PrivacyMode;
+  isSidebarOpen?: boolean;
+  walletBalance?: number;
+  privacyMode?: PrivacyMode;
+  onNewChat?: () => void;
+  onOpenHistory?: () => void;
+  onConnectHuman?: () => void;
 }
 
 export interface AIChatHandle {
@@ -77,6 +84,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       onPrivacyModeChange,
       initialSpeedMode,
       initialPrivacyMode,
+      isSidebarOpen,
+      walletBalance = 0,
+      privacyMode: propPrivacyMode,
+      onNewChat,
+      onOpenHistory,
+      onConnectHuman,
     },
     ref,
   ) => {
@@ -455,6 +468,19 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
           ref={scrollRef}
           className="flex-1 overflow-y-auto no-scrollbar scroll-smooth"
         >
+          {/* Sticky Header */}
+          {isSidebarOpen !== undefined && (
+            <ChatHeader
+              isSidebarOpen={isSidebarOpen}
+              categoryKey={categoryKey}
+              subcategoryTitle={subcategoryTitle}
+              privacyMode={propPrivacyMode || privacyMode}
+              walletBalance={walletBalance}
+              onNewChat={onNewChat || (() => {})}
+              onOpenHistory={onOpenHistory || (() => {})}
+              onConnectHuman={onConnectHuman || (() => {})}
+            />
+          )}
           <div className="max-w-4xl mx-auto w-full px-6 py-2 space-y-3">
             {/* New Welcome Screen */}
             {messages.length === 0 && (
