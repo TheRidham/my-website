@@ -8,6 +8,7 @@ import AuthOverlay from "@/components/AuthOverlay";
 import React, { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
+import { Toaster } from "react-hot-toast";
 
 const PUBLIC_ROUTES = ["/corporate", "/about"];
 
@@ -62,6 +63,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <Toaster position="top-center" />
       <PriceProvider>
         <PromptsProvider>
           <PaymentProvider>

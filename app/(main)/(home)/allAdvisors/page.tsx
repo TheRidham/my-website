@@ -7,6 +7,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useChat } from '@/providers/ChatProvider'
 import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
+import Link from 'next/link'
 
 type Advisor = {
   uid: string
@@ -157,21 +158,27 @@ function AllAdvisorsPage() {
                       </div>
                       
                     </div>
-                    <div className="flex items-center mt-3 gap-3">
-                      <div 
-                        onClick={() => handleAdvisorClick(advisor, 'chat')}
-                        className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors"
-                      >
-                        <MessageCircle className="text-primary group-hover:text-white transition-colors" size={20} />
-                      </div>
-                      <div 
-                        onClick={() => handleAdvisorClick(advisor, 'video')}
-                        className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
-                      >
-                        <Video className="text-primary group-hover:text-white transition-colors" size={20} />
-                      </div>
-                    </div>
                   </div>
+                </div>
+                <div className="flex items-center mt-3 gap-3">
+                  <div 
+                    onClick={() => handleAdvisorClick(advisor, 'chat')}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors"
+                  >
+                    <MessageCircle className="text-primary group-hover:text-white transition-colors" size={20} />
+                  </div>
+                  <div 
+                    onClick={() => handleAdvisorClick(advisor, 'video')}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
+                  >
+                    <Video className="text-primary group-hover:text-white transition-colors" size={20} />
+                  </div>
+                  <Link
+                    href={`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer text-primary text-sm group-hover:text-white"
+                  >
+                    Schedule
+                  </Link>
                 </div>
               </div>
             )

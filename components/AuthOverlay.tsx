@@ -14,6 +14,13 @@ interface AuthOverlayProps {
   onClose?: () => void;
 }
 
+// Helper function to get user's locale and timezone
+function getUserLocaleAndTimezone() {
+  const locale = navigator.language || "en-US";
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return { locale, timezone };
+}
+
 export default function AuthOverlay({ onClose }: AuthOverlayProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -27,6 +34,9 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+
+      // Get user's locale and timezone
+      const { locale, timezone } = getUserLocaleAndTimezone();
 
       // Check if user profile exists
       const userRef = doc(db, "users", user.uid);
@@ -45,6 +55,8 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
           age: null,
           gender: null,
           phone: null,
+          locale,
+          timezone,
           createdAt: serverTimestamp(),
           indatedAt: serverTimestamp(),
         });
@@ -80,6 +92,9 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
       console.log(user);
       console.log("User signed in anonymously:", user);
 
+      // Get user's locale and timezone
+      const { locale, timezone } = getUserLocaleAndTimezone();
+
       // Anonymous users go directly to home
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
@@ -91,6 +106,8 @@ export default function AuthOverlay({ onClose }: AuthOverlayProps) {
           email: `guest${randomNumber}@gmail.com`,
           isAnonymous: true,
           walletBalance: 0,
+          locale,
+          timezone,
           createdAt: serverTimestamp(),
           indatedAt: serverTimestamp(),
         });
