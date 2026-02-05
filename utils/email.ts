@@ -65,7 +65,7 @@ export async function notifyAdvisorScheduledSession(
     const callable = httpsCallable(functions, "notifyUpcomingSessionAdvisor");
 
     await callable({
-      to: "monusch08@gmail.com",
+      to: ADMIN_EMAIL,
       templateParams: {
         userName,
         advisorName,
