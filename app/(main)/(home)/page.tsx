@@ -7,7 +7,10 @@ import {
   Shield, X,
   ChevronLeft,
   Loader,
-  Loader2
+  Loader2,
+  MessageCircle,
+  Video,
+  Clock
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -68,6 +71,7 @@ function HomePage() {
   const [showSearchScreen, setShowSearchScreen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [sessionType, setSessionType] = useState<'chat' | 'video'>('chat')
   const { resetChat, switchChat } = useChat()
   const { jaiyaPrompt } = usePrompts();
 
@@ -108,7 +112,7 @@ function HomePage() {
     fetchAdvisors()
   }, [])
 
-  const handleAdvisorClick = (advisor: Advisor) => {
+  const handleAdvisorClick = (advisor: Advisor, type: "chat" | "video" = "chat") => {
     setSelectedAdvisor({
       id: advisor.uid,
       name: advisor.name,
@@ -117,7 +121,8 @@ function HomePage() {
       rating: advisor.rating || 4.8,
       experience: advisor.experience || '5+ years'
     })
-    setIsModalOpen(true)
+    setSessionType(type);
+    setIsModalOpen(true);
   }
 
   const handleAdvisorSearch = async (query: string) => {
@@ -424,8 +429,7 @@ function HomePage() {
               advisors.map((advisor) => (
                 <div
                   key={advisor.uid}
-                  onClick={() => handleAdvisorClick(advisor)}
-                  className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
+                  className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all group"
                 >
                   <div className="relative w-16 h-16 mx-auto mb-3">
                     <Image
@@ -441,18 +445,40 @@ function HomePage() {
                         }`}
                     />
                   </div>
-                  <h3 className="text-[13px] font-bold text-gray-900 text-center line-clamp-1">
-                    {advisor.name}
-                  </h3>
-                  <p className="text-[10px] text-primary font-bold text-center uppercase tracking-wider mt-0.5">
-                    {advisor.specialization?.[0] || 'Expert'}
-                  </p>
-                  <div className="flex items-center justify-center gap-1 mt-2">
-                    <Star size={10} className="fill-amber-400 text-amber-400" />
-                    <span className="text-[10px] font-bold text-gray-600">
-                      {advisor.rating || 4.8}
-                    </span>
+                      <h3 className="text-[13px] font-bold text-gray-900 text-left line-clamp-1">
+                        {advisor.name}
+                      </h3>
+                  <div className='flex justify-between items-center'>
+                      <p className="text-[9px] text-primary font-bold uppercase tracking-wider mt-0.5">
+                        {advisor.specialization?.[0] || 'Expert'}
+                      </p>
+                    <div className="flex items-center gap-1">
+                      <Star size={10} className="fill-amber-400 text-amber-400" />
+                      <span className="text-[10px] font-bold text-gray-600">
+                        {advisor.rating || 4.8}
+                      </span>
+                    </div>
                   </div>
+                  <div className="flex items-center mt-3 gap-3">
+                  <div 
+                    onClick={() => handleAdvisorClick(advisor, 'chat')}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
+                  >
+                    <MessageCircle className="text-primary group-hover:text-white transition-colors" size={18} />
+                  </div>
+                  <div 
+                    onClick={() => handleAdvisorClick(advisor, 'video')}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
+                  >
+                    <Video className="text-primary group-hover:text-white transition-colors" size={18} />
+                  </div>
+                  <Link
+                    href={`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer text-primary text-sm group-hover:text-white"
+                  >
+                    <Clock className="text-primary group-hover:text-white transition-colors" size={18} />
+                  </Link>
+                </div>
                 </div>
               ))
             )}
@@ -546,6 +572,7 @@ function HomePage() {
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             selectedAdvisor={selectedAdvisor}
+            sessionType={sessionType}
           />
         )}
       </div>
