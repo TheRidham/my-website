@@ -1,12 +1,14 @@
 "use client";
 
 import Jaiya from "@/components/Jaiya/Index";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useChat } from "@/providers/ChatProvider";
 import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import PrivacyConsentModal from "@/components/ConsentModal";
+import ChatToggleButton from "@/components/ChatToggleButton";
 
 const aiAdvisorRoutes = [
   "nutrition",
@@ -21,6 +23,8 @@ const aiAdvisorRoutes = [
 ];
 
 function Layout({ children }: { children: React.ReactNode }) {
+  
+  const [showConsentModal, setShowConsentModal] = useState(false);
   const params = useParams();
   const pathname = usePathname();
   const { activeChat, resetChat, isSidebarOpen, setIsSidebarOpen, switchChat } =
@@ -49,10 +53,21 @@ function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [categoryKey, subcategoryTitle, pathname, switchChat, resetChat]);
 
+  
   //route protection handled by AuthOverlay
   const router = useRouter();
   const { user, loading } = useAuth();
+  
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => {
+        setShowConsentModal(true);
+      }, 4000);
 
+      return () => clearTimeout(timer); // cleanup
+    }
+  }, [user]);
+  
   if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -62,6 +77,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <section className="flex h-screen overflow-hidden">
+      {showConsentModal ? <PrivacyConsentModal /> : null}
       {/* Sidebar (Left Section) */}
       <div
         className={`
@@ -81,7 +97,6 @@ function Layout({ children }: { children: React.ReactNode }) {
         >
           {children}
         </div>
-
         {/* Desktop Toggle Button (Inside Sidebar when open) */}
         {isSidebarOpen && (
           <button
@@ -111,49 +126,7 @@ function Layout({ children }: { children: React.ReactNode }) {
               <PanelLeftClose size={22} />
             </button>
           ) : (
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="absolute left-4 top-4 text-gray-400 hover:text-primary hover:bg-emerald-50 rounded-full transition-all z-50 shadow-md border border-gray-100 bg-white group"
-              title="Open sidebar"
-            >
-              <div className="relative flex items-center justify-center w-14 h-14">
-                {/* Circular Text using SVG */}
-                <svg
-                  className="absolute inset-0 w-full h-full -rotate-90"
-                  viewBox="0 0 100 100"
-                >
-                  <defs>
-                    <path
-                      id="circlePath"
-                      d="M 50,50 m -40,0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0"
-                    />
-                  </defs>
-                  <text
-                    className="text-[12px] fill-gray-800 group-hover:fill-primary transition-colors font-bold"
-                    style={{ letterSpacing: "0.12em" }}
-                  >
-                    <textPath
-                      href="#circlePath"
-                      startOffset="50%"
-                      textAnchor="middle"
-                    >
-                      CLICK TO CHAT • CLICK TO CHAT •
-                    </textPath>
-                  </text>
-                </svg>
-
-                {/* Center Icon/Content */}
-                <div className="flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-primary group-hover:text-white transition-colors">
-                  <img
-                src={
-                  "https://firebasestorage.googleapis.com/v0/b/jai-ai-30103.firebasestorage.app/o/profilePhotos%2Fd9dd1082-440c-439b-9113-9c2c344d0693.jpg?alt=media&token=205a0856-3170-4fd8-ba89-8c3e406806d7"
-                }
-                alt="human-advisor"
-                className="w-8 h-8 rounded-full object-cover"
-                />
-                </div>
-              </div>
-            </button>
+            <ChatToggleButton onClick={() => setIsSidebarOpen(true)} />
           ))}
 
         <div className="flex-1 h-full">
