@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase'
 import { useChat } from '@/providers/ChatProvider'
 import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 type Advisor = {
   uid: string
@@ -35,6 +36,7 @@ function getCategoryKey(spec: string) {
 
 function AllAdvisorsPage() {
   const { switchChat } = useChat()
+  const router = useRouter()
   const [advisors, setAdvisors] = useState<Advisor[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
@@ -102,10 +104,10 @@ function AllAdvisorsPage() {
         {!loading &&
           advisors.map((advisor) => {
             return (
-              <div
+              <Link
+                href={`/allAdvisors/${advisor.uid}`}
                 key={advisor.uid}
-                // onClick={() => handleAdvisorClick(advisor)}
-                className="bg-secondary rounded-4xl p-5 py-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
+                className="bg-secondary rounded-4xl p-5 py-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group block"
               >
                 <div className="flex gap-5">
                   <div className="relative w-20 h-20 rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner shrink-0">
@@ -162,25 +164,37 @@ function AllAdvisorsPage() {
                 </div>
                 <div className="flex items-center mt-3 gap-3">
                   <div 
-                    onClick={() => handleAdvisorClick(advisor, 'chat')}
-                    className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleAdvisorClick(advisor, 'chat')
+                    }}
+                    className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
                   >
                     <MessageCircle className="text-primary group-hover:text-white transition-colors" size={20} />
                   </div>
                   <div 
-                    onClick={() => handleAdvisorClick(advisor, 'video')}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleAdvisorClick(advisor, 'video')
+                    }}
                     className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
                   >
                     <Video className="text-primary group-hover:text-white transition-colors" size={20} />
                   </div>
-                  <Link
-                    href={`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      router.push(`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`)
+                    }}
                     className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer text-primary text-sm group-hover:text-white"
                   >
                     Schedule
-                  </Link>
+                  </button>
                 </div>
-              </div>
+              </Link>
             )
           })}
       </div>

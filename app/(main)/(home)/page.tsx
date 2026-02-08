@@ -431,54 +431,58 @@ function HomePage() {
                   key={advisor.uid}
                   className="min-w-40 bg-white rounded-3xl p-4 border border-gray-200 shadow-sm hover:border-blue-200 hover:shadow-md transition-all group"
                 >
-                  <div className="relative w-16 h-16 mx-auto mb-3">
-                    <Image
-                      src={advisor.profilePhoto || jaiyaAvatar}
-                      alt={advisor.name}
-                      fill
-                      className="rounded-2xl object-cover group-hover:scale-105 transition-transform"
-                    />
-                    <div
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${!advisor.busy
-                        ? "bg-green-500"
-                        : "bg-amber-500"
-                        }`}
-                    />
-                  </div>
-                      <h3 className="text-[13px] font-bold text-gray-900 text-left line-clamp-1">
-                        {advisor.name}
-                      </h3>
-                  <div className='flex justify-between items-center'>
-                      <p className="text-[9px] text-primary font-bold uppercase tracking-wider mt-0.5">
-                        {advisor.specialization?.[0] || 'Expert'}
-                      </p>
-                    <div className="flex items-center gap-1">
-                      <Star size={10} className="fill-amber-400 text-amber-400" />
-                      <span className="text-[10px] font-bold text-gray-600">
-                        {advisor.rating || 4.8}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center mt-3 gap-3">
-                  <div 
-                    onClick={() => handleAdvisorClick(advisor, 'chat')}
-                    className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
-                  >
-                    <MessageCircle className="text-primary group-hover:text-white transition-colors" size={18} />
-                  </div>
-                  <div 
-                    onClick={() => handleAdvisorClick(advisor, 'video')}
-                    className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
-                  >
-                    <Video className="text-primary group-hover:text-white transition-colors" size={18} />
-                  </div>
                   <Link
-                    href={`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`}
-                    className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer text-primary text-sm group-hover:text-white"
+                    href={`/allAdvisors/${advisor.uid}`}
                   >
-                    <Clock className="text-primary group-hover:text-white transition-colors" size={18} />
+                    <div className="relative w-16 h-16 mx-auto mb-3">
+                      <Image
+                        src={advisor.profilePhoto || jaiyaAvatar}
+                        alt={advisor.name}
+                        fill
+                        className="rounded-2xl object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div
+                        className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${!advisor.busy
+                          ? "bg-green-500"
+                          : "bg-amber-500"
+                          }`}
+                      />
+                    </div>
+                        <h3 className="text-[13px] font-bold text-gray-900 text-left line-clamp-1">
+                          {advisor.name}
+                        </h3>
+                    <div className='flex justify-between items-center'>
+                        <p className="text-[9px] text-primary font-bold uppercase tracking-wider mt-0.5">
+                          {advisor.specialization?.[0] || 'Expert'}
+                        </p>
+                      <div className="flex items-center gap-1">
+                        <Star size={10} className="fill-amber-400 text-amber-400" />
+                        <span className="text-[10px] font-bold text-gray-600">
+                          {advisor.rating || 4.8}
+                        </span>
+                      </div>
+                    </div>
                   </Link>
-                </div>
+                  <div className="flex items-center mt-3 gap-3">
+                    <div 
+                      onClick={() => handleAdvisorClick(advisor, 'chat')}
+                      className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
+                    >
+                      <MessageCircle className="text-primary group-hover:text-white transition-colors" size={18} />
+                    </div>
+                    <div 
+                      onClick={() => handleAdvisorClick(advisor, 'video')}
+                      className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer"
+                    >
+                      <Video className="text-primary group-hover:text-white transition-colors" size={18} />
+                    </div>
+                    <Link
+                      href={`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`}
+                      className="flex-1 w-10 h-10 bg-primary/30 rounded-xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer text-primary text-sm group-hover:text-white"
+                    >
+                      <Clock className="text-primary group-hover:text-white transition-colors" size={18} />
+                    </Link>
+                  </div>
                 </div>
               ))
             )}
