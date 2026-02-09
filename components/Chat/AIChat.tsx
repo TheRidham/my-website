@@ -38,6 +38,8 @@ import ChatSection from "../ChatSection";
 import AppDownloadBadges from "../AppDownloadBadges";
 import Link from "next/link";
 import AdvisorPromptModal from "../AdvisorPromptModal";
+import FollowUpChips from "../FollowUpChips";
+import MCQOptions from "../MCQOptions";
 
 interface Message {
   role: "user" | "assistant";
@@ -167,11 +169,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       isStreaming,
       sendMessageStream,
       shouldSaveToDb,
-    } = useChatAI({
+      } = useChatAI({
       systemPrompt,
       appendGeneralPrompt: !isJaiya,
       speedMode,
       privacyMode,
+      isJaiya,
     });
 
     const { trackChatStart, trackChatEnd } = useChatAnalytics();
@@ -289,8 +292,6 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       if (!content.trim() || isLoading || isStreaming) {
         return;
       }
-
-      console.log('[AIChat] Sending message with modes:', { speedMode, privacyMode, hasStartedChat });
 
       // Mark chat as started (hides mode toggles)
       if (!hasStartedChat) {
@@ -511,18 +512,43 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                 >
-                  <div
-                    className={`px-4 py-2 max-w-[85%] shadow-sm rounded-2xl ${msg.role === "user"
-                        ? "bg-primary text-white rounded-tr-none"
-                        : "bg-white border border-gray-200 text-gray-700 rounded-tl-none"
-                      }`}
-                  >
+                  <div className="flex flex-col items-start max-w-[85%]">
                     <div
-                      className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
-                      dangerouslySetInnerHTML={{
-                        __html: marked.parse(displayContent ?? ""),
-                      }}
-                    />
+                      className={`px-4 py-2 shadow-sm rounded-2xl ${msg.role === "user"
+                          ? "bg-primary text-white rounded-tr-none"
+                          : "bg-white border border-gray-200 text-gray-700 rounded-tl-none"
+                        }`}
+                    >
+                      <div
+                        className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
+                        dangerouslySetInnerHTML={{
+                          __html: marked.parse(displayContent ?? ""),
+                        }}
+                      />
+                    </div>
+
+                    {/* Follow-up Questions and MCQ - only for advisors, not Jaiya */}
+                    {!isJaiya && msg.role === 'assistant' && (
+                      <>
+                        {(msg as any).followupQuestions && (msg as any).followupQuestions.length > 0 && (
+                          <FollowUpChips
+                            questions={(msg as any).followupQuestions}
+                            onQuestionTap={async (question) => {
+                              await sendMessageStream(question);
+                            }}
+                          />
+                        )}
+
+                        {(msg as any).isMCQ && (msg as any).mcqOptions && (
+                          <MCQOptions
+                            options={(msg as any).mcqOptions}
+                            onOptionPress={async (option) => {
+                              await sendMessageStream(option);
+                            }}
+                          />
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               );

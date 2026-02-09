@@ -9,7 +9,8 @@ interface IPromptsContext {
   advisorsPrompt: any,
   analysisPrompt: any,
   healthContainerPrompt: any,
-  generalPrompt: any
+  generalPrompt: any,
+  generalPrompttest: any
 }
 
 const PromptsContext = createContext<IPromptsContext | null>(null)
@@ -20,6 +21,7 @@ export const PromptsProvider = ({children}: {children: React.ReactNode}) => {
   const [advisorsPrompt, setAdvisorsPrompt] = useState<any>(null);
   const [analysisPrompt, setAnalysisPrompt] = useState<any>(null);
   const [generalPrompt, setGeneralPrompt] = useState<any>(null);
+  const [generalPrompttest, setGeneralPrompttest] = useState<any>(null);
   const [healthContainerPrompt, setHealthContainerPrompts] = useState<any>(null);
 
   useEffect(() => {
@@ -68,19 +70,29 @@ export const PromptsProvider = ({children}: {children: React.ReactNode}) => {
       }
     };
 
+    const fetchGeneralPrompttest = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'prompts', 'generalPrompttest'));
+        if (docSnap.exists()) setGeneralPrompttest(docSnap.data());
+      } catch (e) {
+        console.error("Error fetching generalPrompttest:", e);
+      }
+    };
+
     const fetchPrompts = () => {
       fetchJaiayaPrompts();
       fetchAdvisorPrompts();
       fetchAnalysisPrompts();
       fetchHealthContainerPrompts();
       fetchGeneralPrompt();
+      fetchGeneralPrompttest();
     }
     
     fetchPrompts();
   }, []);
 
   return (
-    <PromptsContext.Provider value={{jaiyaPrompt, advisorsPrompt, analysisPrompt, healthContainerPrompt, generalPrompt }}>
+    <PromptsContext.Provider value={{jaiyaPrompt, advisorsPrompt, analysisPrompt, healthContainerPrompt, generalPrompt, generalPrompttest}}>
       {children}
     </PromptsContext.Provider>
   )

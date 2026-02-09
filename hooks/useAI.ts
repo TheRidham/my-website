@@ -4,6 +4,7 @@ import { functions } from '@/lib/firebase';
 import { usePrompts } from '@/providers/PromptsProvider';
 import { streamChatWithSSE, fallbackToCallable } from '@/lib/sse-client';
 import { CHAT_MODES, SpeedMode, PrivacyMode } from '@/constants/chatModes';
+import { MCQ_TOOLS } from '@/lib/toolDefinitions';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -11,6 +12,9 @@ interface Message {
   timestamp?: string;
   _isStreaming?: boolean;
   _streamingId?: string;
+  followupQuestions?: string[];
+  isMCQ?: boolean;
+  mcqOptions?: string[];
 }
 
 interface useChatAIOptions {
@@ -21,9 +25,32 @@ interface useChatAIOptions {
   isJaiya?: boolean;
   speedMode?: SpeedMode;
   privacyMode?: PrivacyMode;
+  // Allow explicit functionName override (for Jaiya to use original function)
+  explicitFunctionName?: string;
 }
 
 const DEFAULT_MESSAGES: Message[] = [];
+
+const stripFollowupTags = (text: string): { cleanText: string; followups: string[] | undefined } => {
+  let cleanText = text;
+  let followups: string[] | undefined;
+
+  const followupMatch = text.match(/<followup_questions>([\s\S]*?)<\/followup_questions>/);
+
+  if (followupMatch) {
+    try {
+      followups = JSON.parse(followupMatch[1].trim());
+    } catch (e) {
+      console.error('[stripFollowupTags] Failed to parse followup questions:', e);
+    }
+  }
+
+  // Remove any follow-up tags (complete or partial) from displayed text
+  cleanText = text.replace(/<followup_questions>([\s\S]*?)<\/followup_questions>/g, '').trim();
+  cleanText = cleanText.replace(/<followup_questions>/g, '').trim();
+
+  return { cleanText, followups };
+};
 
 export const useChatAI = ({
   functionName = 'callOpenAI',
@@ -33,8 +60,9 @@ export const useChatAI = ({
   isJaiya = false,
   speedMode = 'quick',
   privacyMode = 'forYou',
+  explicitFunctionName,
 }: useChatAIOptions = {}) => {
-  const { generalPrompt } = usePrompts();
+  const { generalPrompt, generalPrompttest } = usePrompts();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -65,12 +93,24 @@ export const useChatAI = ({
     setError(null);
     
     const requestId = ++lastRequestIdRef.current;
+
+    // Determine which prompt to use based on chat mode
+    const chatMode = CHAT_MODES[speedMode][privacyMode];
+    let finalFunctionName = explicitFunctionName || chatMode.functionName;
+    let generalPromptToUse = finalFunctionName === 'streamChatSSE_withMemory_tooltest' ? generalPrompttest : generalPrompt;
+
+    // FORCE Super AI (isJaiya=true) to use original function and prompt
+    if (isJaiya) {
+      finalFunctionName = 'streamChatSSE_withMemory';
+      generalPromptToUse = generalPrompt;
+    }
+
     const combinedPrompt = (systemPrompt && appendGeneralPrompt)
-      ? `${systemPrompt}\n\n${generalPrompt?.prompt || ''}` 
-      : (systemPrompt || generalPrompt?.prompt || '');
+      ? `${systemPrompt}\n\n${generalPromptToUse?.prompt || ''}`
+      : (systemPrompt || generalPromptToUse?.prompt || '');
 
     try {
-      const chatWithAI = httpsCallable(functions, functionName);
+      const chatWithAI = httpsCallable(functions, finalFunctionName);
       const result = await chatWithAI({
         systemPrompt: combinedPrompt,
         formattedMessages: [
@@ -90,15 +130,15 @@ export const useChatAI = ({
 
       const data = result.data as { text: string };
       const rawText = data.text;
-      
+
       // Split by ||| and filter out empty strings
       const parts = rawText.split('|||').map(p => p.trim()).filter(p => p.length > 0);
-      
+
       const newAssistantMessages = parts.map(part => ({
         role: 'assistant' as const,
         content: part
       }));
-      
+
       setMessages((prev) => [...prev, ...newAssistantMessages]);
       return rawText;
     } catch (err: any) {
@@ -111,7 +151,7 @@ export const useChatAI = ({
         setIsLoading(false);
       }
     }
-  }, [functionName, systemPrompt, messages]);
+  }, [systemPrompt, messages, generalPrompt, generalPrompttest, appendGeneralPrompt, speedMode, privacyMode, explicitFunctionName]);
 
   const sendMessageStream = useCallback(async (content: string) => {
     if (!content.trim()) return;
@@ -123,9 +163,21 @@ export const useChatAI = ({
     setError(null);
 
     const requestId = ++lastRequestIdRef.current;
+
+    // Get the chat mode configuration FIRST (before calculating combinedPrompt)
+    const chatMode = CHAT_MODES[speedMode][privacyMode];
+    let finalFunctionName = explicitFunctionName || chatMode.functionName;
+    let generalPromptToUse = finalFunctionName === 'streamChatSSE_withMemory_tooltest' ? generalPrompttest : generalPrompt;
+
+    // FORCE Super AI (isJaiya=true) to use original function and prompt
+    if (isJaiya) {
+      finalFunctionName = 'streamChatSSE_withMemory';
+      generalPromptToUse = generalPrompt;
+    }
+
     const combinedPrompt = (systemPrompt && appendGeneralPrompt)
-      ? `${systemPrompt}\n\n${generalPrompt?.prompt || ''}`
-      : (systemPrompt || generalPrompt?.prompt || '');
+      ? `${systemPrompt}\n\n${generalPromptToUse?.prompt || ''}`
+      : (systemPrompt || generalPromptToUse?.prompt || '');
 
     // Create streaming message ID
     const streamingId = `streaming-${Date.now()}`;
@@ -138,9 +190,6 @@ export const useChatAI = ({
     }
 
     try {
-      // Get the chat mode configuration
-      const chatMode = CHAT_MODES[speedMode][privacyMode];
-      console.log('[useAI] Modes:', { speedMode, privacyMode }, '→ Function:', chatMode.functionName, 'Save DB:', chatMode.saveToDb);
 
       // Format messages for the API
       const formattedMessages = [
@@ -170,11 +219,16 @@ export const useChatAI = ({
 
             // Add streaming message on first chunk
             if (!streamingMessageAdded) {
+              const { cleanText, followups } = isJaiya
+                ? { cleanText: chunk.fullResponse, followups: undefined }
+                : stripFollowupTags(chunk.fullResponse);
+
               setMessages((prev) => [
                 ...prev,
                 {
                   role: 'assistant',
-                  content: chunk.fullResponse,
+                  content: cleanText,
+                  followupQuestions: followups,
                   _isStreaming: true,
                   _streamingId: streamingId
                 }
@@ -182,10 +236,14 @@ export const useChatAI = ({
               streamingMessageAdded = true;
             } else {
               // Update existing streaming message
+              const { cleanText, followups } = isJaiya
+                ? { cleanText: chunk.fullResponse, followups: undefined }
+                : stripFollowupTags(chunk.fullResponse);
+
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg._streamingId === streamingId
-                    ? { ...msg, content: chunk.fullResponse }
+                    ? { ...msg, content: cleanText, followupQuestions: followups }
                     : msg
                 )
               );
@@ -198,12 +256,25 @@ export const useChatAI = ({
               return;
             }
 
+            // Strip follow-up tags and extract questions (only for non-Jaiya chats)
+            const { cleanText, followups } = isJaiya
+              ? { cleanText: fullResponse, followups: undefined }
+              : stripFollowupTags(fullResponse);
+
             // Remove streaming message and split by |||
-            const parts = fullResponse.split('|||').map(p => p.trim()).filter(p => p.length > 0);
-            const newAssistantMessages = parts.map(part => ({
-              role: 'assistant' as const,
-              content: part
-            }));
+            const parts = cleanText.split('|||').map(p => p.trim()).filter(p => p.length > 0);
+
+            const newAssistantMessages = parts.map((part, i) => {
+              const msg: Message = {
+                role: 'assistant' as const,
+                content: part
+              };
+              // Add follow-up questions to last message only
+              if (i === parts.length - 1 && followups && followups.length > 0) {
+                msg.followupQuestions = followups;
+              }
+              return msg;
+            });
 
             setMessages((prev) => [
               // Remove the streaming message
@@ -214,6 +285,37 @@ export const useChatAI = ({
 
             setIsStreaming(false);
             setIsLoading(false);
+          },
+          onToolCall: (toolCalls) => {
+            // Check if this is still the latest request
+            if (requestId !== lastRequestIdRef.current) {
+              console.warn('sendMessageStream: Request ID:', requestId, 'was invalidated. Ignoring tool call.');
+              return;
+            }
+
+            // Remove streaming message
+            setMessages((prev) => prev.filter(msg => msg._streamingId !== streamingId));
+
+            toolCalls.forEach((toolCall: any) => {
+              if (toolCall.function && toolCall.function.name === "askClarificationQuestion") {
+                try {
+                  const args = JSON.parse(toolCall.function.arguments);
+
+                  const mcqMessage: Message = {
+                    role: 'assistant',
+                    content: args.question,
+                    isMCQ: true,
+                    mcqOptions: args.options,
+                  };
+
+                  setMessages((prev) => [...prev, mcqMessage]);
+                  setIsStreaming(false);
+                  setIsLoading(false);
+                } catch (error) {
+                  console.error('[useAI] Failed to parse tool call:', error);
+                }
+              }
+            });
           },
           onError: (error) => {
             // Check if this is still the latest request
@@ -230,7 +332,7 @@ export const useChatAI = ({
 
             // Fallback to non-streaming
             console.log('sendMessageStream: Falling back to non-streaming API');
-            fallbackToCallable(formattedMessages, combinedPrompt, chatMode.functionName)
+            fallbackToCallable(formattedMessages, combinedPrompt, finalFunctionName)
               .then((rawText) => {
                 if (requestId !== lastRequestIdRef.current) return;
 
@@ -252,7 +354,10 @@ export const useChatAI = ({
               });
           }
         },
-        { functionName: chatMode.functionName }
+        {
+          tools: finalFunctionName === 'streamChatSSE_withMemory_tooltest' ? MCQ_TOOLS : undefined,
+          functionName: finalFunctionName
+        }
       );
 
       return null; // Return null for consistency with sendMessage
@@ -266,7 +371,6 @@ export const useChatAI = ({
       setError(err.message || 'Failed to stream response');
 
       // Fallback to non-streaming
-      const chatMode = CHAT_MODES[speedMode][privacyMode];
       const formattedMessages = [
         ...messages.map(m => ({
           role: m.role,
@@ -276,7 +380,7 @@ export const useChatAI = ({
       ];
 
       try {
-        const rawText = await fallbackToCallable(formattedMessages, combinedPrompt, chatMode.functionName);
+        const rawText = await fallbackToCallable(formattedMessages, combinedPrompt, finalFunctionName);
         if (requestId !== lastRequestIdRef.current) return;
 
         const parts = rawText.split('|||').map(p => p.trim()).filter(p => p.length > 0);
@@ -296,7 +400,7 @@ export const useChatAI = ({
 
       return null;
     }
-  }, [systemPrompt, messages, appendGeneralPrompt, generalPrompt, functionName, isJaiya, speedMode, privacyMode]);
+  }, [systemPrompt, messages, appendGeneralPrompt, generalPrompt, generalPrompttest, isJaiya, speedMode, privacyMode, explicitFunctionName]);
 
   const clearMessages = useCallback(() => {
     setMessages(initialMessages);

@@ -10,7 +10,7 @@ export interface ChatModeConfig {
 export const CHAT_MODES: Record<SpeedMode, Record<PrivacyMode, ChatModeConfig>> = {
   quick: {
     forYou: {
-      functionName: 'streamChatSSE_withMemory',
+      functionName: 'streamChatSSE_withMemory_tooltest',
       saveToDb: true,
       showInHistory: true,
     },
