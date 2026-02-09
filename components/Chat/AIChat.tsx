@@ -466,7 +466,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         {/* Chat Messages Area */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto no-scrollbar scroll-smooth"
+          className="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-4 overflow-x-hidden"
         >
           {/* Sticky Header */}
           {isSidebarOpen !== undefined && (
@@ -481,7 +481,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               onConnectHuman={onConnectHuman || (() => {})}
             />
           )}
-          <div className="max-w-4xl mx-auto w-full px-6 py-2 space-y-3">
+          <div className="relative max-w-4xl mx-auto w-full px-6 py-2 space-y-3">
             {/* New Welcome Screen */}
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
