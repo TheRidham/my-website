@@ -10,9 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages, systemPrompt, functionName } = body;
-
-    console.log('[API ROUTE] Received payload:', { functionName, messagesCount: messages?.length, hasSystemPrompt: !!systemPrompt });
+    const { messages, systemPrompt, functionName, tools } = body;
 
     if (!messages || !systemPrompt) {
       return NextResponse.json(
@@ -25,6 +23,7 @@ export async function POST(request: NextRequest) {
     const FUNCTION_URLS: Record<string, string> = {
       streamChatSSE: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE',
       streamChatSSE_withMemory: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_withMemory',
+      streamChatSSE_withMemory_tooltest: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_withMemory_tooltest',
       streamChatSSE_testgpt: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_testgpt',
       streamChatSSE_testgpt_noMemory: 'https://asia-south1-jai-ai-30103.cloudfunctions.net/streamChatSSE_testgpt_noMemory',
     };
@@ -40,8 +39,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[API ROUTE] Proxying to Firebase', functionName, '...');
-
     // Set up timeout (60 seconds to match Firebase function timeout)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
@@ -53,7 +50,11 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ messages, systemPrompt }),
+      body: JSON.stringify({
+        messages,
+        systemPrompt,
+        ...(tools ? { tools } : {}),
+      }),
       signal: controller.signal,
     });
 
@@ -61,17 +62,42 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[API ROUTE] Firebase error:', response.status, errorText);
       return NextResponse.json(
         { error: `Firebase error: ${response.status} - ${errorText}` },
         { status: response.status }
       );
     }
 
-    console.log('[API ROUTE] Streaming response from Firebase...');
+    // Create a transform stream to log and forward the SSE stream
+    const reader = response.body?.getReader();
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
-    // Stream the response back to browser
-    return new NextResponse(response.body, {
+    const transformStream = new ReadableStream({
+      async start(controller) {
+        try {
+          let buffer = '';
+          let chunkIndex = 0;
+
+          while (true) {
+            const { done, value } = await reader!.read();
+            if (done) break;
+
+            const text = decoder.decode(value, { stream: true });
+            buffer += text;
+
+            controller.enqueue(encoder.encode(text));
+          }
+
+          controller.close();
+        } catch (error) {
+          console.error('[API ROUTE] Transform stream error:', error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new NextResponse(transformStream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -79,6 +105,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: any) {
+    // AbortError is expected when tool calls (MCQ) are received - not a real error
+    if (error.name === 'AbortError') {
+      console.log('[API ROUTE] Stream aborted (tool call received)');
+      return new NextResponse(null, { status: 200 });
+    }
+
     console.error('[API ROUTE] Error:', error);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },

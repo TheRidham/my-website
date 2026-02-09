@@ -23,6 +23,7 @@ export interface StreamingEventHandler {
   onChunk?: (chunk: StreamChunk) => void;
   onComplete?: (fullResponse: string) => void;
   onError?: (error: StreamError) => void;
+  onToolCall?: (toolCalls: any[]) => void;
 }
 
 /**
@@ -32,6 +33,7 @@ export interface StreamingOptions {
   enabled?: boolean;
   timeout?: number; // in milliseconds
   functionName?: string; // Backend function name to call
+  tools?: any[]; // Tool definitions for function calling
 }
 
 /**
@@ -69,20 +71,17 @@ export async function streamChatWithSSE(
 
   // Get Firebase ID token
   const idToken = await currentUser.getIdToken();
-  console.log('[SSE CLIENT] Auth token acquired');
 
   // Prepare payload
   const payload = {
     messages,
     systemPrompt,
     functionName: options.functionName || 'streamChatSSE_withMemory',
+    ...(options.tools ? { tools: options.tools } : {}),
   };
-
-  console.log('[SSE CLIENT] Using function:', payload.functionName, 'for', options.functionName || 'default');
 
   // Call Next.js API route (same-origin, no CORS issues)
   const functionUrl = `/api/chat/stream`;
-  console.log('[SSE CLIENT] Connecting to API route...');
 
   // Return a promise that resolves when streaming completes
   return new Promise<void>((resolve, reject) => {
@@ -112,8 +111,6 @@ export async function streamChatWithSSE(
             signal: abortController.signal,
           });
 
-          console.log('[SSE CLIENT] Response received:', response.status, response.statusText);
-
           if (!response.ok) {
             const errorText = await response.text();
             console.error('[SSE CLIENT] HTTP error:', response.status, response.statusText, errorText);
@@ -125,8 +122,6 @@ export async function streamChatWithSSE(
             clearTimeout(timeoutId);
             timeoutId = null;
           }
-
-          console.log('[SSE CLIENT] Connection opened');
 
           // Read the stream
           const reader = response.body?.getReader();
@@ -163,26 +158,30 @@ export async function streamChatWithSSE(
 
                     switch (currentEvent) {
                       case 'chunk':
-                        console.log('[SSE CLIENT] Chunk received:', data.content?.length || 0, 'chars');
                         handlers.onChunk?.(data as StreamChunk);
                         break;
 
                       case 'done':
-                        console.log('[SSE CLIENT] Stream complete, total chunks:', data.chunks);
                         handlers.onComplete?.(data.fullResponse);
                         abortController.abort();
-                        resolve(); // Resolve the promise successfully
-                        return; // Exit the IIFE
+                        resolve(); // Resolve promise successfully
+                        return; // Exit IIFE
 
                       case 'error':
-                        console.error('[SSE CLIENT] Error event:', data);
                         const errorData = data as StreamError;
                         // Ensure error has proper message
                         const errorMessage = errorData.error || errorData.code || 'Unknown streaming error';
                         handlers.onError?.({ error: errorMessage, code: errorData.code || 'unknown' });
                         abortController.abort();
-                        reject(new Error(errorMessage)); // Reject the promise
-                        return; // Exit the IIFE
+                        reject(new Error(errorMessage)); // Reject promise
+                        return; // Exit IIFE
+
+                      case 'tool_call':
+                        const toolCalls = (data as any).tool_calls || data;
+                        handlers.onToolCall?.(toolCalls);
+                        abortController.abort();
+                        resolve();
+                        return;
                     }
                   } catch (parseError) {
                     console.error('[SSE CLIENT] Failed to parse SSE data:', parseError, currentData);
@@ -193,38 +192,36 @@ export async function streamChatWithSSE(
                   currentData = '';
                 }
               }
-            }
-          }
+             }
+           }
 
-          // If we get here, stream ended normally without explicit done event
-          console.log('[SSE CLIENT] Stream ended normally');
-          resolve();
+           // If we get here, stream ended normally without explicit done event
+           resolve();
 
-        } catch (error: any) {
-          // Abort the fetch if still active
-          abortController.abort();
+         } catch (error: any) {
+           // Abort the fetch if still active
+           abortController.abort();
 
-          // Check if this was an abort (timeout or manual)
-          if (error.name === 'AbortError') {
-            console.log('[SSE CLIENT] Stream aborted');
-            resolve(); // Resolve on abort (not an error)
-            return;
-          }
+           // Check if this was an abort (timeout or manual)
+           if (error.name === 'AbortError') {
+             resolve(); // Resolve on abort (not an error)
+             return;
+           }
 
-          console.error('[SSE CLIENT] Fetch error:', error);
-          const errorMessage = error?.message || error?.toString() || 'Connection failed';
-          handlers.onError?.({ error: errorMessage, code: 'fetch_error' });
-          reject(new Error(errorMessage));
-        } finally {
-          // Cleanup timeout
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-        }
-      })();
-    });
-}
+           console.error('[SSE CLIENT] Fetch error:', error);
+           const errorMessage = error?.message || error?.toString() || 'Connection failed';
+           handlers.onError?.({ error: errorMessage, code: 'fetch_error' });
+           reject(new Error(errorMessage));
+         } finally {
+           // Cleanup timeout
+           if (timeoutId) {
+             clearTimeout(timeoutId);
+             timeoutId = null;
+           }
+         }
+       })();
+     });
+   }
 
 /**
  * Fallback to non-streaming Firebase callable function
