@@ -11,7 +11,7 @@ export default function TermsOfService() {
       <main className="max-w-4xl mx-auto px-4 py-10 text-gray-800">
         <header className="mb-10">
           <h1 className="text-3xl font-bold">Terms of Service</h1>
-          <p className="text-lg text-gray-600 mt-2">Effective: October 2025</p>
+          <p className="text-lg text-gray-600 mt-2">Effective: January 2026</p>
         </header>
 
         <section className="space-y-6">
