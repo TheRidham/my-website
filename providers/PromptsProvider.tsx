@@ -1,6 +1,6 @@
-'use'
+'use client'
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -91,8 +91,18 @@ export const PromptsProvider = ({children}: {children: React.ReactNode}) => {
     fetchPrompts();
   }, []);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    jaiyaPrompt,
+    advisorsPrompt,
+    analysisPrompt,
+    healthContainerPrompt,
+    generalPrompt,
+    generalPrompttest
+  }), [jaiyaPrompt, advisorsPrompt, analysisPrompt, healthContainerPrompt, generalPrompt, generalPrompttest]);
+
   return (
-    <PromptsContext.Provider value={{jaiyaPrompt, advisorsPrompt, analysisPrompt, healthContainerPrompt, generalPrompt, generalPrompttest}}>
+    <PromptsContext.Provider value={contextValue}>
       {children}
     </PromptsContext.Provider>
   )

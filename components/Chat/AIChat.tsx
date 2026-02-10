@@ -124,19 +124,34 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     // Resolve prompt and welcome message
     const { systemPrompt, welcomeMessage } = useMemo(() => {
       if (isJaiya) {
+        // Return early if Jaiya prompt hasn't loaded yet
+        if (!jaiyaPrompt) {
+          return {
+            systemPrompt: undefined,
+            welcomeMessage: undefined,
+          };
+        }
         // Use Firestore prompt directly (same as Android app)
         return {
-          systemPrompt: jaiyaPrompt?.prompt,
-          welcomeMessage: jaiyaPrompt?.welcomeMessage,
+          systemPrompt: jaiyaPrompt.prompt,
+          welcomeMessage: jaiyaPrompt.welcomeMessage,
         };
       }
 
       if (categoryKey && subcategoryTitle) {
-        const categoryData = advisorsPrompt?.[categoryKey];
+        // Return early if advisor prompts haven't loaded yet
+        if (!advisorsPrompt) {
+          return {
+            systemPrompt: undefined,
+            welcomeMessage: undefined,
+          };
+        }
+
+        const categoryData = advisorsPrompt[categoryKey];
         const advisorData = categoryData?.[subcategoryTitle];
 
         if (!advisorData) {
-          console.error("AIChat: Advisor data not found for:", {
+          console.warn("AIChat: Advisor data not found for:", {
             categoryKey,
             subcategoryTitle,
           });
@@ -154,6 +169,10 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               );
             }
           }
+          return {
+            systemPrompt: undefined,
+            welcomeMessage: undefined,
+          };
         }
 
         // Combine subcategory prompt with category general prompt
@@ -172,6 +191,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         welcomeMessage: undefined,
       };
     }, [isJaiya, categoryKey, subcategoryTitle, jaiyaPrompt, advisorsPrompt]);
+
+    // Check if prompts are still loading (needed when we expect them)
+    const isPromptLoading = Boolean((isJaiya || (categoryKey && subcategoryTitle)) && !systemPrompt);
 
     const {
       messages,
@@ -483,8 +505,16 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             />
           )}
           <div className="relative max-w-4xl mx-auto w-full px-6 py-2 space-y-3">
+            {/* Loading Prompts State */}
+            {isPromptLoading && (
+              <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-sm font-medium text-muted-foreground">Loading advisor data...</p>
+              </div>
+            )}
+
             {/* New Welcome Screen */}
-            {messages.length === 0 && (
+            {!isPromptLoading && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
                 {isJaiya ? <ChatSection />:
                 <>
@@ -510,7 +540,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             )}
 
             {/* Chat History */}
-            {messages.map((msg, index) => {
+            {!isPromptLoading && messages.map((msg, index) => {
               // Hide streaming messages for Jaiya (show "Thinking..." instead)
               if (isJaiya && (msg as any)._isStreaming) {
                 return null;
@@ -583,7 +613,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {/* Loading State */}
             {/* For Jaiya: Show during entire loading/streaming */}
             {/* For others: Show only when loading and no streaming message yet */}
-            {isLoading &&
+            {!isPromptLoading && isLoading &&
               (isJaiya || !messages.some((m) => (m as any)._isStreaming)) && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
@@ -647,29 +677,32 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Ask me anything..."
-              className="flex-1 px-4 py-2 focus:outline-none"
+              disabled={isPromptLoading}
+              className="flex-1 px-4 py-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
               onClick={handleSend}
-              disabled={isLoading || !input.trim()}
-              className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square"
+              disabled={isPromptLoading || isLoading || !input.trim()}
+              className="w-10 h-10 rounded-full bg-primary hover:bg-emerald-500 transition-colors aspect-square disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowRight size={24} />
             </Button>
           </div>
         </div>
 
-        <AppDownloadBadges />
+        {!isPromptLoading && <AppDownloadBadges />}
 
-        <div className="flex items-center justify-center text-[9px] sm:text-xs pb-1">
-          By continuing, you agree to our&nbsp;
-          <Link href="/terms" className="underline">
-            Terms of Service
-          </Link> &nbsp;and&nbsp; 
-          <Link href="/policy" className="underline">
-            Privacy Policy
-          </Link>.
-        </div>
+        {!isPromptLoading && (
+          <div className="flex items-center justify-center text-[9px] sm:text-xs pb-1">
+            By continuing, you agree to our&nbsp;
+            <Link href="/terms" className="underline">
+              Terms of Service
+            </Link> &nbsp;and&nbsp; 
+            <Link href="/policy" className="underline">
+              Privacy Policy
+            </Link>.
+          </div>
+        )}
 
         <HumanAdvisorModal
           isOpen={isHumanModalOpen}
