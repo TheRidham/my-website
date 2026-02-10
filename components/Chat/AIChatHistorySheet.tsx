@@ -20,11 +20,23 @@ interface Props {
   setHistory: any;
 }
 
+const map = new Map([
+  ["Nutrition & Diet", "nutrition"],
+  ["Fitness", "fitness"],
+  ["Mental Health", "mental"],
+  ["General Medicine", "general"],
+  ["Sexual Health", "sexual"],
+  ["Chronic Diseases", "chronic"],
+  ["Skin & Beauty", "skin"],
+  ["Addiction", "addiction"],
+  ["Relationship", "relationship"],
+]);
+
 export default function AIChatHistorySheet({
   open,
   setOpen,
   setChatId,
-  setHistory
+  setHistory,
 }: Props) {
   const { chats, loading, deleteChat } = useChatHistory(auth.currentUser?.uid);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -36,23 +48,6 @@ export default function AIChatHistorySheet({
       console.log(`Chat with ID ${chatId} deleted.`);
     }
   };
-
-  //   const formatDate = (timestamp: Date) => {
-  //     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  //     const now = new Date();
-  //     const diffInMs = now.getTime() - date.getTime();
-  //     const diffInHours = diffInMs / (1000 * 60 * 60);
-  //     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-
-  //     if (diffInHours < 24) {
-  //       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  //     } else if (diffInDays < 7) {
-  //       return date.toLocaleDateString('en-US', { weekday: 'short' });
-  //     } else {
-  //       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  //     }
-  //   };
-
 
   return (
     <>
@@ -92,9 +87,9 @@ export default function AIChatHistorySheet({
                       setHistory(chat.messages);
                       setOpen(false);
                       router.push(
-                        `../${chat.advisorName}/${encodeURIComponent(
-                          chat.advisorCategory
-                        )}`
+                        `../${map.get(chat.advisorName)}/${encodeURIComponent(
+                          chat.advisorCategory,
+                        )}`,
                       );
                     }}
                   >
@@ -118,12 +113,6 @@ export default function AIChatHistorySheet({
                         <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                           {chat.lastMessage}
                         </p>
-
-                        {/* Timestamp */}
-                        {/* <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Clock size={12} />
-                          <span>{formatDate(chat.timestamp)}</span>
-                        </div> */}
                       </div>
 
                       {/* Delete Button */}

@@ -22,7 +22,7 @@ export default function ChatToggleButton({
 
         {/* Circular Text using SVG */}
         <svg
-          className="absolute inset-0 w-full h-full rotate-90 group-hover:rotate-270 transition-transform duration-700 ease-out"
+          className="absolute inset-0 w-full h-full rotate-270 transition-transform duration-700 ease-out"
           viewBox="0 0 100 100"
         >
           <defs>
@@ -45,7 +45,7 @@ export default function ChatToggleButton({
               startOffset="50%"
               textAnchor="middle"
             >
-              CLICK TO CHAT
+              CLICK TO EXPLORE
             </textPath>
           </text>
         </svg>
