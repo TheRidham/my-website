@@ -147,7 +147,7 @@ export default function ProfilePage() {
             <SettingButton
               icon={<MessageSquare className="w-5 h-5" />}
               label="Chat History"
-              onClick={() => alert("Navigate to chat history")}
+              href="/history"
             />
             <SettingButton
               icon={<RefreshCw className="w-5 h-5" />}
