@@ -117,9 +117,18 @@ export async function getFreeRangesForDate(
     const isToday = startOfDay.toDateString() === new Date().toDateString()
 
     if (isToday) {
+      // If advisor is currently busy (via manual status or active session), 
+      // available slots should start at least 30 mins from now.
+      const isBusy = advisorSnap.data()?.busy === true || 
+                     sortedBusy.some(b => now >= b.from && now <= b.to)
+      
+      const effectiveNow = isBusy 
+        ? new Date(now.getTime() + 30 * 60 * 1000) 
+        : now
+
       freeRanges = freeRanges
         .map((r) => ({
-          from: r.from < now ? now : r.from,
+          from: r.from < effectiveNow ? effectiveNow : r.from,
           to: r.to,
         }))
         .filter((r) => r.from < r.to)
