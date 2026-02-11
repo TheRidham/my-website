@@ -19,7 +19,12 @@ import { getAuth } from "firebase/auth";
 import { useParams } from "next/navigation";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getApp } from "firebase/app";
-import { ArrowLeft, ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  MessageSquare,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -52,6 +57,8 @@ export default function HumanChatWeb() {
   const params = useParams();
   const roomId = params.roomId as string;
   const advisorId = params.advisorId as string;
+
+  console.log("roomId:", roomId);
 
   const db = getFirestore();
   const auth = getAuth();
@@ -108,16 +115,19 @@ export default function HumanChatWeb() {
 
     const q = query(
       collection(db, "chatRooms", roomId, "messages"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
     );
 
+    console.log("q: ", q);
+
     const unsub = onSnapshot(q, (snap) => {
+      console.log(snap.docs);
       setMessages(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
     });
 
     const chatRequestQuery = query(
       collection(db, "chatRequests"),
-      where("roomId", "==", roomId)
+      where("roomId", "==", roomId),
     );
 
     const unsubRequest = onSnapshot(chatRequestQuery, (snap) => {
@@ -152,7 +162,7 @@ export default function HumanChatWeb() {
     setText("");
   };
 
-  console.log(advisorProfile);
+  // console.log(advisorProfile);
 
   const handleEndSession = async () => {
     // Get the latest chat request status first
@@ -162,7 +172,7 @@ export default function HumanChatWeb() {
       const chatRequestQuery = query(
         collection(db, "chatRequests"),
         where("roomId", "==", roomId),
-        limit(1)
+        limit(1),
       );
 
       const snap = await getDocs(chatRequestQuery);
@@ -205,11 +215,23 @@ export default function HumanChatWeb() {
     setIsOpen(false);
   }
 
+  console.log("chatRequest:", chatRequest);
+  console.log("messages:", messages);
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <header className="p-4 border-b flex items-center gap-6 bg-gray-100">
-        <button className="group" onClick={() => setIsOpen(true)}>
+        <button
+          className="group"
+          onClick={() => {
+            if (chatRequest.status !== "closed") {
+              setIsOpen(true);
+            } else {
+              router.back();
+            }
+          }}
+        >
           <ArrowLeft className="w-6 h-6 group-hover:text-primary" />
         </button>
         {advisorProfile && (
@@ -276,6 +298,14 @@ export default function HumanChatWeb() {
         </DialogContent>
       </Dialog>
 
+      {chatRequest?.status === "closed" && messages.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+          <MessageSquare size={48} className="mb-4 opacity-50" />
+          <p className="text-lg font-medium">No chat history</p>
+          <p className="text-sm">no conversation to see</p>
+        </div>
+      ) : null}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((m) => {
@@ -308,7 +338,9 @@ export default function HumanChatWeb() {
               </div>
 
               {/* Message Content */}
-              <div className={`flex flex-col max-w-[70%] ${isUser ? "items-end" : "items-start"}`}>
+              <div
+                className={`flex flex-col max-w-[70%] ${isUser ? "items-end" : "items-start"}`}
+              >
                 <div
                   className={`p-3 rounded-2xl shadow-sm ${
                     isUser
@@ -316,7 +348,9 @@ export default function HumanChatWeb() {
                       : "bg-gray-100 text-gray-800 rounded-tl-sm"
                   }`}
                 >
-                  <p className="text-sm leading-relaxed break-words">{m.content}</p>
+                  <p className="text-sm leading-relaxed break-words">
+                    {m.content}
+                  </p>
                 </div>
                 {timestamp && (
                   <span className="text-xs text-gray-500 mt-1 px-2">
@@ -331,21 +365,23 @@ export default function HumanChatWeb() {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t flex gap-2 border-gray-400">
-        <textarea
-          className="flex-1 border border-gray-400 rounded-lg p-2 resize-none"
-          rows={1}
-          placeholder="Ask anything"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button
-          onClick={send}
-          className="px-4 rounded-lg bg-primary text-white"
-        >
-          Send
-        </button>
-      </div>
+      {chatRequest?.status === "active" ? (
+        <div className="p-3 border-t flex gap-2 border-gray-400">
+          <textarea
+            className="flex-1 border border-gray-400 rounded-lg p-2 resize-none"
+            rows={1}
+            placeholder="Ask anything"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <button
+            onClick={send}
+            className="px-4 rounded-lg bg-primary text-white"
+          >
+            Send
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

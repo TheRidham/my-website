@@ -44,7 +44,7 @@ export default function DemoForm() {
           Request a Demo
         </h2>
         <p className="text-muted-foreground mb-8">
-          See how QuikAdvise can benefit your organization
+          See how Quik Advice can benefit your organization
         </p>
         {submitStatus === 'success' && (
           <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-sm">
