@@ -45,7 +45,6 @@ export default function CallPage() {
       setHasJoined(true);
     }
 
-    // Cleanup on unmount - notify server user is leaving
     return () => {
       const cleanup = async () => {
         try {
