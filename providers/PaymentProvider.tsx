@@ -159,7 +159,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
       advisorId,
       sessionType,
       returnUrl: `${window.location.origin}/payment-callback`,
-      isDev: false  // using live keys right now
+      isDev: true  // using test keys right now
     })
 
     return result.data
@@ -171,7 +171,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
     const result = await createDodoWalletTopupSession({
       amount,
       returnUrl: `${window.location.origin}/wallet/callback`,
-      isDev: false  // using live keys right now
+      isDev: true  // using test keys right now
     })
 
     return result.data
@@ -202,4 +202,5 @@ export function usePayment() {
   }
   return context
 }
+
 
