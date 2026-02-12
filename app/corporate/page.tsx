@@ -402,7 +402,7 @@ export default function WellspringPage() {
               What Our Clients Say
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              See how Quik Advise has helped organizations improve employee
+              See how Quik Advice has helped organizations improve employee
               wellness
             </p>
           </div>

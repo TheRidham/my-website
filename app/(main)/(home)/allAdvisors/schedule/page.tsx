@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getFirestore, collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore'
+import { getFirestore, collection, addDoc, query, where, getDocs, Timestamp, getDoc, doc } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { ChevronUp, ChevronDown, Clock, Video, MessageSquare, Minus, Plus, ChevronLeft, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -126,15 +126,26 @@ export default function ScheduleScreen() {
       )
       const to = new Date(from.getTime() + duration * 60 * 1000)
 
+      const now = new Date();
+      const thirtyMinsFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+      const db = getFirestore()
+
+      const advisorSnap = await getDoc(doc(db, "advisors", advisorId));
+
+      if (advisorSnap.exists() && advisorSnap.data()?.busy) {
+        if (from < thirtyMinsFromNow) {
+          setError(`For today's schedule, please select the time from available slots time range.`);
+          return;
+        }
+      }
+
       // ── Check for past time ──
-      const now = new Date()
       if (from < now) {
         setError('Cannot schedule a session for a past time. Please select a future date and time.')
         setLoading(false)
         return
       }
 
-      const db = getFirestore()
       const fromTs = Timestamp.fromDate(from)
       const toTs = Timestamp.fromDate(to)
 
