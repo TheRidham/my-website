@@ -106,7 +106,7 @@ export default function DemoForm() {
             </select>
           </div>
           <textarea
-            className="flex min-h-[80px] w-full border px-3 py-2 text-sm ring-offset-accent-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-xl border-border/60 focus:border-primary/50 bg-corporate resize-none"
+            className="flex min-h-20 w-full border px-3 py-2 text-sm ring-offset-accent-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-xl border-border/60 focus:border-primary/50 bg-corporate resize-none"
             name="message"
             placeholder="Anything else you'd like to share... (Optional) "
             rows={4}
