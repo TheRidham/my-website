@@ -98,12 +98,16 @@ const Navbar = () => {
             ))}
             <div className="h-px bg-emerald-100 my-2" />
             <div className="grid grid-cols-2 gap-3">
-              <button className="py-3 px-4 rounded-xl border border-emerald-200 text-slate-600 font-medium hover:bg-emerald-50 transition-colors">
-                Sign In
-              </button>
-              <button className="py-3 px-4 rounded-xl bg-linear-to-r from-primary to-teal-500 text-white font-medium shadow-lg shadow-emerald-500/25">
-                Get Started
-              </button>
+              <Link href={'/auth/login'}>
+                <button className="w-full py-3 px-4 rounded-xl border border-emerald-200 text-slate-600 font-medium hover:bg-emerald-50 transition-colors">
+                  Sign In
+                </button>
+              </Link>
+              <Link href={'/auth/signup'}>
+                <button className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-primary to-teal-500 text-white font-medium shadow-lg shadow-emerald-500/25">
+                  Get Started
+                </button>
+              </Link>
             </div>
           </div>
         </div>
