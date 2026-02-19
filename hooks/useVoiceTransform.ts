@@ -73,7 +73,17 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
 
     try {
       const voiceSettings = config?.voiceSettings;
-      const body: Record<string, any> = { text };
+      const body: {
+        text: string;
+        voiceId?: string;
+        voiceSettings?: {
+          stability?: number;
+          similarityBoost?: number;
+          speed?: number;
+          style?: number;
+          useSpeakerBoost?: boolean;
+        };
+      } = { text };
 
       if (config?.voiceId) {
         body.voiceId = config.voiceId;

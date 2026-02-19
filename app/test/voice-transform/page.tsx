@@ -38,9 +38,19 @@ export default function VoiceTransformTestPage() {
         const response = await fetch("/api/elevenlabs/voices");
         if (response.ok) {
           const data = await response.json();
-          setVoices(data.voices || []);
-          if (!selectedVoice && data.voices?.[0]) {
-            setSelectedVoice(data.voices[0].voice_id);
+
+          const voicesArray = (data.voices || []).map((v: any) => ({
+            voice_id: v.voiceId,
+            name: v.name,
+            category: v.category,
+            description: v.description,
+            labels: v.labels,
+          }));
+
+          setVoices(voicesArray);
+
+          if (!selectedVoice && voicesArray.length > 0 && voicesArray[0].voice_id) {
+            setSelectedVoice(voicesArray[0].voice_id);
           }
         }
       } catch (err) {
@@ -48,7 +58,7 @@ export default function VoiceTransformTestPage() {
       }
     };
     fetchVoices();
-  }, [selectedVoice]);
+  }, []);
 
   const handleVoiceChange = (voiceId: string) => {
     setSelectedVoice(voiceId);
@@ -129,7 +139,7 @@ export default function VoiceTransformTestPage() {
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span>🎙️ Voice Settings</span>
+                Voice Settings
               </h2>
 
               <div className="space-y-4">
@@ -144,7 +154,7 @@ export default function VoiceTransformTestPage() {
                     className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     {voices.map((voice) => (
-                      <option key={voice.voice_id} value={voice.voice_id}>
+                      <option key={voice.voice_id || voice.name || `voice-${Math.random()}`} value={voice.voice_id}>
                         {voice.name}
                       </option>
                     ))}
@@ -220,28 +230,28 @@ export default function VoiceTransformTestPage() {
                     disabled={isRunning}
                     className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
                   >
-                    🎭 Natural
+                    Natural
                   </button>
                   <button
                     onClick={() => handlePreset("expressive")}
                     disabled={isRunning}
                     className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
                   >
-                    🎬 Expressive
+                    Expressive
                   </button>
                   <button
                     onClick={() => handlePreset("fast")}
                     disabled={isRunning}
                     className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
                   >
-                    ⚡ Fast
+                    Fast
                   </button>
                   <button
                     onClick={() => handlePreset("serious")}
                     disabled={isRunning}
                     className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
                   >
-                    💼 Serious
+                    Serious
                   </button>
                 </div>
               </div>
@@ -249,7 +259,7 @@ export default function VoiceTransformTestPage() {
 
             <div className="bg-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span>🎤 Status & Transcripts</span>
+                Status & Transcripts
               </h2>
 
               <div className="flex items-center gap-3 mb-6">
@@ -306,7 +316,7 @@ export default function VoiceTransformTestPage() {
 
           <div className="bg-gray-800 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <span>ℹ️ About</span>
+              About
             </h2>
               <div className="space-y-3 text-sm text-gray-400">
                 <p>

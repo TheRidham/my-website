@@ -10,9 +10,9 @@ export async function GET() {
       );
     }
 
-    const voices = await (elevenlabs as any).voices.getAll();
+    const response = await (elevenlabs as any).voices.getAll();
 
-    return NextResponse.json(voices);
+    return NextResponse.json(response);
   } catch (error) {
     console.error("[VOICES] Error:", error);
     return NextResponse.json(

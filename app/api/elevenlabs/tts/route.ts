@@ -4,7 +4,7 @@ import { elevenlabs, VOICE_ID, MODEL_TTS } from "@/lib/elevenlabs-server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { text, voiceId } = body;
+    const { text, voiceId, voiceSettings } = body;
 
     if (!text || typeof text !== "string") {
       return NextResponse.json(
@@ -20,13 +20,37 @@ export async function POST(req: Request) {
       );
     }
 
+    const ttsOptions: any = {
+      text,
+      modelId: MODEL_TTS,
+      outputFormat: "mp3_44100_128",
+    };
+
+    if (voiceSettings) {
+      const voiceSettingsObj: any = {};
+      if (voiceSettings.stability !== undefined) {
+        voiceSettingsObj.stability = voiceSettings.stability;
+      }
+      if (voiceSettings.similarityBoost !== undefined) {
+        voiceSettingsObj.similarityBoost = voiceSettings.similarityBoost;
+      }
+      if (voiceSettings.speed !== undefined) {
+        voiceSettingsObj.speed = voiceSettings.speed;
+      }
+      if (voiceSettings.style !== undefined) {
+        voiceSettingsObj.style = voiceSettings.style;
+      }
+      if (voiceSettings.useSpeakerBoost !== undefined) {
+        voiceSettingsObj.useSpeakerBoost = voiceSettings.useSpeakerBoost;
+      }
+      if (Object.keys(voiceSettingsObj).length > 0) {
+        ttsOptions.voiceSettings = voiceSettingsObj;
+      }
+    }
+
     const response = await elevenlabs.textToSpeech.convert(
       voiceId || VOICE_ID,
-      {
-        text,
-        modelId: MODEL_TTS,
-        outputFormat: "mp3_44100_128",
-      }
+      ttsOptions
     );
 
     return new Response(response as unknown as ReadableStream, {
