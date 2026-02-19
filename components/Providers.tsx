@@ -10,7 +10,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 
-const PUBLIC_ROUTES = ["/corporate", "/about"];
+const PUBLIC_ROUTES = ["/corporate", "/about", "/test"];
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
