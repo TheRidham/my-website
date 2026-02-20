@@ -333,6 +333,10 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         setHasStartedChat(true);
       }
 
+      // Increment user message count here
+      userMessageCountRef.current += 1;
+      console.log("userMessageCount: ", userMessageCountRef.current);
+
       // Send message using streaming
       // The hook will automatically add the user message and stream the response
       await sendMessageStream(content);
@@ -346,6 +350,16 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
           }
         }, 100);
       });
+
+      // Show advisor modal after message is processed
+    if (
+      userMessageCountRef.current === 2 ||
+      userMessageCountRef.current === 6
+      ) {
+      setTimeout(() => {
+        setShowAdvisorModal(true);
+      }, 1000);
+    }
 
       // Save messages to Firebase (only for non-Jaiya chats and if shouldSaveToDb is true)
       if (!isJaiya && shouldSaveToDb) {
@@ -591,6 +605,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                             questions={(msg as any).followupQuestions}
                             onQuestionTap={async (question) => {
                               await sendMessageStream(question);
+                              userMessageCountRef.current += 1;
+                              if(userMessageCountRef.current === 2 || userMessageCountRef.current === 6) {
+                                setTimeout(() => {
+                                  setShowAdvisorModal(true);
+                                }, 1000)
+                              }
                             }}
                           />
                         )}
@@ -600,6 +620,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                             options={(msg as any).mcqOptions}
                             onOptionPress={async (option) => {
                               await sendMessageStream(option);
+                              userMessageCountRef.current += 1;
+                              if(userMessageCountRef.current === 2 || userMessageCountRef.current === 6) {
+                                setTimeout(() => {
+                                  setShowAdvisorModal(true);
+                                }, 1000)
+                              }
                             }}
                           />
                         )}
