@@ -8,6 +8,7 @@ import { ChevronUp, ChevronDown, Clock, Video, MessageSquare, Minus, Plus, Chevr
 import toast from 'react-hot-toast'
 import { notifyAdvisorScheduledSession } from '@/utils/email'
 import { getFreeRangesForDate } from '@/utils/freeSlots'
+import { useAuthGate } from '@/providers/AuthGateProvider'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -97,13 +98,25 @@ export default function ScheduleScreen() {
     fetchSlots()
   }, [dayIdx, advisorId, days])
 
+  const { requireLogin } = useAuthGate()
+
   async function handleSchedule() {
     setError(null)
     const auth = getAuth()
-    const user = auth.currentUser
+    let user = auth.currentUser
+
+    if (!user || user.isAnonymous) {
+      const loggedIn = await requireLogin({
+        title: 'Login Required',
+        description: 'Sign in with Google to schedule a session. Guest accounts cannot access this feature.',
+      })
+      if (!loggedIn) return
+      // Refetch user after successful login
+      user = auth.currentUser
+    }
 
     if (!user) {
-      setError('Please sign in to schedule a session.')
+      setError('Authentication failed. Please try again.')
       return
     }
 

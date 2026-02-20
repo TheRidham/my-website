@@ -26,6 +26,7 @@ import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 import { usePrompts } from '@/providers/PromptsProvider';
 import { httpsCallable } from 'firebase/functions';
 import ExpertCallCard from '@/components/ExpertCallCard';
+import { useAuthGate } from '@/providers/AuthGateProvider';
 
 const RECOMMENDED_QUESTIONS = [
   "What should I eat to lose weight?",
@@ -74,6 +75,7 @@ function HomePage() {
   const [sessionType, setSessionType] = useState<'chat' | 'video'>('chat')
   const { resetChat, switchChat } = useChat()
   const { jaiyaPrompt } = usePrompts();
+  const { requireLogin } = useAuthGate();
 
   const categoriesList = Object.entries(ADVISOR_CATEGORIES).map(([key, value]) => ({
     key,
@@ -112,7 +114,13 @@ function HomePage() {
     fetchAdvisors()
   }, [])
 
-  const handleAdvisorClick = (advisor: Advisor, type: "chat" | "video" = "chat") => {
+  const handleAdvisorClick = async (advisor: Advisor, type: "chat" | "video" = "chat") => {
+    const loggedIn = await requireLogin({
+      title: 'Login Required',
+      description: 'Sign in with Google to connect with an expert advisor. Guest accounts cannot access this feature.',
+    });
+    if (!loggedIn) return;
+
     setSelectedAdvisor({
       id: advisor.uid,
       name: advisor.name,

@@ -23,6 +23,7 @@ import { getAuth } from 'firebase/auth'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
 import { useAuth } from '@/hooks/useAuth'
 import { useChat } from '@/providers/ChatProvider'
+import { useAuthGate } from '@/providers/AuthGateProvider'
 
 interface JaiyaProps {
   isSidebarOpen?: boolean;
@@ -61,6 +62,7 @@ function Jaiya({
 
   const {user, loading} = useAuth();
   const { activeChat } = useChat();
+  const { requireLogin } = useAuthGate();
 
   useEffect(() => {
     if(loading) return;
@@ -79,12 +81,11 @@ function Jaiya({
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        const isGuest = (userData?.isGuest || userData?.isAnonymous) ?? false;
         const hasClaimed = userData?.hasClaimedFreeCash ?? false;
-        if (isGuest || hasClaimed) setIsEligible(false);
+        if (hasClaimed) setIsEligible(false);
         else setIsEligible(true);
       } else {
-        // New user, not a guest
+        // New user
         setIsEligible(true);
       }
     };
@@ -103,6 +104,13 @@ function Jaiya({
   };
 
   const handleClaimFreeOffer = async () => {
+    // Block guest/anonymous users — show login popup via AuthGateProvider
+    const loggedIn = await requireLogin({
+      title: 'Login Required',
+      description: 'Sign in with Google to claim your $10 free credit. Guest accounts cannot access this feature.',
+    });
+    if (!loggedIn) return;
+
     setIsClaimingOffer(true);
     try {
       const result = await claimFreeOfferIfEligible();
@@ -163,7 +171,15 @@ function Jaiya({
           walletBalance={walletBalance}
           privacyMode={privacyMode}
           onNewChat={handleNewChat}
-          onOpenHistory={() => setIsOpen(true)}
+          onOpenHistory={async () => {
+            const loggedIn = await requireLogin({
+              title: "Log in required.",
+              description: "History is not saved for guest accounts. Please login to save your chats and access anytime."
+            });
+            if(!loggedIn) return;
+
+            setIsOpen(true)
+          }}
           onConnectHuman={() => setIsHumanModalOpen(true)}
         />
       </div>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
+import { useAuthGate } from '@/providers/AuthGateProvider'
 
 export default function WalletPage() {
   const { walletBalance, isLoading, createDodoWalletTopup, transactions } = usePayment()
@@ -14,12 +15,19 @@ export default function WalletPage() {
   const [amount, setAmount] = useState('500')
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const { requireLogin } = useAuthGate()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleTopUp = async () => {
+    const loggedIn = await requireLogin({
+      title: 'Login Required',
+      description: 'Sign in with Google to add money to your wallet. Guest accounts cannot access this feature.',
+    })
+    if (!loggedIn) return
+
     const numAmount = parseInt(amount)
     if (isNaN(numAmount) || numAmount < 1) {
       alert('Please enter a valid amount (min $1)')

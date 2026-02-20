@@ -4,6 +4,7 @@ import { PriceProvider } from "@/providers/PriceProvider";
 import { PromptsProvider } from "@/providers/PromptsProvider";
 import { ChatProvider } from "@/providers/ChatProvider";
 import { PaymentProvider } from "@/providers/PaymentProvider";
+import { AuthGateProvider } from "@/providers/AuthGateProvider";
 import AuthOverlay from "@/components/AuthOverlay";
 import React, { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -68,8 +69,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <PromptsProvider>
           <PaymentProvider>
             <ChatProvider>
-              {showAuthOverlay && <AuthOverlay onClose={handleCloseOverlay} />}
-              {children}
+              <AuthGateProvider>
+                {showAuthOverlay && <AuthOverlay onClose={handleCloseOverlay} />}
+                {children}
+              </AuthGateProvider>
             </ChatProvider>
           </PaymentProvider>
         </PromptsProvider>

@@ -24,8 +24,7 @@ import {
 import { useRouter } from "next/navigation";
 import CardSwipeLoader from "../CardSwipeLoader";
 import { notifyAdvisorNewSession } from "@/utils/email";
-import { usePrice } from "@/providers/PriceProvider";
-
+import { usePrice } from "@/providers/PriceProvider";import { useAuthGate } from '@/providers/AuthGateProvider';
 interface Advisor {
   id: string;
   name: string;
@@ -62,6 +61,7 @@ export function HumanAdvisorModal({
   const fee = (sessionType==="chat" ? price : videoFee);
   const { createRoom } = useVideoRoom();
   const { trackChatStart } = useChatAnalytics();
+  const { requireLogin } = useAuthGate();
 
   const router = useRouter();
 
@@ -102,6 +102,12 @@ export function HumanAdvisorModal({
   };
 
   const handleWalletPayment = async (advisorId: string) => {
+    const loggedIn = await requireLogin({
+      title: 'Login Required',
+      description: 'Sign in with Google to pay and start a session. Guest accounts cannot access this feature.',
+    });
+    if (!loggedIn) return;
+
     setIsProcessing(true);
     try {
       const amountInPaise = fee * 100;
@@ -145,6 +151,12 @@ export function HumanAdvisorModal({
   };
 
   const handleRazorpayPayment = async (advisorId: string) => {
+    const loggedIn = await requireLogin({
+      title: 'Login Required',
+      description: 'Sign in with Google to pay and start a session. Guest accounts cannot access this feature.',
+    });
+    if (!loggedIn) return;
+
     setIsProcessing(true);
     try {
       const amountInPaise = fee * 100;

@@ -9,6 +9,7 @@ import { useChat } from '@/providers/ChatProvider'
 import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useAuthGate } from '@/providers/AuthGateProvider'
 
 type Advisor = {
   uid: string
@@ -37,6 +38,7 @@ function getCategoryKey(spec: string) {
 function AllAdvisorsPage() {
   const { switchChat } = useChat()
   const router = useRouter()
+  const { requireLogin } = useAuthGate()
   const [advisors, setAdvisors] = useState<Advisor[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null)
@@ -66,7 +68,13 @@ function AllAdvisorsPage() {
     fetchAdvisors()
   }, [])
 
-  const handleAdvisorClick = (advisor: Advisor, type: 'chat' | 'video' = 'chat') => {
+  const handleAdvisorClick = async (advisor: Advisor, type: 'chat' | 'video' = 'chat') => {
+    const loggedIn = await requireLogin({
+      title: 'Login Required',
+      description: 'Sign in with Google to connect with an expert advisor. Guest accounts cannot access this feature.',
+    })
+    if (!loggedIn) return
+
     setSelectedAdvisor({
       id: advisor.uid,
       name: advisor.name,
@@ -184,9 +192,14 @@ function AllAdvisorsPage() {
                     <Video className="text-primary group-hover:text-white transition-colors" size={20} />
                   </div>
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault()
                       e.stopPropagation()
+                      const loggedIn = await requireLogin({
+                        title: 'Login Required',
+                        description: 'Sign in with Google to schedule a session. Guest accounts cannot access this feature.',
+                      })
+                      if (!loggedIn) return
                       router.push(`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`)
                     }}
                     className="flex-1 w-10 h-10 bg-primary/30 rounded-2xl flex items-center justify-center group-hover:bg-primary transition-colors cursor-pointer text-primary text-sm group-hover:text-white"

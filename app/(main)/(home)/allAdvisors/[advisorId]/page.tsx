@@ -8,6 +8,7 @@ import { Star, MessageCircle, Phone, Calendar, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { HumanAdvisorModal } from '@/components/Chat/HumanAdvisorModal'
 import { useRouter } from 'next/navigation'
+import { useAuthGate } from '@/providers/AuthGateProvider'
 
 interface Advisor {
   uid: string
@@ -35,6 +36,7 @@ export default function AdvisorProfilePage({ params }: { params: Promise<{ advis
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sessionType, setSessionType] = useState<'chat' | 'video'>('chat')
+  const { requireLogin } = useAuthGate()
 
   useEffect(() => {
     const fetchAdvisor = async () => {
@@ -62,8 +64,14 @@ export default function AdvisorProfilePage({ params }: { params: Promise<{ advis
     fetchAdvisor()
   }, [advisorId, router])
 
-  const handleSessionClick = (type: 'chat' | 'video') => {
+  const handleSessionClick = async (type: 'chat' | 'video') => {
     if (advisor) {
+      const loggedIn = await requireLogin({
+        title: 'Login Required',
+        description: 'Sign in with Google to connect with an expert advisor. Guest accounts cannot access this feature.',
+      })
+      if (!loggedIn) return
+
       setSessionType(type)
       setIsModalOpen(true)
     }
@@ -265,13 +273,20 @@ export default function AdvisorProfilePage({ params }: { params: Promise<{ advis
         </button>
 
         {/* Schedule Button */}
-        <Link
-          href={`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`}
+        <button
+          onClick={async () => {
+            const loggedIn = await requireLogin({
+              title: 'Login Required',
+              description: 'Sign in with Google to schedule a session. Guest accounts cannot access this feature.',
+            })
+            if (!loggedIn) return
+            router.push(`/allAdvisors/schedule?advisorName=${advisor.name}&advisorId=${advisor.uid}`)
+          }}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-2xl font-semibold hover:bg-primary/90 transition-colors"
         >
           <Calendar size={20} />
           Schedule
-        </Link>
+        </button>
       </div>
 
       {/* Modal for Chat/Video */}

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
+import { useAuthGate } from "@/providers/AuthGateProvider";
 
 type UserData = {
   email: string | null;
@@ -27,6 +28,7 @@ type UserData = {
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { requireLogin } = useAuthGate();
 
   const user = auth.currentUser;
   const router = useRouter();
@@ -62,6 +64,16 @@ export default function ProfilePage() {
 
     fetchData();
   }, [user?.uid]);
+
+  const handleHistoryClick = () => {
+    const loggedIn = requireLogin({
+      title: "Log in required.",
+      description: "History is not saved for guest accounts. Please login to save your chats and access anytime."
+    });
+    if(!loggedIn) return;
+
+    router.push('/history')
+  }
 
   const handleLogout = async () => {
     try {
@@ -147,7 +159,7 @@ export default function ProfilePage() {
             <SettingButton
               icon={<MessageSquare className="w-5 h-5" />}
               label="Chat History"
-              href="/history"
+              onClick={handleHistoryClick}
             />
             <SettingButton
               icon={<RefreshCw className="w-5 h-5" />}
