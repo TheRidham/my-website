@@ -39,7 +39,11 @@ export interface VoiceOption {
   labels?: string[];
 }
 
+export interface UseVoiceTransformOptions {
+  autoPlay?: boolean;
+}
+
 export interface UseVoiceTransformReturn extends VoiceTransformState {
-  start: () => Promise<void>;
+  start: (externalStream?: MediaStream) => Promise<void>;
   stop: () => void;
 }

@@ -3,6 +3,7 @@ import {
   Room,
   RemoteParticipant,
   RemoteTrack,
+  RemoteAudioTrack,
   Track,
 } from "twilio-video";
 import { useLayoutEffect, useRef, useState, useCallback } from "react";
@@ -24,6 +25,7 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
   const [connecting, setConnecting] = useState<boolean>(false);
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
+  const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true);
   const [participants, setParticipants] = useState<RemoteParticipant[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,10 +34,10 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
   const roomRef = useRef<Room | null>(null);
   const localTracksRef = useRef<HTMLMediaElement[]>([]);
   const remoteTracksRef = useRef<HTMLMediaElement[]>([]);
+  const remoteAudioTracksRef = useRef<RemoteAudioTrack[]>([]);
   const joinInProgressRef = useRef(false);
 
   const cleanupTracks = useCallback(() => {
-    // Must clear innerHTML FIRST before React tries to unmount
     if (localVideoRef.current) {
       localVideoRef.current.innerHTML = "";
     }
@@ -43,12 +45,11 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
       remoteVideoRef.current.innerHTML = "";
     }
 
-    // Clear the track references
     localTracksRef.current = [];
     remoteTracksRef.current = [];
+    remoteAudioTracksRef.current = [];
   }, []);
 
-  // Create a room if it doesn't exist
   const createRoom = useCallback(
     async (
       advisorIdParam: string,
@@ -86,22 +87,16 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
   const disconnectRoom = useCallback(() => {
     if (roomRef.current) {
       try {
-        // Detach all local participant tracks
         try {
           roomRef.current.localParticipant.tracks.forEach((pub) => {
             try {
               if ("detach" in pub.track) {
                 pub.track.detach();
               }
-            } catch (e) {
-              // Ignore individual track errors
-            }
+            } catch (e) {}
           });
-        } catch (e) {
-          // Ignore local tracks error
-        }
+        } catch (e) {}
 
-        // Detach all remote participant tracks
         try {
           roomRef.current.participants.forEach((participant) => {
             try {
@@ -110,17 +105,11 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
                   if (pub.track && "detach" in pub.track) {
                     pub.track.detach();
                   }
-                } catch (e) {
-                  // Ignore individual track errors
-                }
+                } catch (e) {}
               });
-            } catch (e) {
-              // Ignore participant errors
-            }
+            } catch (e) {}
           });
-        } catch (e) {
-          // Ignore remote tracks error
-        }
+        } catch (e) {}
 
         roomRef.current.disconnect();
       } catch (e) {
@@ -157,7 +146,6 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
           "generateVideoToken",
         );
 
-        // Check if room exists and join
         const joinRes = await joinVideoRoom({ roomId: targetRoomId });
 
         const joinData = joinRes.data as { success?: boolean };
@@ -167,7 +155,6 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
           console.log("room is joined!");
         }
 
-        // Generate token
         const tokenRes = await generateVideoToken({ roomId: targetRoomId });
         const tokenData = tokenRes.data as { token?: string };
         if (!tokenData.token) {
@@ -210,16 +197,27 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
             remoteTracksRef.current.push(mediaElement);
             console.log("Track attached:", track.kind, track.name);
           }
+
+          if (track.kind === "audio" && "mediaStreamTrack" in track) {
+            const audioTrack = track as RemoteAudioTrack;
+            remoteAudioTracksRef.current.push(audioTrack);
+            console.log("Remote audio track stored:", track.name);
+          }
         };
 
         const detachTrack = (track: Track | RemoteTrack) => {
           if ("detach" in track) {
             track.detach().forEach((el) => {
-              // Twilio already removes from DOM, just clean up our reference
               remoteTracksRef.current = remoteTracksRef.current.filter(
                 (t) => t !== el,
               );
             });
+          }
+
+          if (track.kind === "audio") {
+            remoteAudioTracksRef.current = remoteAudioTracksRef.current.filter(
+              (t) => t !== track,
+            );
           }
         };
 
@@ -240,8 +238,6 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
             if (publication.track && publication.isSubscribed) {
               attachTrack(publication.track);
             }
-            // Note: Twilio automatically subscribes to tracks by default.
-            // If not yet subscribed, the 'trackSubscribed' event will fire when ready.
           });
 
           participant.on("trackSubscribed", attachTrack);
@@ -252,7 +248,7 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
         joinedRoom.on("participantConnected", (participant) => {
           console.log("Participant connected:", participant.sid);
           handleParticipant(participant);
-          setStatus("active"); // Update status when someone joins
+          setStatus("active");
         });
         joinedRoom.on("participantDisconnected", (participant) => {
           setParticipants((prevParticipants) =>
@@ -270,7 +266,6 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
         setError(errorMessage);
         setStatus("ended");
 
-        // Clean up on error
         joinInProgressRef.current = false;
       } finally {
         joinInProgressRef.current = false;
@@ -295,7 +290,6 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
       pub.track.enable(newState);
     });
 
-    // If camera is being disabled, clear the local video preview
     if (!newState && localVideoRef.current) {
       localVideoRef.current.innerHTML = "";
       localTracksRef.current = [];
@@ -304,7 +298,6 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
       localVideoRef.current &&
       localTracksRef.current.length === 0
     ) {
-      // If camera is being enabled, re-attach the video tracks
       roomRef.current.localParticipant.videoTracks.forEach((pub) => {
         if (pub.track && "attach" in pub.track) {
           const mediaElement = pub.track.attach();
@@ -329,6 +322,47 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
     setMicEnabled(newState);
   }, [micEnabled]);
 
+  const getRemoteAudioStream = useCallback((): MediaStream | null => {
+    const audioTracks = remoteAudioTracksRef.current;
+    if (audioTracks.length === 0) {
+      console.log("No remote audio tracks available");
+      return null;
+    }
+
+    const mediaStreamTracks = audioTracks
+      .map((track) => track.mediaStreamTrack)
+      .filter(Boolean);
+
+    if (mediaStreamTracks.length === 0) {
+      console.log("No media stream tracks available");
+      return null;
+    }
+
+    return new MediaStream(mediaStreamTracks);
+  }, []);
+
+  const toggleRemoteAudio = useCallback((): void => {
+    const newState = !remoteAudioEnabled;
+
+    remoteTracksRef.current.forEach((element) => {
+      if (element instanceof HTMLAudioElement) {
+        element.muted = !newState;
+      }
+    });
+
+    setRemoteAudioEnabled(newState);
+  }, [remoteAudioEnabled]);
+
+  const setRemoteAudioMuted = useCallback((muted: boolean): void => {
+    remoteTracksRef.current.forEach((element) => {
+      if (element instanceof HTMLAudioElement) {
+        element.muted = muted;
+      }
+    });
+
+    setRemoteAudioEnabled(!muted);
+  }, []);
+
   useLayoutEffect(() => {
     return () => {
       disconnectRoom();
@@ -343,8 +377,12 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
     connecting,
     cameraEnabled,
     micEnabled,
+    remoteAudioEnabled,
     toggleCamera,
     toggleMic,
+    toggleRemoteAudio,
+    setRemoteAudioMuted,
+    getRemoteAudioStream,
     localVideoRef,
     remoteVideoRef,
     participants,

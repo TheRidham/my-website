@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
-import { Scribe, RealtimeEvents, CommitStrategy } from "@elevenlabs/client";
+import { useCallback, useRef, useState } from "react";
+import { Scribe, RealtimeEvents, CommitStrategy, AudioFormat } from "@elevenlabs/client";
 import type {
   VoiceTransformStatus,
   Transcript,
   VoiceTransformConfig,
-  VoiceSettings,
   UseVoiceTransformReturn,
+  UseVoiceTransformOptions,
 } from "@/types/voice-transform";
 
 const COMMIT_CONFIG = {
@@ -17,7 +17,27 @@ const COMMIT_CONFIG = {
   punctuationMarks: [".", "?", "!", "。", "।"],
 };
 
-export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransformReturn {
+function getSupportedSampleRate(actualRate: number): { format: AudioFormat; rate: number } {
+  const supportedRates = [
+    { format: AudioFormat.PCM_48000, rate: 48000 },
+    { format: AudioFormat.PCM_44100, rate: 44100 },
+    { format: AudioFormat.PCM_24000, rate: 24000 },
+    { format: AudioFormat.PCM_22050, rate: 22050 },
+    { format: AudioFormat.PCM_16000, rate: 16000 },
+    { format: AudioFormat.PCM_8000, rate: 8000 },
+  ];
+  
+  const closest = supportedRates.reduce((prev, curr) => 
+    Math.abs(curr.rate - actualRate) < Math.abs(prev.rate - actualRate) ? curr : prev
+  );
+  
+  return closest;
+}
+
+export function useVoiceTransform(
+  config?: VoiceTransformConfig,
+  options?: UseVoiceTransformOptions,
+): UseVoiceTransformReturn {
   const [state, setState] = useState({
     status: "idle" as VoiceTransformStatus,
     partialTranscript: "",
@@ -34,6 +54,10 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
   const isStoppingRef = useRef(false);
   const commitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastPartialRef = useRef<string>("");
+  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const isExternalStreamRef = useRef(false);
+  const isSessionReadyRef = useRef(false);
 
   const setStatus = useCallback((status: VoiceTransformStatus) => {
     setState((prev) => ({ ...prev, status }));
@@ -168,25 +192,77 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
     }
   }, [clearCommitTimer, forceCommit, endsWithPunctuation, getWordCount]);
 
-  const start = useCallback(async () => {
+  const float32ToPCM16 = useCallback((float32Array: Float32Array): Int16Array => {
+    const int16Array = new Int16Array(float32Array.length);
+    for (let i = 0; i < float32Array.length; i++) {
+      const s = Math.max(-1, Math.min(1, float32Array[i]));
+      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return int16Array;
+  }, []);
+
+  const arrayBufferToBase64 = useCallback((buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }, []);
+
+  const resampleAudio = useCallback((
+    input: Float32Array,
+    inputSampleRate: number,
+    outputSampleRate: number
+  ): Float32Array => {
+    if (inputSampleRate === outputSampleRate) return input;
+    
+    const ratio = inputSampleRate / outputSampleRate;
+    const outputLength = Math.floor(input.length / ratio);
+    const output = new Float32Array(outputLength);
+    
+    for (let i = 0; i < outputLength; i++) {
+      const srcIndex = Math.floor(i * ratio);
+      output[i] = input[srcIndex];
+    }
+    
+    return output;
+  }, []);
+
+  const start = useCallback(async (externalStream?: MediaStream) => {
     isStoppingRef.current = false;
+    isSessionReadyRef.current = false;
     lastPartialRef.current = "";
     setError(null);
-    setStatus("requesting-mic");
+
+    const hasExternalStream = !!externalStream;
+    isExternalStreamRef.current = hasExternalStream;
+
+    if (!hasExternalStream) {
+      setStatus("requesting-mic");
+    } else {
+      setStatus("connecting");
+    }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 16000,
-          channelCount: 1,
-        },
-      });
+      let stream: MediaStream;
+
+      if (externalStream) {
+        stream = externalStream;
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 16000,
+            channelCount: 1,
+          },
+        });
+      }
       streamRef.current = stream;
 
-      const audioContext = new AudioContext({ sampleRate: 48000 });
+      const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
 
       setStatus("connecting");
@@ -201,22 +277,81 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
 
       const { token } = await tokenResponse.json();
 
-      const connection = Scribe.connect({
-        token,
-        modelId: "scribe_v2_realtime",
-        commitStrategy: CommitStrategy.MANUAL,
-        microphone: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      let connection: ReturnType<typeof Scribe.connect>;
+      let targetSampleRate = 16000;
+      let audioFormat = AudioFormat.PCM_16000;
+
+      if (hasExternalStream) {
+        const actualSampleRate = audioContext.sampleRate;
+        const supported = getSupportedSampleRate(actualSampleRate);
+        targetSampleRate = supported.rate;
+        audioFormat = supported.format;
+        
+        console.log(`[SCRIBE] Using sample rate ${targetSampleRate} (actual: ${actualSampleRate})`);
+        
+        connection = Scribe.connect({
+          token,
+          modelId: "scribe_v2_realtime",
+          commitStrategy: CommitStrategy.MANUAL,
+          audioFormat,
+          sampleRate: targetSampleRate,
+        });
+      } else {
+        connection = Scribe.connect({
+          token,
+          modelId: "scribe_v2_realtime",
+          commitStrategy: CommitStrategy.MANUAL,
+          microphone: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      }
 
       scribeConnectionRef.current = connection;
 
+      connection.on(RealtimeEvents.OPEN, () => {
+        console.log("[SCRIBE] WebSocket opened");
+      });
+
       connection.on(RealtimeEvents.SESSION_STARTED, () => {
         console.log("[SCRIBE] Session started");
+        isSessionReadyRef.current = true;
         setStatus("listening");
+        
+        if (hasExternalStream) {
+          const source = audioContext.createMediaStreamSource(stream);
+          mediaStreamSourceRef.current = source;
+
+          const bufferSize = 4096;
+          const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+          source.connect(scriptProcessor);
+          
+          scriptProcessorRef.current = scriptProcessor;
+
+          scriptProcessor.onaudioprocess = (event) => {
+            if (isStoppingRef.current || !scribeConnectionRef.current || !isSessionReadyRef.current) return;
+
+            let inputData: Float32Array = event.inputBuffer.getChannelData(0);
+            
+            if (audioContext.sampleRate !== targetSampleRate) {
+              const resampled = resampleAudio(inputData, audioContext.sampleRate, targetSampleRate);
+              inputData = new Float32Array(resampled);
+            }
+            
+            const pcm16 = float32ToPCM16(inputData);
+            const base64 = arrayBufferToBase64(pcm16.buffer as ArrayBuffer);
+
+            try {
+              scribeConnectionRef.current.send({ audioBase64: base64 });
+            } catch (e) {
+              console.error("[SCRIPT_PROCESSOR] Error sending audio:", e);
+            }
+          };
+          
+          console.log("[SCRIBE] Audio processing started");
+        }
       });
 
       connection.on(RealtimeEvents.PARTIAL_TRANSCRIPT, (data: { text: string }) => {
@@ -240,13 +375,24 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
             partialTranscript: "",
             committedTranscripts: [...prev.committedTranscripts, transcript],
           }));
-          fetchAndPlayTTS(text);
+          if (options?.autoPlay !== false) {
+            fetchAndPlayTTS(text);
+          }
         }
       });
 
       connection.on(RealtimeEvents.ERROR, (error: unknown) => {
+        if (isStoppingRef.current) return;
+        
         console.error("[SCRIBE] Error:", error);
         setError("Transcription error. Please try again.");
+      });
+
+      connection.on(RealtimeEvents.AUTH_ERROR, (error: unknown) => {
+        if (isStoppingRef.current) return;
+        
+        console.error("[SCRIBE] Auth Error:", error);
+        setError("Authentication error. Please try again.");
       });
 
       connection.on(RealtimeEvents.CLOSE, () => {
@@ -267,10 +413,11 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
         setError("Failed to start. Please try again.");
       }
     }
-  }, [config, setError, setStatus, handlePartialTranscript, clearCommitTimer, forceCommit, fetchAndPlayTTS]);
+  }, [config, options?.autoPlay, setError, setStatus, handlePartialTranscript, clearCommitTimer, fetchAndPlayTTS, float32ToPCM16, arrayBufferToBase64, resampleAudio]);
 
   const stop = useCallback(() => {
     isStoppingRef.current = true;
+    isSessionReadyRef.current = false;
     clearCommitTimer();
 
     if (currentSourceRef.current) {
@@ -280,15 +427,29 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
       currentSourceRef.current = null;
     }
 
+    if (scriptProcessorRef.current) {
+      try {
+        scriptProcessorRef.current.disconnect();
+      } catch {}
+      scriptProcessorRef.current = null;
+    }
+
+    if (mediaStreamSourceRef.current) {
+      try {
+        mediaStreamSourceRef.current.disconnect();
+      } catch {}
+      mediaStreamSourceRef.current = null;
+    }
+
     if (scribeConnectionRef.current) {
       scribeConnectionRef.current.close();
       scribeConnectionRef.current = null;
     }
 
-    if (streamRef.current) {
+    if (!isExternalStreamRef.current && streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
     }
+    streamRef.current = null;
 
     if (audioContextRef.current) {
       audioContextRef.current.close();
@@ -298,6 +459,7 @@ export function useVoiceTransform(config?: VoiceTransformConfig): UseVoiceTransf
     playbackQueueRef.current = [];
     isPlayingRef.current = false;
     lastPartialRef.current = "";
+    isExternalStreamRef.current = false;
 
     setState({
       status: "idle",

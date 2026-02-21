@@ -268,7 +268,7 @@ export default function VoiceTransformTestPage() {
               </div>
 
               <button
-                onClick={isRunning ? stop : start}
+                onClick={() => isRunning ? stop() : start()}
                 className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
                   isRunning
                     ? "bg-red-600 hover:bg-red-700"
