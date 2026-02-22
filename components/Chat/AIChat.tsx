@@ -41,6 +41,7 @@ import Link from "next/link";
 import AdvisorPromptModal from "../AdvisorPromptModal";
 import FollowUpChips from "../FollowUpChips";
 import MCQOptions from "../MCQOptions";
+import { useRouter } from "next/navigation";
 
 interface Message {
   role: "user" | "assistant";
@@ -114,6 +115,8 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     // State for advisor prompt modal
     const [showAdvisorModal, setShowAdvisorModal] = useState(false);
     const userMessageCountRef = useRef(0);
+    
+    const router = useRouter();
 
     // Configure marked options
     marked.setOptions({
@@ -692,6 +695,14 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                       {mode}
                     </button>
                   ))}
+                </div>
+                <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
+                    <button
+                      onClick={() => router.push("/customize") }
+                      className={`bg-background capitalize px-2 sm:px-4 py-1.5 text-xs font-medium text-primary`}
+                    >
+                      customize your ai
+                    </button>
                 </div>
               </div>
             </div>
