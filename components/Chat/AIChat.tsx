@@ -319,9 +319,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
 
     useEffect(() => {
       if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        scrollRef.current.scrollTop += 200;
       }
-    }, [messages, isLoading, isStreaming]);
+    }, [isLoading]);
 
     const processMessage = async (content: string) => {
       if (!content.trim() || isLoading || isStreaming) {
