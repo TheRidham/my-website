@@ -22,6 +22,7 @@ import {
   Shield,
   Lock,
 } from "lucide-react";
+import HealthQuestionnaireModal from "@/components/CustomizeAI/HealthQuestionnaireModal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -360,6 +361,7 @@ export default function CustomizePage() {
   const [activeGeneticCategory, setActiveGeneticCategory] =
     useState("DNA Analysis");
   const geneticInputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState<boolean>(false);
 
   // Health Trackers state
   const [trackers, setTrackers] = useState<HealthTracker[]>([
@@ -1005,48 +1007,19 @@ export default function CustomizePage() {
             icon={<Sparkles size={20} className="text-primary" />}
             title="Health Highlights"
             subtitle="Add notes & ask quick questions"
-            badge="Coming Soon"
           >
-            {/* Add Highlight Input */}
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="text"
-                value={highlightText}
-                onChange={(e) => setHighlightText(e.target.value)}
-                placeholder="Add a health note or highlight..."
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-gray-400"
-              />
-              <button className="bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-all shadow-sm flex items-center gap-1.5">
-                <Plus size={14} />
-                Add
+            <div className="w-full">
+              <button
+                onClick={() => setOpen(true)}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-xl"
+              >
+                Add or Edit Your Health Report
               </button>
-            </div>
 
-            {/* Quick Questions */}
-            <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
-                Quick Questions
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {QUICK_QUESTIONS.map((q, i) => (
-                  <button
-                    key={i}
-                    className="flex items-center gap-2 text-left px-3.5 py-2.5 rounded-xl border border-gray-200 hover:border-primary/30 hover:bg-primary/5 transition-all group"
-                  >
-                    <MessageCircle
-                      size={14}
-                      className="text-gray-400 group-hover:text-primary shrink-0 transition-colors"
-                    />
-                    <span className="text-xs font-medium text-gray-600 group-hover:text-primary transition-colors">
-                      {q}
-                    </span>
-                    <ChevronRight
-                      size={12}
-                      className="ml-auto text-gray-300 group-hover:text-primary shrink-0 transition-colors"
-                    />
-                  </button>
-                ))}
-              </div>
+              <HealthQuestionnaireModal
+                isOpen={open}
+                onClose={() => setOpen(false)}
+              />
             </div>
           </SectionCard>
         </div>

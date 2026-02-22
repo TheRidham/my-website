@@ -21,6 +21,7 @@ import {
   Group,
   Users,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { ADVISOR_CATEGORIES } from "@/constant/advisors";
 import { SpeedMode, PrivacyMode, DEFAULT_SPEED_MODE, DEFAULT_PRIVACY_MODE } from "@/constants/chatModes";
@@ -33,7 +34,6 @@ import { HumanAdvisorModal } from "./HumanAdvisorModal";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { useChatAnalytics } from "@/hooks/useChatAnalytics";
 import { auth } from "@/lib/firebase";
-import { LucideIcon } from "../ui/LucideIcon";
 import { ChatHeader } from "./ChatHeader";
 import ChatSection from "../ChatSection";
 import AppDownloadBadges from "../AppDownloadBadges";
@@ -42,6 +42,7 @@ import AdvisorPromptModal from "../AdvisorPromptModal";
 import FollowUpChips from "../FollowUpChips";
 import MCQOptions from "../MCQOptions";
 import { useRouter } from "next/navigation";
+import { useAuthGate } from "@/providers/AuthGateProvider";
 
 interface Message {
   role: "user" | "assistant";
@@ -106,6 +107,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     const { jaiyaPrompt, advisorsPrompt } = usePrompts();
     const { switchChat, activeChat } = useChat();
     const { createChat, updateChat } = useChatHistory(auth.currentUser?.uid);
+    const { requireLogin } = useAuthGate();
 
     const messagesRef = useRef<any[]>([]);
     // Track if we've processed the initial message to avoid duplicates
@@ -698,10 +700,18 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                 </div>
                 <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
                     <button
-                      onClick={() => router.push("/customize") }
-                      className={`bg-background capitalize px-2 sm:px-4 py-1.5 text-xs font-medium text-primary`}
+                      onClick={async () => {
+                        const loggedIn = await requireLogin({
+                          title: 'Login Required',
+                          description: 'Sign in with Google to claim your $10 free credit. Guest accounts cannot access this feature.',
+                        });
+                        if (!loggedIn) return;
+                        router.push("/customize") 
+                      }}
+                      className={`bg-background capitalize flex gap-1 cursor-pointer px-2 sm:px-4 py-1.5 text-xs font-medium text-primary`}
                     >
-                      customize your ai
+                      <Settings size={16} />
+                      <span className="hidden sm:inline">customize your AI</span>
                     </button>
                 </div>
               </div>
