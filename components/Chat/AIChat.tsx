@@ -24,7 +24,12 @@ import {
   Settings,
 } from "lucide-react";
 import { ADVISOR_CATEGORIES } from "@/constant/advisors";
-import { SpeedMode, PrivacyMode, DEFAULT_SPEED_MODE, DEFAULT_PRIVACY_MODE } from "@/constants/chatModes";
+import {
+  SpeedMode,
+  PrivacyMode,
+  DEFAULT_SPEED_MODE,
+  DEFAULT_PRIVACY_MODE,
+} from "@/constants/chatModes";
 import { Button } from "@/components/ui/button";
 import { usePrompts } from "@/providers/PromptsProvider";
 import { useChatAI } from "@/hooks/useAI";
@@ -98,8 +103,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     ref,
   ) => {
     const [input, setInput] = useState("");
-    const [speedMode, setSpeedMode] = useState<SpeedMode>(initialSpeedMode || DEFAULT_SPEED_MODE);
-    const [privacyMode, setPrivacyMode] = useState<PrivacyMode>(initialPrivacyMode || DEFAULT_PRIVACY_MODE);
+    const [speedMode, setSpeedMode] = useState<SpeedMode>(
+      initialSpeedMode || DEFAULT_SPEED_MODE,
+    );
+    const [privacyMode, setPrivacyMode] = useState<PrivacyMode>(
+      initialPrivacyMode || DEFAULT_PRIVACY_MODE,
+    );
     const [hasStartedChat, setHasStartedChat] = useState(false);
     const [showAnonWarning, setShowAnonWarning] = useState(false);
     const [isHumanModalOpen, setIsHumanModalOpen] = useState(false);
@@ -117,7 +126,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     // State for advisor prompt modal
     const [showAdvisorModal, setShowAdvisorModal] = useState(false);
     const userMessageCountRef = useRef(0);
-    
+
     const router = useRouter();
 
     // Configure marked options
@@ -198,7 +207,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
     }, [isJaiya, categoryKey, subcategoryTitle, jaiyaPrompt, advisorsPrompt]);
 
     // Check if prompts are still loading (needed when we expect them)
-    const isPromptLoading = Boolean((isJaiya || (categoryKey && subcategoryTitle)) && !systemPrompt);
+    const isPromptLoading = Boolean(
+      (isJaiya || (categoryKey && subcategoryTitle)) && !systemPrompt,
+    );
 
     const {
       messages,
@@ -209,7 +220,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       isStreaming,
       sendMessageStream,
       shouldSaveToDb,
-      } = useChatAI({
+    } = useChatAI({
       systemPrompt,
       appendGeneralPrompt: !isJaiya,
       speedMode,
@@ -232,7 +243,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
         setMessages(formattedHistory);
         messagesRef.current = formattedHistory;
         isHistoryLoadedRef.current = true;
-        
+
         // Track chat start
         trackChatStart("ai", categoryKey, subcategoryTitle);
       }
@@ -357,14 +368,14 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
       });
 
       // Show advisor modal after message is processed
-    if (
-      userMessageCountRef.current === 2 ||
-      userMessageCountRef.current === 6
+      if (
+        userMessageCountRef.current === 2 ||
+        userMessageCountRef.current === 6
       ) {
-      setTimeout(() => {
-        setShowAdvisorModal(true);
-      }, 1000);
-    }
+        setTimeout(() => {
+          setShowAdvisorModal(true);
+        }, 1000);
+      }
 
       // Save messages to Firebase (only for non-Jaiya chats and if shouldSaveToDb is true)
       if (!isJaiya && shouldSaveToDb) {
@@ -528,123 +539,141 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             {isPromptLoading && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
                 <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-sm font-medium text-muted-foreground">Loading advisor data...</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Loading advisor data...
+                </p>
               </div>
             )}
 
             {/* New Welcome Screen */}
             {!isPromptLoading && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[70vh] pb-5">
-                {isJaiya ? <ChatSection />:
-                <>
-                  <p className="text-gray-700 font-semibold mb-3 text-center">What can I help you with?</p>
+                {isJaiya ? (
+                  <ChatSection />
+                ) : (
+                  <>
+                    <p className="text-gray-700 font-semibold mb-3 text-center">
+                      What can I help you with?
+                    </p>
 
-                  {suggestions.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
-                      {suggestions.map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => processMessage(suggestion)}
-                          className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-primary hover:bg-accent transition-all group shadow-sm text-left"
-                        >
-                          <p className="text-[13px] font-semibold text-gray-800 group-hover:text-primary">
-                            {suggestion}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </>}
+                    {suggestions.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+                        {suggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => processMessage(suggestion)}
+                            className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-primary hover:bg-accent transition-all group shadow-sm text-left"
+                          >
+                            <p className="text-[13px] font-semibold text-gray-800 group-hover:text-primary">
+                              {suggestion}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
             {/* Chat History */}
-            {!isPromptLoading && messages.map((msg, index) => {
-              // Hide streaming messages for Jaiya (show "Thinking..." instead)
-              if (isJaiya && (msg as any)._isStreaming) {
-                return null;
-              }
-
-              // If it's Jaiya and the message looks like JSON, we might want to hide it or show the 'response' field
-              let displayContent = msg.content;
-              if (isJaiya && msg.role === "assistant") {
-                try {
-                  const jsonMatch = msg.content.match(/\{[\s\S]*\}/);
-                  const jsonStr = jsonMatch ? jsonMatch[0] : msg.content;
-                  const data = JSON.parse(jsonStr);
-                  if (data.isfind) {
-                    return null; // Hide redirecting messages
-                  }
-                  displayContent = data.response || msg.content;
-                } catch (e) {
-                  // Not JSON, show as is
+            {!isPromptLoading &&
+              messages.map((msg, index) => {
+                // Hide streaming messages for Jaiya (show "Thinking..." instead)
+                if (isJaiya && (msg as any)._isStreaming) {
+                  return null;
                 }
-              }
 
-              return (
-                <div
-                  key={index}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                // If it's Jaiya and the message looks like JSON, we might want to hide it or show the 'response' field
+                let displayContent = msg.content;
+                if (isJaiya && msg.role === "assistant") {
+                  try {
+                    const jsonMatch = msg.content.match(/\{[\s\S]*\}/);
+                    const jsonStr = jsonMatch ? jsonMatch[0] : msg.content;
+                    const data = JSON.parse(jsonStr);
+                    if (data.isfind) {
+                      return null; // Hide redirecting messages
+                    }
+                    displayContent = data.response || msg.content;
+                  } catch (e) {
+                    // Not JSON, show as is
+                  }
+                }
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
-                >
-                  <div className="flex flex-col items-start max-w-[85%]">
-                    <div
-                      className={`px-4 py-2 shadow-sm rounded-2xl ${msg.role === "user"
-                          ? "bg-primary text-white rounded-tr-none"
-                          : "bg-white border border-gray-200 text-gray-700 rounded-tl-none"
-                        }`}
-                    >
+                  >
+                    <div className="flex flex-col items-start max-w-[85%]">
                       <div
-                        className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
-                        dangerouslySetInnerHTML={{
-                          __html: marked.parse(displayContent ?? ""),
-                        }}
-                      />
+                        className={`px-4 py-2 shadow-sm rounded-2xl ${
+                          msg.role === "user"
+                            ? "bg-primary text-white rounded-tr-none"
+                            : "bg-white border border-gray-200 text-gray-700 rounded-tl-none"
+                        }`}
+                      >
+                        <div
+                          className="text-[14px] leading-relaxed font-medium prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100"
+                          dangerouslySetInnerHTML={{
+                            __html: marked.parse(displayContent ?? ""),
+                          }}
+                        />
+                      </div>
+
+                      {/* Follow-up Questions and MCQ - only for advisors, not Jaiya */}
+                      {!isJaiya && msg.role === "assistant" && (
+                        <>
+                          {(msg as any).followupQuestions &&
+                            (msg as any).followupQuestions.length > 0 && (
+                              <FollowUpChips
+                                questions={(msg as any).followupQuestions}
+                                onQuestionTap={async (question) => {
+                                  await sendMessageStream(question);
+                                  userMessageCountRef.current += 1;
+                                  if (
+                                    userMessageCountRef.current === 2 ||
+                                    userMessageCountRef.current === 6
+                                  ) {
+                                    setTimeout(() => {
+                                      setShowAdvisorModal(true);
+                                    }, 1000);
+                                  }
+                                }}
+                              />
+                            )}
+
+                          {(msg as any).isMCQ && (msg as any).mcqOptions && (
+                            <MCQOptions
+                              options={(msg as any).mcqOptions}
+                              onOptionPress={async (option) => {
+                                await sendMessageStream(option);
+                                userMessageCountRef.current += 1;
+                                if (
+                                  userMessageCountRef.current === 2 ||
+                                  userMessageCountRef.current === 6
+                                ) {
+                                  setTimeout(() => {
+                                    setShowAdvisorModal(true);
+                                  }, 1000);
+                                }
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
                     </div>
-
-                    {/* Follow-up Questions and MCQ - only for advisors, not Jaiya */}
-                    {!isJaiya && msg.role === 'assistant' && (
-                      <>
-                        {(msg as any).followupQuestions && (msg as any).followupQuestions.length > 0 && (
-                          <FollowUpChips
-                            questions={(msg as any).followupQuestions}
-                            onQuestionTap={async (question) => {
-                              await sendMessageStream(question);
-                              userMessageCountRef.current += 1;
-                              if(userMessageCountRef.current === 2 || userMessageCountRef.current === 6) {
-                                setTimeout(() => {
-                                  setShowAdvisorModal(true);
-                                }, 1000)
-                              }
-                            }}
-                          />
-                        )}
-
-                        {(msg as any).isMCQ && (msg as any).mcqOptions && (
-                          <MCQOptions
-                            options={(msg as any).mcqOptions}
-                            onOptionPress={async (option) => {
-                              await sendMessageStream(option);
-                              userMessageCountRef.current += 1;
-                              if(userMessageCountRef.current === 2 || userMessageCountRef.current === 6) {
-                                setTimeout(() => {
-                                  setShowAdvisorModal(true);
-                                }, 1000)
-                              }
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
             {/* Loading State */}
             {/* For Jaiya: Show during entire loading/streaming */}
             {/* For others: Show only when loading and no streaming message yet */}
-            {!isPromptLoading && isLoading &&
+            {!isPromptLoading &&
+              isLoading &&
               (isJaiya || !messages.some((m) => (m as any)._isStreaming)) && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
@@ -656,12 +685,9 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                     </div>
                   </div>
                 </div>
-              )
-            }
+              )}
           </div>
         </div>
-
-        
 
         {/* Input Area */}
         <div className="px-4 py-1.5 relative">
@@ -669,14 +695,16 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             <div className="pl-6 max-w-2xl w-full pt-2 absolute -top-10 left-1/2 -translate-x-1/2">
               <div className="flex gap-3 flex-wrap">
                 <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
-                  {(['Quick', 'Thoughtful'] as const).map((mode) => (
+                  {(["Quick", "Thoughtful"] as const).map((mode) => (
                     <button
                       key={mode}
-                      onClick={() => setSpeedMode(mode.toLowerCase() as SpeedMode)}
+                      onClick={() =>
+                        setSpeedMode(mode.toLowerCase() as SpeedMode)
+                      }
                       className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
                         speedMode === mode.toLowerCase()
-                          ? 'text-primary'
-                          : 'text-gray-600 hover:text-gray-800'
+                          ? "text-primary"
+                          : "text-gray-600 hover:text-gray-800"
                       }`}
                     >
                       {mode}
@@ -684,35 +712,49 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                   ))}
                 </div>
                 <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
-                  {(['Anonymized', 'For You'] as const).map((mode) => (
+                  {(["Anonymized", "For You"] as const).map((mode) => (
                     <button
                       key={mode}
-                      onClick={() => setPrivacyMode(mode === 'For You' ? 'forYou' : 'anonymized' as PrivacyMode)}
+                      onClick={() =>
+                        setPrivacyMode(
+                          mode === "For You"
+                            ? "forYou"
+                            : ("anonymized" as PrivacyMode),
+                        )
+                      }
                       className={`bg-background px-2 sm:px-4 py-1.5 text-xs font-medium transition-colors ${
-                        privacyMode === (mode === 'For You' ? 'forYou' : 'anonymized')
-                          ? 'text-primary'
-                          : 'text-gray-600 hover:text-gray-800'
+                        privacyMode ===
+                        (mode === "For You" ? "forYou" : "anonymized")
+                          ? "text-primary"
+                          : "text-gray-600 hover:text-gray-800"
                       }`}
                     >
                       {mode}
                     </button>
                   ))}
                 </div>
-                <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
-                    <button
-                      onClick={async () => {
-                        const loggedIn = await requireLogin({
-                          title: 'Login Required',
-                          description: 'Sign in with Google to claim your $10 free credit. Guest accounts cannot access this feature.',
-                        });
-                        if (!loggedIn) return;
-                        router.push("/customize") 
-                      }}
-                      className={`bg-background capitalize flex gap-1 cursor-pointer px-2 sm:px-4 py-1.5 text-xs font-medium text-primary`}
-                    >
-                      <Settings size={16} />
-                      <span className="hidden sm:inline">customize your AI</span>
-                    </button>
+                <div className="relative inline-flex border border-gray-300 rounded-full divide-x divide-gray-300">
+                  <button
+                    onClick={async () => {
+                      const loggedIn = await requireLogin({
+                        title: "Login Required",
+                        description:
+                          "Sign in with Google to claim your $10 free credit. Guest accounts cannot access this feature.",
+                      });
+                      if (!loggedIn) return;
+                      router.push("/customize");
+                    }}
+                    className="bg-background rounded-full capitalize flex items-center gap-1 cursor-pointer px-3 sm:px-4 py-1.5 text-xs font-medium text-primary"
+                  >
+                    <Settings size={16} />
+                    <span className="hidden sm:inline">customize your AI</span>
+                  </button>
+
+                  <div className="absolute -top-2 -right-4 flex bg-background border border-purple-600 justify-center items-center rounded-full px-1.5 py-0.5 z-10">
+                    <span className="text-[10px] leading-none font-medium text-purple-500 uppercase tracking-wider">
+                      beta
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -744,10 +786,12 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
             By continuing, you agree to our&nbsp;
             <Link href="/terms" className="underline">
               Terms of Service
-            </Link> &nbsp;and&nbsp; 
+            </Link>{" "}
+            &nbsp;and&nbsp;
             <Link href="/policy" className="underline">
               Privacy Policy
-            </Link>.
+            </Link>
+            .
           </div>
         )}
 
