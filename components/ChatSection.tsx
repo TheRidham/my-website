@@ -102,7 +102,7 @@ export default function ChatSection() {
               Your Personal Health Team
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-             Get presidential-level care from a private health team and a deeply personalized AI built around your body, environment & preferences
+             Get presidential-level care from a private health team and a deeply personalized<span className="text-foreground font-medium"> AI built around your body, environment & preferences </span>  
             </p>
 
             {/* Pill Statistic */}
