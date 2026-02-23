@@ -21,6 +21,7 @@ import {
   Shield,
   Lock,
   Settings,
+  HeartHandshake,
 } from "lucide-react";
 import HealthQuestionnaireModal from "@/components/CustomizeAI/HealthQuestionnaireModal";
 
@@ -998,7 +999,7 @@ export default function CustomizePage() {
 
           {/* ─── 4. Health Highlights (Placeholder) ─────────────────────── */}
           <SectionCard
-            icon={<Settings size={20} className="text-primary" />}
+            icon={<HeartHandshake size={20} className="text-primary" />}
             title="Health Highlights"
             subtitle="Add notes & ask quick questions"
           >

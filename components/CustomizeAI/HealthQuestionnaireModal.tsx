@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent } from "react";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 
 interface HealthFormData {
   bmi: string;
@@ -51,6 +53,28 @@ export default function HealthQuestionnaireModal({
 
   const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
 
+  useEffect(() => {
+    const fetchReport = async () => {
+      if (!auth.currentUser) {
+        console.log("User not authenticated");
+        return;
+      }
+
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      const snapshot = await getDoc(userRef);
+      
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setFormData({ ...data?.healthReport, customQuestions: null });
+        setCustomQuestions(data?.healthReport?.customQuestions);
+      } else {
+        console.log("Could't fetch existing health report");
+      }
+    };
+
+    fetchReport();
+  }, [isOpen])
+  
   if (!isOpen) return null;
 
   const handleChange = (
@@ -92,15 +116,26 @@ export default function HealthQuestionnaireModal({
     );
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!auth.currentUser?.uid) {
+      console.error("User is not authenticated");
+      return;
+    }
+
+    const userRef = doc(db, 'users', auth.currentUser.uid);
     const finalData = {
       ...formData,
       customQuestions,
     };
 
     console.log("Health Questionnaire Data:", finalData);
+
+    await updateDoc(userRef, {
+      'healthReport': finalData,
+      updatedAt: Date.now()
+    });
 
     onClose();
   };
