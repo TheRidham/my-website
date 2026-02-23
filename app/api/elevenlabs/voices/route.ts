@@ -11,7 +11,6 @@ export async function GET() {
     }
 
     const response = await (elevenlabs as any).voices.getAll();
-
     return NextResponse.json(response);
   } catch (error) {
     console.error("[VOICES] Error:", error);
