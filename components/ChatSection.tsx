@@ -102,7 +102,7 @@ export default function ChatSection() {
               Your Personal Health Team
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              We'll help you with <span className="text-foreground font-medium">nutrition</span>, <span className="text-foreground font-medium">lifestyle</span>, <span className="text-foreground font-medium">supplements</span> & <span className="text-foreground font-medium">OTC advisory</span> — keeping you healthy before you ever need clinical intervention.
+             Get presidential-level care from a private health team and a deeply personalized<span className="text-foreground font-medium"> AI built around your body, environment & preferences </span>  
             </p>
 
             {/* Pill Statistic */}
