@@ -733,7 +733,7 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                     </button>
                   ))}
                 </div>
-                <div className="relative inline-flex border border-gray-300 rounded-full divide-x divide-gray-300">
+                <div className="flex border border-gray-300 rounded-full overflow-hidden divide-x divide-gray-300">
                   <button
                     onClick={async () => {
                       const loggedIn = await requireLogin({
@@ -744,17 +744,11 @@ export const AIChat = forwardRef<AIChatHandle, AIChatProps>(
                       if (!loggedIn) return;
                       router.push("/customize");
                     }}
-                    className="bg-background rounded-full capitalize flex items-center gap-1 cursor-pointer px-3 sm:px-4 py-1.5 text-xs font-medium text-primary"
+                    className={`bg-background capitalize flex gap-1 cursor-pointer px-2 sm:px-4 py-1.5 text-xs font-medium text-primary`}
                   >
                     <Settings size={16} />
                     <span className="hidden sm:inline">customize your AI</span>
                   </button>
-
-                  <div className="absolute -top-2 -right-4 flex bg-background border border-purple-600 justify-center items-center rounded-full px-1.5 py-0.5 z-10">
-                    <span className="text-[10px] leading-none font-medium text-purple-500 uppercase tracking-wider">
-                      beta
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
