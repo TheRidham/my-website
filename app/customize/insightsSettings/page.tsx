@@ -23,7 +23,7 @@ import {
   Settings,
   HeartHandshake,
 } from "lucide-react";
-import HealthQuestionnaireModal from "@/components/CustomizeAI/HealthQuestionnaireModal";
+import InsightsInput from "@/components/CustomizeAI/InsightsInput";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -362,7 +362,6 @@ export default function CustomizePage() {
   const [activeGeneticCategory, setActiveGeneticCategory] =
     useState("DNA Analysis");
   const geneticInputRef = useRef<HTMLInputElement>(null);
-  const [open, setOpen] = useState<boolean>(false);
 
   // Health Trackers state
   const [trackers, setTrackers] = useState<HealthTracker[]>([
@@ -1000,22 +999,12 @@ export default function CustomizePage() {
           {/* ─── 4. Health Highlights (Placeholder) ─────────────────────── */}
           <SectionCard
             icon={<HeartHandshake size={20} className="text-primary" />}
-            title="Health Highlights"
-            subtitle="Add notes & ask quick questions"
+            title="Health Insights"
+            subtitle="Add personal health insights & observations"
           >
-            <div className="w-full">
-              <button
-                onClick={() => setOpen(true)}
-                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-xl"
-              >
-                Add or Edit Your Health Report
-              </button>
-
-              <HealthQuestionnaireModal
-                isOpen={open}
-                onClose={() => setOpen(false)}
-              />
-            </div>
+            <InsightsInput
+              placeholder="e.g., 'Regular headaches after coffee', 'Improved sleep with evening walks'"
+            />
           </SectionCard>
         </div>
       </div>

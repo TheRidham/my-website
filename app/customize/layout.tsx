@@ -15,7 +15,7 @@ const Layout = ({ children }: { children: ReactNode}) => {
           <div className="flex items-center gap-2 mb-1">
             <Link 
               href={'/'}
-              className='p-3 hover:bg-primary/10 rounded-2xl'
+              className='p-2 hover:bg-primary/10 rounded-2xl'
             >
               <ArrowLeft size={22} />
             </Link>
