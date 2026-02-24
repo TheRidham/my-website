@@ -537,7 +537,7 @@ export function useVoiceTransform(
               });
             }
             
-            // Handle messages from the AudioWorklet processor
+            // Handling messages from the AudioWorklet processor
             workletNode.port.onmessage = (event) => {
               if (event.data.type === 'audioData') {
                 if (isStoppingRef.current || !scribeConnectionRef.current || !isSessionReadyRef.current) {
