@@ -109,12 +109,20 @@ class VoiceTransformProcessor extends AudioWorkletProcessor {
       let inputData = input[0];
       
       // Check if we have actual audio (not silence)
-      // Increased threshold for mobile devices (higher noise floor)
-      const silenceThreshold = 0.005;
-      const hasAudio = inputData.some(sample => Math.abs(sample) > silenceThreshold);
+      // Detect if we're on mobile for lower threshold
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      if (!hasAudio) {
-        // Skip processing silent audio
+      // Much lower threshold for mobile devices (iOS Safari has WebRTC bug causing very quiet audio)
+      const silenceThreshold = isMobile ? 0.0001 : 0.005;
+      
+      // Check for any non-zero audio (mobile audio is very quiet but not zero)
+      const hasAudio = inputData.some(sample => sample !== 0 && Math.abs(sample) > silenceThreshold);
+      
+      // Also check if there's ANY audio data at all (don't skip if stream exists)
+      const hasAnyData = inputData.some(sample => sample !== 0);
+      
+      if (!hasAudio && !hasAnyData) {
+        // Skip processing only if truly no data
         return true;
       }
       
@@ -126,18 +134,36 @@ class VoiceTransformProcessor extends AudioWorkletProcessor {
       // Convert Float32 to PCM16
       const pcm16 = this.float32ToPCM16(inputData);
       
+      // Log audio level for debugging
+      const maxLevel = inputData.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0);
+      const avgLevel = inputData.reduce((sum, sample) => sum + Math.abs(sample), 0) / inputData.length;
+      
       // Send audio data to main thread
       // Try transferable objects first, fall back to copy if not supported
       try {
         this.port.postMessage({
           type: 'audioData',
-          data: pcm16.buffer
+          data: pcm16.buffer,
+          debug: {
+            maxLevel: maxLevel,
+            avgLevel: avgLevel,
+            sampleCount: inputData.length,
+            threshold: silenceThreshold,
+            isMobile: isMobile
+          }
         }, [pcm16.buffer]);
       } catch (e) {
         // Fall back to non-transferable if not supported
         this.port.postMessage({
           type: 'audioData',
-          data: pcm16.buffer.slice(0)
+          data: pcm16.buffer.slice(0),
+          debug: {
+            maxLevel: maxLevel,
+            avgLevel: avgLevel,
+            sampleCount: inputData.length,
+            threshold: silenceThreshold,
+            isMobile: isMobile
+          }
         });
       }
       

@@ -121,6 +121,8 @@ export function useVoiceTransform(
   const networkEventListenersRef = useRef<{ online: () => void; offline: () => void } | null>(null);
   const connectionStartTimeRef = useRef<number>(0);
   const wasConnectedRef = useRef(false);
+  const lastAudioSentRef = useRef<number>(Date.now());
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const setStatus = useCallback((status: VoiceTransformStatus) => {
     setState((prev) => ({ ...prev, status }));
@@ -501,6 +503,40 @@ export function useVoiceTransform(
             });
             audioWorkletNodeRef.current = workletNode;
             
+            // Monitor audio track for iOS WebKit bug #180748 (track may get muted internally)
+            const audioTracks = stream.getAudioTracks();
+            if (audioTracks.length > 0) {
+              audioTracks.forEach(track => {
+                // Listen for track mute state changes
+                const handleMuteChange = () => {
+                  console.log("[TRACK STATE]", {
+                    kind: track.kind,
+                    enabled: track.enabled,
+                    muted: track.muted,
+                    readyState: track.readyState,
+                    timestamp: new Date().toISOString()
+                  });
+                  
+                  // If track gets muted after starting, try to restart it
+                  if (track.muted && isSessionReadyRef.current && !isStoppingRef.current) {
+                    console.warn("[TRACK] Audio track muted unexpectedly, attempting restart...");
+                    track.enabled = false;
+                    setTimeout(() => {
+                      track.enabled = true;
+                      console.log("[TRACK] Track restarted");
+                    }, 100);
+                  }
+                };
+                
+                track.addEventListener('mute', handleMuteChange);
+                track.addEventListener('unmute', handleMuteChange);
+                track.addEventListener('ended', handleMuteChange);
+                
+                // Store track for cleanup
+                (track as any)._muteListeners = handleMuteChange;
+              });
+            }
+            
             // Handle messages from the AudioWorklet processor
             workletNode.port.onmessage = (event) => {
               if (event.data.type === 'audioData') {
@@ -509,11 +545,22 @@ export function useVoiceTransform(
                 }
                 
                 try {
+                  // Log debug info if available
+                  if (event.data.debug) {
+                    console.log("[WORKLET AUDIO]", {
+                      ...event.data.debug,
+                      timestamp: new Date().toISOString()
+                    });
+                  }
+                  
                   // Convert ArrayBuffer to base64
                   const base64 = arrayBufferToBase64(event.data.data);
                   
                   // Send to ElevenLabs
                   scribeConnectionRef.current.send({ audioBase64: base64 });
+                  
+                  // Update last audio sent time
+                  lastAudioSentRef.current = Date.now();
                 } catch (e) {
                   console.error("[WORKLET] Error sending audio:", e);
                 }
@@ -538,6 +585,22 @@ export function useVoiceTransform(
             workletNode.port.postMessage({ type: 'start' });
             
             console.log("[SCRIBE] AudioWorklet processing started with sample rate:", targetSampleRate);
+            
+            // Set up heartbeat to keep connection alive
+            // Send small audio packets every 5 seconds to prevent timeout
+            heartbeatIntervalRef.current = setInterval(() => {
+              if (scribeConnectionRef.current && isSessionReadyRef.current && !isStoppingRef.current) {
+                try {
+                  // Send a small silent packet to keep connection alive
+                  const silentBuffer = new Int16Array(32).fill(0);
+                  const base64 = arrayBufferToBase64(silentBuffer.buffer);
+                  scribeConnectionRef.current.send({ audioBase64: base64 });
+                  console.log("[HEARTBEAT] Sent keep-alive packet");
+                } catch (e) {
+                  console.error("[HEARTBEAT] Error sending keep-alive:", e);
+                }
+              }
+            }, 5000); // Every 5 seconds
           } catch (error) {
             console.error("[SCRIBE] Failed to setup AudioWorklet:", error);
             setError("Failed to setup audio processing. Please try again.");
@@ -651,6 +714,12 @@ export function useVoiceTransform(
     connectionStartTimeRef.current = 0;
     clearCommitTimer();
 
+    // Clear heartbeat interval
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
+
     // Remove network event listeners
     if (networkEventListenersRef.current) {
       window.removeEventListener('online', networkEventListenersRef.current.online);
@@ -675,6 +744,19 @@ export function useVoiceTransform(
         console.error("[STOP] Error disconnecting AudioWorklet:", e);
       }
       audioWorkletNodeRef.current = null;
+    }
+
+    // Clean up audio track event listeners
+    if (streamRef.current) {
+      const tracks = streamRef.current.getAudioTracks();
+      tracks.forEach(track => {
+        const listener = (track as any)._muteListeners;
+        if (listener) {
+          track.removeEventListener('mute', listener);
+          track.removeEventListener('unmute', listener);
+          track.removeEventListener('ended', listener);
+        }
+      });
     }
 
     // Clear keep-alive interval
