@@ -109,7 +109,9 @@ class VoiceTransformProcessor extends AudioWorkletProcessor {
       let inputData = input[0];
       
       // Check if we have actual audio (not silence)
-      const hasAudio = inputData.some(sample => Math.abs(sample) > 0.001);
+      // Increased threshold for mobile devices (higher noise floor)
+      const silenceThreshold = 0.005;
+      const hasAudio = inputData.some(sample => Math.abs(sample) > silenceThreshold);
       
       if (!hasAudio) {
         // Skip processing silent audio
@@ -125,11 +127,19 @@ class VoiceTransformProcessor extends AudioWorkletProcessor {
       const pcm16 = this.float32ToPCM16(inputData);
       
       // Send audio data to main thread
-      // Use transferable objects for better performance (zero-copy transfer)
-      this.port.postMessage({
-        type: 'audioData',
-        data: pcm16.buffer
-      }, [pcm16.buffer]);
+      // Try transferable objects first, fall back to copy if not supported
+      try {
+        this.port.postMessage({
+          type: 'audioData',
+          data: pcm16.buffer
+        }, [pcm16.buffer]);
+      } catch (e) {
+        // Fall back to non-transferable if not supported
+        this.port.postMessage({
+          type: 'audioData',
+          data: pcm16.buffer.slice(0)
+        });
+      }
       
     } catch (error) {
       // Log errors (will appear in main thread console if port.onmessageerror is set)

@@ -16,6 +16,22 @@ const COMMIT_CONFIG = {
   punctuationMarks: [".", "?", "!", "。", "।"],
 };
 
+function logDeviceInfo() {
+  console.log("[DEVICE INFO] Browser:", navigator.userAgent);
+  console.log("[DEVICE INFO] Platform:", navigator.platform);
+  console.log("[DEVICE INFO] Hardware Concurrency:", navigator.hardwareConcurrency);
+  console.log("[DEVICE INFO] Memory:", (navigator as any).deviceMemory);
+  console.log("[DEVICE INFO] Connection:", (navigator as any).connection?.effectiveType);
+  console.log("[DEVICE INFO] Touch Support:", 'ontouchstart' in window);
+}
+
+function checkNetworkConnectivity(): boolean {
+  if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
+    return navigator.onLine;
+  }
+  return true;
+}
+
 function getSupportedSampleRate(actualRate: number): { format: AudioFormat; rate: number } {
   const supportedRates = [
     { format: AudioFormat.PCM_48000, rate: 48000 },
@@ -57,6 +73,7 @@ export function useVoiceTransform(
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const isExternalStreamRef = useRef(false);
   const isSessionReadyRef = useRef(false);
+  const networkEventListenersRef = useRef<{ online: () => void; offline: () => void } | null>(null);
 
   const setStatus = useCallback((status: VoiceTransformStatus) => {
     setState((prev) => ({ ...prev, status }));
@@ -201,11 +218,26 @@ export function useVoiceTransform(
   }, []);
 
   const start = useCallback(async (externalStream?: MediaStream) => {
+    // Prevent multiple simultaneous starts
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      console.warn("[START] Already running - ignoring duplicate start");
+      return;
+    }
+
     isStoppingRef.current = false;
     isSessionReadyRef.current = false;
     lastPartialRef.current = "";
     setError(null);
-
+    
+    // Log device info for debugging
+    logDeviceInfo();
+    
+    // Check network connectivity first
+    if (!checkNetworkConnectivity()) {
+      setError("No network connection. Please check your internet connection.");
+      return;
+    }
+    
     const hasExternalStream = !!externalStream;
     isExternalStreamRef.current = hasExternalStream;
 
@@ -233,29 +265,85 @@ export function useVoiceTransform(
       }
       streamRef.current = stream;
 
-      const audioContext = new AudioContext();
-      audioContextRef.current = audioContext;
-
-      // Resume AudioContext if suspended (required by some browsers)
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-      }
+      // Don't create AudioContext yet - wait until after token fetch
+      // This prevents mobile browsers from suspending it during network delay
 
       setStatus("connecting");
 
-      const tokenResponse = await fetch("/api/elevenlabs/scribe-token", {
-        method: "POST",
-      });
+      // Set up network change listeners
+      const handleOnline = () => {
+        console.log("[SCRIBE] Network connection restored");
+        if (!scribeConnectionRef.current && !isStoppingRef.current) {
+          console.log("[SCRIBE] Reconnecting after network restoration...");
+          // Trigger reconnection if connection was lost
+        }
+      };
+      
+      const handleOffline = () => {
+        console.log("[SCRIBE] Network connection lost");
+        setError("Network connection lost. Please check your internet.");
+      };
+      
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      networkEventListenersRef.current = { online: handleOnline, offline: handleOffline };
 
-      if (!tokenResponse.ok) {
+      // Fetch token with retry logic for mobile networks
+      let tokenResponse: Response | null = null;
+      let tokenRetryCount = 0;
+      const maxTokenRetries = 3;
+
+      while (tokenRetryCount < maxTokenRetries) {
+        try {
+          tokenResponse = await fetch("/api/elevenlabs/scribe-token", {
+            method: "POST",
+            signal: AbortSignal.timeout(10000), // 10 second timeout
+          });
+          if (tokenResponse.ok) break;
+        } catch (e) {
+          tokenRetryCount++;
+          if (tokenRetryCount >= maxTokenRetries) throw e;
+          console.log(`[SCRIBE] Token fetch retry ${tokenRetryCount}/${maxTokenRetries}`);
+          await new Promise(r => setTimeout(r, 1000 * tokenRetryCount));
+        }
+      }
+
+      if (!tokenResponse || !tokenResponse.ok) {
         throw new Error("Failed to get token");
       }
 
       const { token } = await tokenResponse.json();
 
+      // NOW create AudioContext - after token fetch, before WebSocket connection
+      // This reduces time window where mobile browsers might suspend it
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+
+      // Resume AudioContext immediately and keep it alive
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+
+      // Keep AudioContext alive by playing a silent buffer periodically
+      const keepAliveInterval = setInterval(() => {
+        if (audioContextRef.current && audioContextRef.current.state === 'running') {
+          const oscillator = audioContextRef.current.createOscillator();
+          const gain = audioContextRef.current.createGain();
+          gain.gain.value = 0; // Silent
+          oscillator.connect(gain);
+          gain.connect(audioContextRef.current.destination);
+          oscillator.start();
+          oscillator.stop(audioContextRef.current.currentTime + 0.01);
+        }
+      }, 10000); // Every 10 seconds
+
+      // Store interval for cleanup
+      (audioContextRef as any)._keepAliveInterval = keepAliveInterval;
+
       let connection: ReturnType<typeof Scribe.connect>;
       let targetSampleRate = 16000;
       let audioFormat = AudioFormat.PCM_16000;
+      let workletLoaded = false;
 
       if (hasExternalStream) {
         const actualSampleRate = audioContext.sampleRate;
@@ -287,8 +375,18 @@ export function useVoiceTransform(
 
       scribeConnectionRef.current = connection;
 
+      // Set up connection timeout (15 seconds for mobile)
+      const connectionTimeout = setTimeout(() => {
+        if (scribeConnectionRef.current && !isSessionReadyRef.current) {
+          console.error("[SCRIBE] Connection timeout - closing");
+          connection.close();
+          setError("Connection timeout. Please check your network and try again.");
+        }
+      }, 15000);
+
       connection.on(RealtimeEvents.OPEN, () => {
         console.log("[SCRIBE] WebSocket opened");
+        clearTimeout(connectionTimeout);
       });
 
       connection.on(RealtimeEvents.SESSION_STARTED, async () => {
@@ -300,9 +398,30 @@ export function useVoiceTransform(
           try {
             console.log("[SCRIBE] Setting up AudioWorklet for external stream");
             
-            // Load the AudioWorklet processor module
-            await audioContext.audioWorklet.addModule('/voice-transform-processor.js');
-            console.log("[SCRIBE] AudioWorklet module loaded");
+            // Load the AudioWorklet processor module with multiple path attempts
+            const workletPaths = [
+              '/voice-transform-processor.js',
+              '/api/voice-transform-processor',
+              './voice-transform-processor.js',
+            ];
+            
+            let workletLoadError: Error | null = null;
+            for (const path of workletPaths) {
+              try {
+                await audioContext.audioWorklet.addModule(path);
+                console.log("[SCRIBE] AudioWorklet module loaded from:", path);
+                workletLoaded = true;
+                workletLoadError = null;
+                break;
+              } catch (e) {
+                console.warn(`[SCRIBE] Failed to load from ${path}:`, e);
+                workletLoadError = e instanceof Error ? e : new Error(String(e));
+              }
+            }
+            
+            if (!workletLoaded) {
+              throw new Error(`Failed to load AudioWorklet module from all paths. Last error: ${workletLoadError?.message}`);
+            }
             
             // Create audio source from stream
             const source = audioContext.createMediaStreamSource(stream);
@@ -337,14 +456,17 @@ export function useVoiceTransform(
               }
             };
             
-            // Connect: source -> workletNode -> destination (silent)
+            // Connect: source -> workletNode
             source.connect(workletNode);
             
-            // Create silent gain node so worklet keeps processing
+            // Connect worklet to a silent buffer to keep it processing
+            // Don't connect to destination as mobile browsers optimize away silent nodes
+            const silentBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+            const silentSource = audioContext.createBufferSource();
             const silentGain = audioContext.createGain();
             silentGain.gain.value = 0;
+            silentSource.buffer = silentBuffer;
             workletNode.connect(silentGain);
-            silentGain.connect(audioContext.destination);
             
             // Tell the processor to start processing
             workletNode.port.postMessage({ type: 'start' });
@@ -413,6 +535,17 @@ export function useVoiceTransform(
 
         if (!isStoppingRef.current) {
           setError("Connection lost. Please try again.");
+          
+          // Attempt auto-reconnect on mobile if stream is still available
+          if (streamRef.current && hasExternalStream) {
+            console.log("[SCRIBE] Attempting automatic reconnection...");
+            setTimeout(() => {
+              if (!isStoppingRef.current && !scribeConnectionRef.current) {
+                console.log("[SCRIBE] Retrying connection...");
+                start(externalStream);
+              }
+            }, 2000);
+          }
         }
       });
 
@@ -431,6 +564,13 @@ export function useVoiceTransform(
     isSessionReadyRef.current = false;
     clearCommitTimer();
 
+    // Remove network event listeners
+    if (networkEventListenersRef.current) {
+      window.removeEventListener('online', networkEventListenersRef.current.online);
+      window.removeEventListener('offline', networkEventListenersRef.current.offline);
+      networkEventListenersRef.current = null;
+    }
+
     if (currentSourceRef.current) {
       try {
         currentSourceRef.current.stop();
@@ -448,6 +588,12 @@ export function useVoiceTransform(
         console.error("[STOP] Error disconnecting AudioWorklet:", e);
       }
       audioWorkletNodeRef.current = null;
+    }
+
+    // Clear keep-alive interval
+    if (audioContextRef.current && (audioContextRef.current as any)._keepAliveInterval) {
+      clearInterval((audioContextRef.current as any)._keepAliveInterval);
+      delete (audioContextRef.current as any)._keepAliveInterval;
     }
 
     if (mediaStreamSourceRef.current) {
