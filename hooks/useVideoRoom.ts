@@ -331,10 +331,10 @@ export function useVideoRoom(options: UseVideoRoomOptions = {}) {
 
     const mediaStreamTracks = audioTracks
       .map((track) => track.mediaStreamTrack)
-      .filter(Boolean);
+      .filter(t => t && t.readyState === 'live' && t.enabled);
 
     if (mediaStreamTracks.length === 0) {
-      console.log("No media stream tracks available");
+      console.log("No live, enabled media stream tracks available");
       return null;
     }
 

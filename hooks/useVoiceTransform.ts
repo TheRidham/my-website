@@ -32,6 +32,51 @@ function checkNetworkConnectivity(): boolean {
   return true;
 }
 
+async function waitForStreamReady(stream: MediaStream, timeout = 5000): Promise<boolean> {
+  const tracks = stream.getAudioTracks();
+  if (tracks.length === 0) {
+    console.warn("[STREAM_READY] No audio tracks in stream");
+    return false;
+  }
+
+  console.log(`[STREAM_READY] Waiting for ${tracks.length} audio tracks to be ready...`);
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const allLive = tracks.every(track => 
+      track.readyState === 'live' && track.enabled
+    );
+    
+    if (allLive) {
+      console.log(`[STREAM_READY] All tracks ready after ${Date.now() - startTime}ms`);
+      return true;
+    }
+    
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  console.warn("[STREAM_READY] Timeout waiting for tracks to be ready");
+  return false;
+}
+
+function validateStream(stream: MediaStream): { valid: boolean; reason?: string } {
+  const audioTracks = stream.getAudioTracks();
+  
+  if (audioTracks.length === 0) {
+    return { valid: false, reason: "No audio tracks" };
+  }
+
+  const liveTracks = audioTracks.filter(track => 
+    track.readyState === 'live' && track.enabled
+  );
+
+  if (liveTracks.length === 0) {
+    return { valid: false, reason: "No active audio tracks (not live or disabled)" };
+  }
+
+  return { valid: true };
+}
+
 function getSupportedSampleRate(actualRate: number): { format: AudioFormat; rate: number } {
   const supportedRates = [
     { format: AudioFormat.PCM_48000, rate: 48000 },
@@ -74,6 +119,8 @@ export function useVoiceTransform(
   const isExternalStreamRef = useRef(false);
   const isSessionReadyRef = useRef(false);
   const networkEventListenersRef = useRef<{ online: () => void; offline: () => void } | null>(null);
+  const connectionStartTimeRef = useRef<number>(0);
+  const wasConnectedRef = useRef(false);
 
   const setStatus = useCallback((status: VoiceTransformStatus) => {
     setState((prev) => ({ ...prev, status }));
@@ -252,6 +299,20 @@ export function useVoiceTransform(
 
       if (externalStream) {
         stream = externalStream;
+        
+        // Validate stream BEFORE proceeding
+        console.log("[START] Validating external stream...");
+        const validation = validateStream(stream);
+        if (!validation.valid) {
+          throw new Error(`Audio stream validation failed: ${validation.reason}`);
+        }
+
+        // Wait for stream to be ready (critical for mobile Safari)
+        console.log("[START] Waiting for stream to be ready...");
+        const streamReady = await waitForStreamReady(stream, 5000);
+        if (!streamReady) {
+          throw new Error("Audio stream not ready. Please wait for the call to stabilize and try again.");
+        }
       } else {
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -375,6 +436,10 @@ export function useVoiceTransform(
 
       scribeConnectionRef.current = connection;
 
+      // Track connection start time
+      connectionStartTimeRef.current = Date.now();
+      wasConnectedRef.current = false;
+
       // Set up connection timeout (15 seconds for mobile)
       const connectionTimeout = setTimeout(() => {
         if (scribeConnectionRef.current && !isSessionReadyRef.current) {
@@ -392,6 +457,7 @@ export function useVoiceTransform(
       connection.on(RealtimeEvents.SESSION_STARTED, async () => {
         console.log("[SCRIBE] Session started");
         isSessionReadyRef.current = true;
+        wasConnectedRef.current = true; // Mark as successfully connected
         setStatus("listening");
         
         if (hasExternalStream) {
@@ -518,7 +584,20 @@ export function useVoiceTransform(
         if (isStoppingRef.current) return;
         
         console.error("[SCRIBE] Error:", error);
-        setError("Transcription error. Please try again.");
+        
+        let errorMessage = "Transcription error. Please try again.";
+        if (error instanceof Error) {
+          if (error.message.includes('stream')) {
+            errorMessage = "Audio stream error. The audio connection may not be stable. Please wait a moment and try again.";
+          } else if (error.message.includes('timeout')) {
+            errorMessage = "Connection timeout. Please check your network and try again.";
+          } else if (error.message.includes('validation')) {
+            errorMessage = "Audio stream not ready. Please wait for the call to stabilize and try again.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        setError(errorMessage);
       });
 
       connection.on(RealtimeEvents.AUTH_ERROR, (error: unknown) => {
@@ -529,22 +608,28 @@ export function useVoiceTransform(
       });
 
       connection.on(RealtimeEvents.CLOSE, () => {
-        console.log("[SCRIBE] Connection closed");
+        const connectionDuration = Date.now() - connectionStartTimeRef.current;
+        console.log(`[SCRIBE] Connection closed after ${connectionDuration}ms`);
         scribeConnectionRef.current = null;
         clearCommitTimer();
 
         if (!isStoppingRef.current) {
           setError("Connection lost. Please try again.");
           
-          // Attempt auto-reconnect on mobile if stream is still available
-          if (streamRef.current && hasExternalStream) {
-            console.log("[SCRIBE] Attempting automatic reconnection...");
+          // Only auto-reconnect if connection was working for at least 30 seconds
+          // This prevents infinite loops on immediate failures
+          const connectionWasWorking = wasConnectedRef.current && connectionDuration > 30000;
+          
+          if (connectionWasWorking && streamRef.current && hasExternalStream) {
+            console.log("[SCRIBE] Connection was working - attempting automatic reconnection...");
             setTimeout(() => {
               if (!isStoppingRef.current && !scribeConnectionRef.current) {
                 console.log("[SCRIBE] Retrying connection...");
                 start(externalStream);
               }
             }, 2000);
+          } else {
+            console.log("[SCRIBE] Not auto-reconnecting - connection was not stable or failed immediately");
           }
         }
       });
@@ -562,6 +647,8 @@ export function useVoiceTransform(
   const stop = useCallback(async () => {
     isStoppingRef.current = true;
     isSessionReadyRef.current = false;
+    wasConnectedRef.current = false;
+    connectionStartTimeRef.current = 0;
     clearCommitTimer();
 
     // Remove network event listeners

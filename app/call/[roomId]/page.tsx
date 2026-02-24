@@ -137,7 +137,7 @@ export default function CallPage() {
           // Increased timeout for mobile browsers to process user gesture
           setTimeout(() => {
             startVoiceTransform(stream);
-          }, 300);
+          }, 1000);
         }
       }
     }
