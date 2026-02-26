@@ -1,4 +1,5 @@
 "use client";
+
 import { useCallback, useRef, useState } from "react";
 import { Scribe, RealtimeEvents, CommitStrategy, AudioFormat } from "@elevenlabs/client";
 import type {
@@ -15,67 +16,6 @@ const COMMIT_CONFIG = {
   maxWordsBeforeCommit: 20,
   punctuationMarks: [".", "?", "!", "。", "।"],
 };
-
-function logDeviceInfo() {
-  console.log("[DEVICE INFO] Browser:", navigator.userAgent);
-  console.log("[DEVICE INFO] Platform:", navigator.platform);
-  console.log("[DEVICE INFO] Hardware Concurrency:", navigator.hardwareConcurrency);
-  console.log("[DEVICE INFO] Memory:", (navigator as any).deviceMemory);
-  console.log("[DEVICE INFO] Connection:", (navigator as any).connection?.effectiveType);
-  console.log("[DEVICE INFO] Touch Support:", 'ontouchstart' in window);
-}
-
-function checkNetworkConnectivity(): boolean {
-  if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
-    return navigator.onLine;
-  }
-  return true;
-}
-
-async function waitForStreamReady(stream: MediaStream, timeout = 5000): Promise<boolean> {
-  const tracks = stream.getAudioTracks();
-  if (tracks.length === 0) {
-    console.warn("[STREAM_READY] No audio tracks in stream");
-    return false;
-  }
-
-  console.log(`[STREAM_READY] Waiting for ${tracks.length} audio tracks to be ready...`);
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < timeout) {
-    const allLive = tracks.every(track => 
-      track.readyState === 'live' && track.enabled
-    );
-    
-    if (allLive) {
-      console.log(`[STREAM_READY] All tracks ready after ${Date.now() - startTime}ms`);
-      return true;
-    }
-    
-    await new Promise(r => setTimeout(r, 100));
-  }
-
-  console.warn("[STREAM_READY] Timeout waiting for tracks to be ready");
-  return false;
-}
-
-function validateStream(stream: MediaStream): { valid: boolean; reason?: string } {
-  const audioTracks = stream.getAudioTracks();
-  
-  if (audioTracks.length === 0) {
-    return { valid: false, reason: "No audio tracks" };
-  }
-
-  const liveTracks = audioTracks.filter(track => 
-    track.readyState === 'live' && track.enabled
-  );
-
-  if (liveTracks.length === 0) {
-    return { valid: false, reason: "No active audio tracks (not live or disabled)" };
-  }
-
-  return { valid: true };
-}
 
 function getSupportedSampleRate(actualRate: number): { format: AudioFormat; rate: number } {
   const supportedRates = [
@@ -114,15 +54,10 @@ export function useVoiceTransform(
   const isStoppingRef = useRef(false);
   const commitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastPartialRef = useRef<string>("");
-  const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const isExternalStreamRef = useRef(false);
   const isSessionReadyRef = useRef(false);
-  const networkEventListenersRef = useRef<{ online: () => void; offline: () => void } | null>(null);
-  const connectionStartTimeRef = useRef<number>(0);
-  const wasConnectedRef = useRef(false);
-  const lastAudioSentRef = useRef<number>(Date.now());
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const setStatus = useCallback((status: VoiceTransformStatus) => {
     setState((prev) => ({ ...prev, status }));
@@ -257,6 +192,15 @@ export function useVoiceTransform(
     }
   }, [clearCommitTimer, forceCommit, endsWithPunctuation, getWordCount]);
 
+  const float32ToPCM16 = useCallback((float32Array: Float32Array): Int16Array => {
+    const int16Array = new Int16Array(float32Array.length);
+    for (let i = 0; i < float32Array.length; i++) {
+      const s = Math.max(-1, Math.min(1, float32Array[i]));
+      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return int16Array;
+  }, []);
+
   const arrayBufferToBase64 = useCallback((buffer: ArrayBuffer): string => {
     const bytes = new Uint8Array(buffer);
     let binary = "";
@@ -266,27 +210,31 @@ export function useVoiceTransform(
     return btoa(binary);
   }, []);
 
-  const start = useCallback(async (externalStream?: MediaStream) => {
-    // Prevent multiple simultaneous starts
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      console.warn("[START] Already running - ignoring duplicate start");
-      return;
+  const resampleAudio = useCallback((
+    input: Float32Array,
+    inputSampleRate: number,
+    outputSampleRate: number
+  ): Float32Array => {
+    if (inputSampleRate === outputSampleRate) return input;
+    
+    const ratio = inputSampleRate / outputSampleRate;
+    const outputLength = Math.floor(input.length / ratio);
+    const output = new Float32Array(outputLength);
+    
+    for (let i = 0; i < outputLength; i++) {
+      const srcIndex = Math.floor(i * ratio);
+      output[i] = input[srcIndex];
     }
+    
+    return output;
+  }, []);
 
+  const start = useCallback(async (externalStream?: MediaStream) => {
     isStoppingRef.current = false;
     isSessionReadyRef.current = false;
     lastPartialRef.current = "";
     setError(null);
-    
-    // Log device info for debugging
-    logDeviceInfo();
-    
-    // Check network connectivity first
-    if (!checkNetworkConnectivity()) {
-      setError("No network connection. Please check your internet connection.");
-      return;
-    }
-    
+
     const hasExternalStream = !!externalStream;
     isExternalStreamRef.current = hasExternalStream;
 
@@ -301,20 +249,6 @@ export function useVoiceTransform(
 
       if (externalStream) {
         stream = externalStream;
-        
-        // Validate stream BEFORE proceeding
-        console.log("[START] Validating external stream...");
-        const validation = validateStream(stream);
-        if (!validation.valid) {
-          throw new Error(`Audio stream validation failed: ${validation.reason}`);
-        }
-
-        // Wait for stream to be ready (critical for mobile Safari)
-        console.log("[START] Waiting for stream to be ready...");
-        const streamReady = await waitForStreamReady(stream, 5000);
-        if (!streamReady) {
-          throw new Error("Audio stream not ready. Please wait for the call to stabilize and try again.");
-        }
       } else {
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -328,85 +262,24 @@ export function useVoiceTransform(
       }
       streamRef.current = stream;
 
-      // Don't create AudioContext yet - wait until after token fetch
-      // This prevents mobile browsers from suspending it during network delay
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
 
       setStatus("connecting");
 
-      // Set up network change listeners
-      const handleOnline = () => {
-        console.log("[SCRIBE] Network connection restored");
-        if (!scribeConnectionRef.current && !isStoppingRef.current) {
-          console.log("[SCRIBE] Reconnecting after network restoration...");
-          // Trigger reconnection if connection was lost
-        }
-      };
-      
-      const handleOffline = () => {
-        console.log("[SCRIBE] Network connection lost");
-        setError("Network connection lost. Please check your internet.");
-      };
-      
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
-      networkEventListenersRef.current = { online: handleOnline, offline: handleOffline };
+      const tokenResponse = await fetch("/api/elevenlabs/scribe-token", {
+        method: "POST",
+      });
 
-      // Fetch token with retry logic for mobile networks
-      let tokenResponse: Response | null = null;
-      let tokenRetryCount = 0;
-      const maxTokenRetries = 3;
-
-      while (tokenRetryCount < maxTokenRetries) {
-        try {
-          tokenResponse = await fetch("/api/elevenlabs/scribe-token", {
-            method: "POST",
-            signal: AbortSignal.timeout(10000), // 10 second timeout
-          });
-          if (tokenResponse.ok) break;
-        } catch (e) {
-          tokenRetryCount++;
-          if (tokenRetryCount >= maxTokenRetries) throw e;
-          console.log(`[SCRIBE] Token fetch retry ${tokenRetryCount}/${maxTokenRetries}`);
-          await new Promise(r => setTimeout(r, 1000 * tokenRetryCount));
-        }
-      }
-
-      if (!tokenResponse || !tokenResponse.ok) {
+      if (!tokenResponse.ok) {
         throw new Error("Failed to get token");
       }
 
       const { token } = await tokenResponse.json();
 
-      // NOW create AudioContext - after token fetch, before WebSocket connection
-      // This reduces time window where mobile browsers might suspend it
-      const audioContext = new AudioContext();
-      audioContextRef.current = audioContext;
-
-      // Resume AudioContext immediately and keep it alive
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-      }
-
-      // Keep AudioContext alive by playing a silent buffer periodically
-      const keepAliveInterval = setInterval(() => {
-        if (audioContextRef.current && audioContextRef.current.state === 'running') {
-          const oscillator = audioContextRef.current.createOscillator();
-          const gain = audioContextRef.current.createGain();
-          gain.gain.value = 0; // Silent
-          oscillator.connect(gain);
-          gain.connect(audioContextRef.current.destination);
-          oscillator.start();
-          oscillator.stop(audioContextRef.current.currentTime + 0.01);
-        }
-      }, 10000); // Every 10 seconds
-
-      // Store interval for cleanup
-      (audioContextRef as any)._keepAliveInterval = keepAliveInterval;
-
       let connection: ReturnType<typeof Scribe.connect>;
       let targetSampleRate = 16000;
       let audioFormat = AudioFormat.PCM_16000;
-      let workletLoaded = false;
 
       if (hasExternalStream) {
         const actualSampleRate = audioContext.sampleRate;
@@ -438,208 +311,73 @@ export function useVoiceTransform(
 
       scribeConnectionRef.current = connection;
 
-      // Track connection start time
-      connectionStartTimeRef.current = Date.now();
-      wasConnectedRef.current = false;
-
-      // Set up connection timeout (15 seconds for mobile)
-      const connectionTimeout = setTimeout(() => {
-        if (scribeConnectionRef.current && !isSessionReadyRef.current) {
-          console.error("[SCRIBE] Connection timeout - closing");
-          connection.close();
-          setError("Connection timeout. Please check your network and try again.");
-        }
-      }, 15000);
-
       connection.on(RealtimeEvents.OPEN, () => {
         console.log("[SCRIBE] WebSocket opened");
-        clearTimeout(connectionTimeout);
       });
 
-      connection.on(RealtimeEvents.SESSION_STARTED, async () => {
+      connection.on(RealtimeEvents.SESSION_STARTED, () => {
         console.log("[SCRIBE] Session started");
         isSessionReadyRef.current = true;
-        wasConnectedRef.current = true; // Mark as successfully connected
         setStatus("listening");
         
         if (hasExternalStream) {
-          try {
-            console.log("[SCRIBE] Setting up AudioWorklet for external stream");
+          const source = audioContext.createMediaStreamSource(stream);
+          mediaStreamSourceRef.current = source;
+
+          const bufferSize = 4096;
+          const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+          source.connect(scriptProcessor);
+          
+          scriptProcessorRef.current = scriptProcessor;
+
+          scriptProcessor.onaudioprocess = (event) => {
+            if (isStoppingRef.current || !scribeConnectionRef.current || !isSessionReadyRef.current) return;
+
+            let inputData: Float32Array = event.inputBuffer.getChannelData(0);
             
-            // Load the AudioWorklet processor module with multiple path attempts
-            const workletPaths = [
-              '/voice-transform-processor.js',
-              '/api/voice-transform-processor',
-              './voice-transform-processor.js',
-            ];
-            
-            let workletLoadError: Error | null = null;
-            for (const path of workletPaths) {
-              try {
-                await audioContext.audioWorklet.addModule(path);
-                console.log("[SCRIBE] AudioWorklet module loaded from:", path);
-                workletLoaded = true;
-                workletLoadError = null;
-                break;
-              } catch (e) {
-                console.warn(`[SCRIBE] Failed to load from ${path}:`, e);
-                workletLoadError = e instanceof Error ? e : new Error(String(e));
-              }
+            if (audioContext.sampleRate !== targetSampleRate) {
+              const resampled = resampleAudio(inputData, audioContext.sampleRate, targetSampleRate);
+              inputData = new Float32Array(resampled);
             }
             
-            if (!workletLoaded) {
-              throw new Error(`Failed to load AudioWorklet module from all paths. Last error: ${workletLoadError?.message}`);
+            const pcm16 = float32ToPCM16(inputData);
+            const base64 = arrayBufferToBase64(pcm16.buffer as ArrayBuffer);
+
+            try {
+              scribeConnectionRef.current.send({ audioBase64: base64 });
+            } catch (e) {
+              console.error("[SCRIPT_PROCESSOR] Error sending audio:", e);
             }
-            
-            // Create audio source from stream
-            const source = audioContext.createMediaStreamSource(stream);
-            mediaStreamSourceRef.current = source;
-            
-            // Create AudioWorklet node with target sample rate
-            const workletNode = new AudioWorkletNode(audioContext, 'voice-transform-processor', {
-              processorOptions: {
-                targetSampleRate: targetSampleRate,
-              },
-            });
-            audioWorkletNodeRef.current = workletNode;
-            
-            // Monitor audio track for iOS WebKit bug #180748 (track may get muted internally)
-            const audioTracks = stream.getAudioTracks();
-            if (audioTracks.length > 0) {
-              audioTracks.forEach(track => {
-                // Listen for track mute state changes
-                const handleMuteChange = () => {
-                  console.log("[TRACK STATE]", {
-                    kind: track.kind,
-                    enabled: track.enabled,
-                    muted: track.muted,
-                    readyState: track.readyState,
-                    timestamp: new Date().toISOString()
-                  });
-                  
-                  // If track gets muted after starting, try to restart it
-                  if (track.muted && isSessionReadyRef.current && !isStoppingRef.current) {
-                    console.warn("[TRACK] Audio track muted unexpectedly, attempting restart...");
-                    track.enabled = false;
-                    setTimeout(() => {
-                      track.enabled = true;
-                      console.log("[TRACK] Track restarted");
-                    }, 100);
-                  }
-                };
-                
-                track.addEventListener('mute', handleMuteChange);
-                track.addEventListener('unmute', handleMuteChange);
-                track.addEventListener('ended', handleMuteChange);
-                
-                // Store track for cleanup
-                (track as any)._muteListeners = handleMuteChange;
-              });
-            }
-            
-            // Handling messages from the AudioWorklet processor
-            workletNode.port.onmessage = (event) => {
-              if (event.data.type === 'audioData') {
-                if (isStoppingRef.current || !scribeConnectionRef.current || !isSessionReadyRef.current) {
-                  return;
-                }
-                
-                try {
-                  // Log debug info if available
-                  if (event.data.debug) {
-                    console.log("[WORKLET AUDIO]", {
-                      ...event.data.debug,
-                      timestamp: new Date().toISOString()
-                    });
-                  }
-                  
-                  // Convert ArrayBuffer to base64
-                  const base64 = arrayBufferToBase64(event.data.data);
-                  
-                  // Send to ElevenLabs
-                  scribeConnectionRef.current.send({ audioBase64: base64 });
-                  
-                  // Update last audio sent time
-                  lastAudioSentRef.current = Date.now();
-                } catch (e) {
-                  console.error("[WORKLET] Error sending audio:", e);
-                }
-              } else if (event.data.type === 'error') {
-                console.error("[WORKLET] Processor error:", event.data.error);
-              }
-            };
-            
-            // Connect: source -> workletNode
-            source.connect(workletNode);
-            
-            // Connect worklet to a silent buffer to keep it processing
-            // Don't connect to destination as mobile browsers optimize away silent nodes
-            const silentBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
-            const silentSource = audioContext.createBufferSource();
-            const silentGain = audioContext.createGain();
-            silentGain.gain.value = 0;
-            silentSource.buffer = silentBuffer;
-            workletNode.connect(silentGain);
-            
-            // Tell the processor to start processing
-            workletNode.port.postMessage({ type: 'start' });
-            
-            console.log("[SCRIBE] AudioWorklet processing started with sample rate:", targetSampleRate);
-            
-            // Set up heartbeat to keep connection alive
-            // Send small audio packets every 5 seconds to prevent timeout
-            heartbeatIntervalRef.current = setInterval(() => {
-              if (scribeConnectionRef.current && isSessionReadyRef.current && !isStoppingRef.current) {
-                try {
-                  // Send a small silent packet to keep connection alive
-                  const silentBuffer = new Int16Array(32).fill(0);
-                  const base64 = arrayBufferToBase64(silentBuffer.buffer);
-                  scribeConnectionRef.current.send({ audioBase64: base64 });
-                  console.log("[HEARTBEAT] Sent keep-alive packet");
-                } catch (e) {
-                  console.error("[HEARTBEAT] Error sending keep-alive:", e);
-                }
-              }
-            }, 5000); // Every 5 seconds
-          } catch (error) {
-            console.error("[SCRIBE] Failed to setup AudioWorklet:", error);
-            setError("Failed to setup audio processing. Please try again.");
-          }
+          };
+          
+          console.log("[SCRIBE] Audio processing started");
         }
       });
 
       connection.on(RealtimeEvents.PARTIAL_TRANSCRIPT, (data: { text: string }) => {
-        try {
-          handlePartialTranscript(data.text || "");
-        } catch (error) {
-          console.error("[PARTIAL_TRANSCRIPT] Error:", error);
-        }
+        handlePartialTranscript(data.text || "");
       });
 
       connection.on(RealtimeEvents.COMMITTED_TRANSCRIPT, (data: { text: string }) => {
-        try {
-          console.log("[SCRIBE] Committed:", data.text);
-          clearCommitTimer();
-          lastPartialRef.current = "";
+        console.log("[SCRIBE] Committed:", data.text);
+        clearCommitTimer();
+        lastPartialRef.current = "";
 
-          const text = data.text || "";
-          if (text.trim()) {
-            const transcript: Transcript = {
-              id: `t-${Date.now()}`,
-              text,
-              timestamp: Date.now(),
-            };
-            setState((prev) => ({
-              ...prev,
-              partialTranscript: "",
-              committedTranscripts: [...prev.committedTranscripts, transcript],
-            }));
-            if (options?.autoPlay !== false) {
-              fetchAndPlayTTS(text);
-            }
+        const text = data.text || "";
+        if (text.trim()) {
+          const transcript: Transcript = {
+            id: `t-${Date.now()}`,
+            text,
+            timestamp: Date.now(),
+          };
+          setState((prev) => ({
+            ...prev,
+            partialTranscript: "",
+            committedTranscripts: [...prev.committedTranscripts, transcript],
+          }));
+          if (options?.autoPlay !== false) {
+            fetchAndPlayTTS(text);
           }
-        } catch (error) {
-          console.error("[COMMITTED_TRANSCRIPT] Error:", error);
         }
       });
 
@@ -647,20 +385,7 @@ export function useVoiceTransform(
         if (isStoppingRef.current) return;
         
         console.error("[SCRIBE] Error:", error);
-        
-        let errorMessage = "Transcription error. Please try again.";
-        if (error instanceof Error) {
-          if (error.message.includes('stream')) {
-            errorMessage = "Audio stream error. The audio connection may not be stable. Please wait a moment and try again.";
-          } else if (error.message.includes('timeout')) {
-            errorMessage = "Connection timeout. Please check your network and try again.";
-          } else if (error.message.includes('validation')) {
-            errorMessage = "Audio stream not ready. Please wait for the call to stabilize and try again.";
-          } else {
-            errorMessage = error.message;
-          }
-        }
-        setError(errorMessage);
+        setError("Transcription error. Please try again.");
       });
 
       connection.on(RealtimeEvents.AUTH_ERROR, (error: unknown) => {
@@ -671,29 +396,12 @@ export function useVoiceTransform(
       });
 
       connection.on(RealtimeEvents.CLOSE, () => {
-        const connectionDuration = Date.now() - connectionStartTimeRef.current;
-        console.log(`[SCRIBE] Connection closed after ${connectionDuration}ms`);
+        console.log("[SCRIBE] Connection closed");
         scribeConnectionRef.current = null;
         clearCommitTimer();
 
         if (!isStoppingRef.current) {
           setError("Connection lost. Please try again.");
-          
-          // Only auto-reconnect if connection was working for at least 30 seconds
-          // This prevents infinite loops on immediate failures
-          const connectionWasWorking = wasConnectedRef.current && connectionDuration > 30000;
-          
-          if (connectionWasWorking && streamRef.current && hasExternalStream) {
-            console.log("[SCRIBE] Connection was working - attempting automatic reconnection...");
-            setTimeout(() => {
-              if (!isStoppingRef.current && !scribeConnectionRef.current) {
-                console.log("[SCRIBE] Retrying connection...");
-                start(externalStream);
-              }
-            }, 2000);
-          } else {
-            console.log("[SCRIBE] Not auto-reconnecting - connection was not stable or failed immediately");
-          }
         }
       });
 
@@ -705,27 +413,12 @@ export function useVoiceTransform(
         setError("Failed to start. Please try again.");
       }
     }
-  }, [config, options?.autoPlay, setError, setStatus, handlePartialTranscript, clearCommitTimer, fetchAndPlayTTS, arrayBufferToBase64]);
+  }, [config, options?.autoPlay, setError, setStatus, handlePartialTranscript, clearCommitTimer, fetchAndPlayTTS, float32ToPCM16, arrayBufferToBase64, resampleAudio]);
 
-  const stop = useCallback(async () => {
+  const stop = useCallback(() => {
     isStoppingRef.current = true;
     isSessionReadyRef.current = false;
-    wasConnectedRef.current = false;
-    connectionStartTimeRef.current = 0;
     clearCommitTimer();
-
-    // Clear heartbeat interval
-    if (heartbeatIntervalRef.current) {
-      clearInterval(heartbeatIntervalRef.current);
-      heartbeatIntervalRef.current = null;
-    }
-
-    // Remove network event listeners
-    if (networkEventListenersRef.current) {
-      window.removeEventListener('online', networkEventListenersRef.current.online);
-      window.removeEventListener('offline', networkEventListenersRef.current.offline);
-      networkEventListenersRef.current = null;
-    }
 
     if (currentSourceRef.current) {
       try {
@@ -734,35 +427,11 @@ export function useVoiceTransform(
       currentSourceRef.current = null;
     }
 
-    if (audioWorkletNodeRef.current) {
+    if (scriptProcessorRef.current) {
       try {
-        // Stop the worklet processor
-        audioWorkletNodeRef.current.port.postMessage({ type: 'stop' });
-        audioWorkletNodeRef.current.disconnect();
-        console.log("[STOP] AudioWorklet disconnected");
-      } catch (e) {
-        console.error("[STOP] Error disconnecting AudioWorklet:", e);
-      }
-      audioWorkletNodeRef.current = null;
-    }
-
-    // Clean up audio track event listeners
-    if (streamRef.current) {
-      const tracks = streamRef.current.getAudioTracks();
-      tracks.forEach(track => {
-        const listener = (track as any)._muteListeners;
-        if (listener) {
-          track.removeEventListener('mute', listener);
-          track.removeEventListener('unmute', listener);
-          track.removeEventListener('ended', listener);
-        }
-      });
-    }
-
-    // Clear keep-alive interval
-    if (audioContextRef.current && (audioContextRef.current as any)._keepAliveInterval) {
-      clearInterval((audioContextRef.current as any)._keepAliveInterval);
-      delete (audioContextRef.current as any)._keepAliveInterval;
+        scriptProcessorRef.current.disconnect();
+      } catch {}
+      scriptProcessorRef.current = null;
     }
 
     if (mediaStreamSourceRef.current) {
@@ -783,14 +452,7 @@ export function useVoiceTransform(
     streamRef.current = null;
 
     if (audioContextRef.current) {
-      try {
-        // Only close if not already closed
-        if (audioContextRef.current.state !== 'closed') {
-          await audioContextRef.current.close();
-        }
-      } catch (error) {
-        console.error("[STOP] Error closing AudioContext:", error);
-      }
+      audioContextRef.current.close();
       audioContextRef.current = null;
     }
 

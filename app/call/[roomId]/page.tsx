@@ -134,10 +134,9 @@ export default function CallPage() {
         if (stream) {
           setRemoteAudioMuted(true);
           setVoiceTransformEnabled(true);
-          // Increased timeout for mobile browsers to process user gesture
           setTimeout(() => {
             startVoiceTransform(stream);
-          }, 1000);
+          }, 100);
         }
       }
     }
